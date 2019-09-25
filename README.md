@@ -1,13 +1,10 @@
-# go-inet
-A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks
-=======
 ## ATTENTION
 
-The API is **NOT** **stable** yet!
+The API is **REALLY** **NOT** **stable** yet!
 
-# go-inet/inet
+# go-inet
 
-A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks.
+A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks
 
 This package represents IP-addresses and IP-Blocks as comparable types.
 They can be used as keys in maps, freely copied and fast sorted
