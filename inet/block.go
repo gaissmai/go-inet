@@ -209,8 +209,8 @@ func (a Block) Size() int {
 	return new(big.Int).SetBytes(ip.Bytes()).BitLen()
 }
 
-// Contains reports whether ip is contained in Block.
-func (a Block) Contains(ip IP) bool {
+// ContainsIP reports whether ip is contained in Block.
+func (a Block) ContainsIP(ip IP) bool {
 	return (bytes.Compare(a.Base[:], ip[:]) <= 0) && (bytes.Compare(a.Last[:], ip[:]) >= 0)
 }
 

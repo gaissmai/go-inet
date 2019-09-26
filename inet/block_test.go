@@ -78,7 +78,7 @@ func TestBlockIsValid(t *testing.T) {
 
 }
 
-func TestBlockContains(t *testing.T) {
+func TestBlockContainsIP(t *testing.T) {
 
 	r1 := MustBlock(NewBlock("127.0.0.1/8"))
 	r2 := MustBlock(NewBlock("127.0.0.0-127.255.255.255"))
@@ -183,10 +183,10 @@ func TestBlockContains(t *testing.T) {
 
 	for _, tt := range tests {
 		r, ip, want := tt.r, tt.ip, tt.want
-		got := r.Contains(ip)
+		got := r.ContainsIP(ip)
 
 		if got != want {
-			t.Errorf("(%v).Contains(%v) = %v, want %v", r, ip, got, want)
+			t.Errorf("(%v).ContainsIP(%v) = %v, want %v", r, ip, got, want)
 		}
 	}
 }
