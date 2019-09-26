@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"sort"
+
+	"github.com/gaissmai/go-inet/tree/item"
 )
 
 // ########################################################################
@@ -38,7 +40,7 @@ type BlockTree struct {
 // Node, recursive tree data structure, only public for easy serialization, don't rely on it.
 // Items abstracted via Itemer interface
 type Node struct {
-	Item   *Itemer
+	Item   *item.Itemer
 	Parent *Node
 	Childs []*Node
 }
@@ -56,7 +58,7 @@ func NewBlockTree() *BlockTree {
 
 // InsertBulk, insert many items at once into the tree, much more efficient as single inserts in that
 // the values are sorted before insertion. Much less parent/child relinking needed.
-func (t *BlockTree) InsertBulk(bs ...Itemer) *BlockTree {
+func (t *BlockTree) InsertBulk(bs ...item.Itemer) *BlockTree {
 
 	// sort the childs for faster insert
 	sort.Slice(bs, func(i, j int) bool { return bs[i].Compare(bs[j]) < 0 })
@@ -69,14 +71,14 @@ func (t *BlockTree) InsertBulk(bs ...Itemer) *BlockTree {
 
 // Insert one item into the tree. The position within the tree is defined
 // by the Contains() method, part of the Itemer interface .
-func (t *BlockTree) Insert(b Itemer) *BlockTree {
+func (t *BlockTree) Insert(b item.Itemer) *BlockTree {
 	// parent of root is nil
 	t.Root.insert(nil, b)
 	return t
 }
 
 // recursive work horse
-func (n *Node) insert(p *Node, b Itemer) {
+func (n *Node) insert(p *Node, b item.Itemer) {
 
 	// found pos, item is nil, insert payload, but not at root level (t.Root.Parent == nil)
 	if n.Item == nil && p != nil {
@@ -122,12 +124,12 @@ func (n *Node) insert(p *Node, b Itemer) {
 
 // Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
 // false if not found.
-func (t *BlockTree) Remove(b Itemer) bool {
+func (t *BlockTree) Remove(b item.Itemer) bool {
 	return t.Root.remove(b)
 }
 
 // recursive work horse
-func (n *Node) remove(b Itemer) bool {
+func (n *Node) remove(b item.Itemer) bool {
 	// found pos
 	if n.Item != nil && (*n.Item).Compare(b) == 0 {
 
@@ -163,12 +165,12 @@ func (n *Node) remove(b Itemer) bool {
 
 // Lookup item for longest prefix match in the tree.
 // If not found, returns input argument and false.
-func (t *BlockTree) Lookup(b Itemer) (Itemer, bool) {
+func (t *BlockTree) Lookup(b item.Itemer) (item.Itemer, bool) {
 	return t.Root.lookup(b)
 }
 
 // recursive work horse
-func (n *Node) lookup(b Itemer) (Itemer, bool) {
+func (n *Node) lookup(b item.Itemer) (item.Itemer, bool) {
 
 	// found by equality
 	if n.Item != nil && (*n.Item).Compare(b) == 0 {
