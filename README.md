@@ -10,6 +10,8 @@ This package represents IP-addresses and IP-Blocks as comparable types.
 They can be used as keys in maps, freely copied and fast sorted
 without prior conversion from/to IPv4/IPv6.
 
+## go-inet/inet
+
 IP addresses are represented as fixed arrays of 21 bytes, this ensures natural sorting (IPv4 < IPv6).
 
 ```go
@@ -38,7 +40,7 @@ Blocks are represented as a struct of three IP addresses:
 ```
 Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
 
-# go-inet/tree
+## go-inet/tree
 
 An IP CIDR/Block-Tree is supported for fast and easy IP address lookups similar to routing tables.
 
