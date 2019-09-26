@@ -317,7 +317,7 @@ func TestBlockIsDisjunctWith(t *testing.T) {
 	}
 }
 
-func TestBlockIsSubsetOf(t *testing.T) {
+func TestBlockContains(t *testing.T) {
 	tests := []struct {
 		a, b string
 		want bool
@@ -370,9 +370,9 @@ func TestBlockIsSubsetOf(t *testing.T) {
 		ra := MustBlock(NewBlock(a))
 		rb := MustBlock(NewBlock(b))
 
-		got := ra.IsSubsetOf(rb)
+		got := rb.Contains(ra)
 		if got != want {
-			t.Errorf("(%v).IsSubsetOf(%v) = %v; want %v", ra, rb, got, want)
+			t.Errorf("(%v).Contains(%v) = %v; want %v", rb, ra, got, want)
 		}
 	}
 }
@@ -477,11 +477,11 @@ func TestBlockV4V6(t *testing.T) {
 	if r2.OverlapsWith(r1) != false {
 		t.Errorf("%q.OverlapsWith(%q) == %t, want %t", r2, r1, r2.OverlapsWith(r1), false)
 	}
-	if r1.IsSubsetOf(r2) != false {
-		t.Errorf("%q.IsSubsetOf(%q) == %t, want %t", r1, r2, r1.IsSubsetOf(r2), false)
+	if r2.Contains(r1) != false {
+		t.Errorf("%q.Contains(%q) == %t, want %t", r2, r1, r2.Contains(r1), false)
 	}
-	if r2.IsSubsetOf(r1) != false {
-		t.Errorf("%q.IsSubsetOf(%q) == %t, want %t", r2, r1, r2.IsSubsetOf(r1), false)
+	if r1.Contains(r2) != false {
+		t.Errorf("%q.Contains(%q) == %t, want %t", r1, r2, r1.Contains(r2), false)
 	}
 	if r1.IsDisjunctWith(r2) != true {
 		t.Errorf("%q.IsDisjunctWith(%q) == %t, want %t", r1, r2, r1.IsDisjunctWith(r2), true)

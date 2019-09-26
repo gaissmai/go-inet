@@ -214,14 +214,14 @@ func (a Block) ContainsIP(ip IP) bool {
 	return (bytes.Compare(a.Base[:], ip[:]) <= 0) && (bytes.Compare(a.Last[:], ip[:]) >= 0)
 }
 
-// IsSubsetOf reports whether Block a is a true subset of Block b. a and b may NOT coincide.
+// Contains reports whether Block a contains Block b. a and b may NOT coincide.
 //  a   |------------|    |------------|           |------------|
 //  b |-----------------| |-----------------| |-----------------|
-func (a Block) IsSubsetOf(b Block) bool {
+func (a Block) Contains(b Block) bool {
 	if a == b {
 		return false
 	}
-	return bytes.Compare(a.Base[:], b.Base[:]) >= 0 && bytes.Compare(a.Last[:], b.Last[:]) <= 0
+	return bytes.Compare(a.Base[:], b.Base[:]) <= 0 && bytes.Compare(a.Last[:], b.Last[:]) >= 0
 }
 
 // IsDisjunctWith reports whether the Blocks a and b are disjunct
@@ -264,7 +264,7 @@ func (a Block) OverlapsWith(b Block) bool {
 	if a == b {
 		return false
 	}
-	if a.IsSubsetOf(b) || b.IsSubsetOf(a) {
+	if a.Contains(b) || b.Contains(a) {
 		return false
 	}
 	if a.IsDisjunctWith(b) {
@@ -402,8 +402,8 @@ func FindOuterCIDR(bs []Block) Block {
 // Panics if inner blocks are no subset of (or not equal to) outer block.
 func (a Block) FindFreeCIDR(bs []Block) []Block {
 	for _, i := range bs {
-		if !(i.IsSubsetOf(a) || i == a) {
-			panic("at least one inner block isn't subset of (or equal to) outer block")
+		if !(a.Contains(i) || i == a) {
+			panic("at least one inner block isn't contained in (or equal to) outer block")
 		}
 	}
 
@@ -461,7 +461,7 @@ func (a Block) isDisjunctWithAll(bs []Block) bool {
 // isSubsetOfAny is a helper method: Returns true if b is subset of any inner block
 func (a Block) isSubsetOfAny(bs []Block) bool {
 	for _, b := range bs {
-		if a.IsSubsetOf(b) {
+		if b.Contains(a) {
 			return true
 		}
 	}
@@ -583,7 +583,7 @@ func Aggregate(bs []Block) []Block {
 			}
 
 			// skip subsets
-			if cidrs[j].IsSubsetOf(cidrs[i]) {
+			if cidrs[i].Contains(cidrs[j]) {
 				// skip next subset in row
 				skip = j
 				continue

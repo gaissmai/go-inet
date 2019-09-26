@@ -24,7 +24,7 @@ type simpleItem struct{ inet.Block }
 // Contains, part of Itemer interface
 func (a simpleItem) Contains(b Itemer) bool {
 	if other, ok := b.(simpleItem); ok {
-		return other.Block.IsSubsetOf(a.Block)
+		return a.Block.Contains(other.Block)
 	}
 	panic(fmt.Errorf("incompatible types: %T != %T", a, b))
 }
