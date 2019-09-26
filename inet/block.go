@@ -275,32 +275,6 @@ func (a Block) IsDisjunctWith(b Block) bool {
 	return false
 }
 
-// OverlapsWith reports whether the Blocks overlaps.
-//
-//  a    |-------|
-//  b |------|
-//
-//  a |------|
-//  b    |-------|
-//
-//  a |----|
-//  b      |---------|
-//
-//  a      |---------|
-//  b |----|
-func (a Block) OverlapsWith(b Block) bool {
-	if a == b {
-		return false
-	}
-	if a.Contains(b) || b.Contains(a) {
-		return false
-	}
-	if a.IsDisjunctWith(b) {
-		return false
-	}
-	return true
-}
-
 // Compare returns an integer comparing two IP Blocks. The
 // result will be:
 //   0 if a == b,
@@ -333,6 +307,32 @@ func (a Block) Compare(b item.Itemer) int {
 		return 1
 	}
 	return 0
+}
+
+// OverlapsWith reports whether the Blocks overlaps.
+//
+//  a    |-------|
+//  b |------|
+//
+//  a |------|
+//  b    |-------|
+//
+//  a |----|
+//  b      |---------|
+//
+//  a      |---------|
+//  b |----|
+func (a Block) OverlapsWith(b Block) bool {
+	if a == b {
+		return false
+	}
+	if a.Contains(b) || b.Contains(a) {
+		return false
+	}
+	if a.IsDisjunctWith(b) {
+		return false
+	}
+	return true
 }
 
 // SortBlock sorts the given slice of Blocks in place, see Compare() for sort order.
