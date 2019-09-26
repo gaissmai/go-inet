@@ -263,7 +263,6 @@ func ExampleAggregate() {
 		"fe80::/12",
 		"fe80:0000:0000:0000:fe2d:5eff:fef0:fc64/128",
 		"fe80::/10",
-
 	} {
 		bs = append(bs, inet.MustBlock(inet.NewBlock(s)))
 	}
@@ -275,4 +274,3 @@ func ExampleAggregate() {
 	// [10.0.0.0/31 10.0.0.4/30 fe80::/10]
 
 }
-

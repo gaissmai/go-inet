@@ -56,19 +56,6 @@ func NewBlockTree() *BlockTree {
 	}
 }
 
-// InsertBulk, insert many items at once into the tree, much more efficient as single inserts in that
-// the values are sorted before insertion. Much less parent/child relinking needed.
-func (t *BlockTree) InsertBulk(bs ...item.Itemer) *BlockTree {
-
-	// sort the childs for faster insert
-	sort.Slice(bs, func(i, j int) bool { return bs[i].Compare(bs[j]) < 0 })
-
-	for i := range bs {
-		t.Root.insert(nil, bs[i])
-	}
-	return t
-}
-
 // Insert one item into the tree. The position within the tree is defined
 // by the Contains() method, part of the Itemer interface .
 func (t *BlockTree) Insert(b item.Itemer) *BlockTree {

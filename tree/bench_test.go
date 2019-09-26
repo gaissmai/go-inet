@@ -4,33 +4,22 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+
+	"github.com/gaissmai/go-inet/inet"
 )
-
-func BenchmarkInsertBulkBlockTree(b *testing.B) {
-	bench := []int{1000, 10000, 100000}
-
-	for _, n := range bench {
-		blocks := GenSimpleItem(n)
-
-		b.Run(fmt.Sprintf("InsertBulkBlockTree: %d", n), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				t := NewBlockTree()
-				t.InsertBulk(blocks...)
-			}
-		})
-	}
-}
 
 func BenchmarkRemoveBlockTree(b *testing.B) {
 	bench := []int{1000, 10000, 100000}
 
 	for _, n := range bench {
-		blocks := GenSimpleItem(n)
-
+		bs := genBlockMixed(n)
+		inet.SortBlock(bs)
 		t := NewBlockTree()
-		t.InsertBulk(blocks...)
+		for i := range bs {
+			t.Insert(bs[i])
+		}
 
-		vx := GenSimpleItem(10)[0]
+		vx := genBlockMixed(10)[0]
 		b.Run(fmt.Sprintf("InsertRemoveBlockTree: %d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				t.Insert(vx)
@@ -45,12 +34,14 @@ func BenchmarkLookupBlockTree(b *testing.B) {
 	bench := []int{1000, 10000, 100000}
 
 	for _, n := range bench {
-		blocks := GenSimpleItem(n)
-
+		bs := genBlockMixed(n)
+		inet.SortBlock(bs)
 		t := NewBlockTree()
-		t.InsertBulk(blocks...)
+		for i := range bs {
+			t.Insert(bs[i])
+		}
 
-		vx := blocks[rand.Intn(len(blocks))]
+		vx := bs[rand.Intn(len(bs))]
 		b.Run(fmt.Sprintf("LookupBlockTree: %d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				t.Lookup(vx)
@@ -64,10 +55,12 @@ func BenchmarkWalkBlockTree(b *testing.B) {
 	bench := []int{1000, 10000, 100000}
 
 	for _, n := range bench {
-		blocks := GenSimpleItem(n)
-
+		bs := genBlockMixed(n)
+		inet.SortBlock(bs)
 		t := NewBlockTree()
-		t.InsertBulk(blocks...)
+		for i := range bs {
+			t.Insert(bs[i])
+		}
 
 		var walkFn WalkFunc = func(n *Node, l int) error { return nil }
 

@@ -18,14 +18,13 @@ func ExampleBlockTree_Lookup() {
 		"::/0",
 		"0.0.0.0/10",
 	} {
-		item := tree.NewSimpleItem(inet.MustBlock(inet.NewBlock(s)))
+		item := inet.MustBlock(inet.NewBlock(s))
 		bt.Insert(item)
 	}
 
-	null := inet.MustIP(inet.NewIP("0.0.0.0"))
-	item := tree.NewSimpleItem(null)
+	null, _ := inet.NewBlock(inet.MustIP(inet.NewIP("0.0.0.0")))
 
-	if match, ok := bt.Lookup(item); ok {
+	if match, ok := bt.Lookup(null); ok {
 		fmt.Printf("tree.Lookup('0.0.0.0'): LPM found at: %v\n", match)
 	}
 

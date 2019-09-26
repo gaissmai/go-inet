@@ -35,14 +35,6 @@ func genV6(n int) []inet.IP {
 	return out
 }
 
-func genMixed(n int) []inet.IP {
-	out := make([]inet.IP, 0, n)
-	out = append(out, genV4(n/2)...)
-	out = append(out, genV6(n/2)...)
-	rand.Shuffle(len(out), func(i, j int) { out[i], out[j] = out[j], out[i] })
-	return out
-}
-
 // #####################################################################
 
 func genBlockV4(n int) []inet.Block {
@@ -85,33 +77,4 @@ func genBlockMixed(n int) []inet.Block {
 	rs = append(rs, genBlockV6(n/2)...)
 	rand.Shuffle(len(rs), func(i, j int) { rs[i], rs[j] = rs[j], rs[i] })
 	return rs
-}
-
-// #####################################################################
-
-func GenSimpleItemV4(n int) []Itemer {
-	bs := genBlockV4(n)
-	out := make([]Itemer, 0, n)
-	for _, b := range bs {
-		out = append(out, NewSimpleItem(b))
-	}
-	return out
-}
-
-func GenSimpleItemV6(n int) []Itemer {
-	bs := genBlockV6(n)
-	out := make([]Itemer, 0, n)
-	for _, b := range bs {
-		out = append(out, NewSimpleItem(b))
-	}
-	return out
-}
-
-func GenSimpleItem(n int) []Itemer {
-	bs := genBlockMixed(n)
-	out := make([]Itemer, 0, n)
-	for _, b := range bs {
-		out = append(out, NewSimpleItem(b))
-	}
-	return out
 }

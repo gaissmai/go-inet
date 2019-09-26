@@ -39,7 +39,7 @@ func TestTreeLookupLPM(t *testing.T) {
 		tr.Insert(item)
 	}
 
-	look := inet.MustIP(inet.NewIP("0.0.0.0"))
+	look, _ := inet.NewBlock(inet.MustIP(inet.NewIP("0.0.0.0")))
 	want := inet.MustBlock(inet.NewBlock("0.0.0.0/10"))
 
 	got, ok := tr.Lookup(look)
@@ -99,7 +99,9 @@ func TestTreeWalk(t *testing.T) {
 func TestTreeInsertDup(t *testing.T) {
 	r1, _ := inet.NewBlock("0.0.0.0/0")
 
-	tree := NewBlockTree().InsertBulk(r1, r2)
+	tree := NewBlockTree()
+	tree.Insert(r1)
+	tree.Insert(r1)
 
 	got := new(strings.Builder)
 	tree.Fprint(got)
@@ -116,7 +118,9 @@ func TestTreeMultiRoot(t *testing.T) {
 	r1, _ := inet.NewBlock("0.0.0.0/0")
 	r2, _ := inet.NewBlock("::/0")
 
-	tree := NewBlockTree().InsertBulk(r1, r2)
+	tree := NewBlockTree()
+	tree.Insert(r1)
+	tree.Insert(r2)
 
 	got := new(strings.Builder)
 	tree.Fprint(got)
@@ -135,7 +139,10 @@ func TestTreeRemove(t *testing.T) {
 	s2, _ := inet.NewBlock("10.0.0.0/4")
 	s3, _ := inet.NewBlock("10.0.0.0/8")
 
-	tree := NewBlockTree().InsertBulk(s1, s2, s3)
+	tree := NewBlockTree()
+	tree.Insert(s1)
+	tree.Insert(s2)
+	tree.Insert(s3)
 
 	got := new(strings.Builder)
 	tree.Fprint(got)
