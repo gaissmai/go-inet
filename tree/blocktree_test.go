@@ -35,12 +35,12 @@ func TestTreeLookupLPM(t *testing.T) {
 		"::/0",
 		"0.0.0.0/10",
 	} {
-		item := inet.MustBlock(inet.NewBlock(s))
+		item := inet.MustBlock(s)
 		tr.Insert(item)
 	}
 
-	look, _ := inet.NewBlock(inet.MustIP(inet.NewIP("0.0.0.0")))
-	want := inet.MustBlock(inet.NewBlock("0.0.0.0/10"))
+	look := inet.MustBlock(inet.MustIP("0.0.0.0"))
+	want := inet.MustBlock("0.0.0.0/10")
 
 	got, ok := tr.Lookup(look)
 	if !ok {
@@ -64,7 +64,7 @@ func TestTreeWalk(t *testing.T) {
 		"::/0",
 		"0.0.0.0/10",
 	} {
-		item := inet.MustBlock(inet.NewBlock(s))
+		item := inet.MustBlock(s)
 		tr.Insert(item)
 	}
 

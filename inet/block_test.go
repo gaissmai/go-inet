@@ -54,10 +54,10 @@ func TestNewBlockFail(t *testing.T) {
 }
 
 func TestBlockIsValid(t *testing.T) {
-	r1 := MustBlock(NewBlock("127.0.0.1/8"))
-	r2 := MustBlock(NewBlock("127.0.0.0-127.255.255.254"))
-	r3 := MustBlock(NewBlock("2001:db8::/127"))
-	r4 := MustBlock(NewBlock("2001:db8::-2001:dff::"))
+	r1 := MustBlock("127.0.0.1/8")
+	r2 := MustBlock("127.0.0.0-127.255.255.254")
+	r3 := MustBlock("2001:db8::/127")
+	r4 := MustBlock("2001:db8::-2001:dff::")
 
 	for _, b := range []Block{r1, r2, r3, r4} {
 		if !b.IsValid() {
@@ -124,8 +124,8 @@ func TestBlockHasOverlapWith(t *testing.T) {
 	for _, tt := range tests {
 		a, b, want := tt.a, tt.b, tt.want
 
-		ra := MustBlock(NewBlock(a))
-		rb := MustBlock(NewBlock(b))
+		ra := MustBlock(a)
+		rb := MustBlock(b)
 
 		got := ra.OverlapsWith(rb)
 		if got != want {
@@ -194,8 +194,8 @@ func TestBlockIsDisjunctWith(t *testing.T) {
 	for _, tt := range tests {
 		a, b, want := tt.a, tt.b, tt.want
 
-		ra := MustBlock(NewBlock(a))
-		rb := MustBlock(NewBlock(b))
+		ra := MustBlock(a)
+		rb := MustBlock(b)
 
 		got := ra.IsDisjunctWith(rb)
 		if got != want {
@@ -254,8 +254,8 @@ func TestBlockContains(t *testing.T) {
 	for _, tt := range tests {
 		a, b, want := tt.a, tt.b, tt.want
 
-		ra := MustBlock(NewBlock(a))
-		rb := MustBlock(NewBlock(b))
+		ra := MustBlock(a)
+		rb := MustBlock(b)
 
 		got := rb.Contains(ra)
 		if got != want {
@@ -302,7 +302,7 @@ func TestSortBlock(t *testing.T) {
 
 	var sortedBuf []Block
 	for _, s := range sorted {
-		sortedBuf = append(sortedBuf, MustBlock(NewBlock(s)))
+		sortedBuf = append(sortedBuf, MustBlock(s))
 	}
 
 	// clone and shuffle
@@ -355,8 +355,8 @@ func TestBlockMarshalText(t *testing.T) {
 
 // test the separation of the IPv4 and IPv6 address space
 func TestBlockV4V6(t *testing.T) {
-	r1 := MustBlock(NewBlock("0.0.0.0/0"))
-	r2 := MustBlock(NewBlock("::/0"))
+	r1 := MustBlock("0.0.0.0/0")
+	r2 := MustBlock("::/0")
 
 	if r1.OverlapsWith(r2) != false {
 		t.Errorf("%q.OverlapsWith(%q) == %t, want %t", r1, r2, r1.OverlapsWith(r2), false)
@@ -379,7 +379,7 @@ func TestBlockV4V6(t *testing.T) {
 }
 
 func TestFindFreeCIDRBlockNil(t *testing.T) {
-	r := MustBlock(NewBlock("::/0"))
+	r := MustBlock("::/0")
 	rs := r.FindFreeCIDR(nil)
 
 	if rs[0] != r {
@@ -388,7 +388,7 @@ func TestFindFreeCIDRBlockNil(t *testing.T) {
 }
 
 func TestFindFreeCIDRBlockSelf(t *testing.T) {
-	r := MustBlock(NewBlock("::/0"))
+	r := MustBlock("::/0")
 	rs := r.FindFreeCIDR([]Block{r})
 	if rs != nil {
 		t.Errorf("FindFreeCIDR for inner == self, got %#v, want nil", rs)
@@ -421,7 +421,7 @@ func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
 		"fec0::/10",
 		"ff00::/8",
 	} {
-		inner = append(inner, MustBlock(NewBlock(s)))
+		inner = append(inner, MustBlock(s))
 	}
 
 	want := []Block{}
@@ -429,7 +429,7 @@ func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
 		"6000::/3",
 		"fc00::/7",
 	} {
-		want = append(want, MustBlock(NewBlock(s)))
+		want = append(want, MustBlock(s))
 	}
 
 	rs := b.FindFreeCIDR(inner)
@@ -455,7 +455,7 @@ func TestBlockToCIDRListV4(t *testing.T) {
 		"10.0.0.232/30",
 		"10.0.0.236/32",
 	} {
-		want = append(want, MustBlock(NewBlock(s)))
+		want = append(want, MustBlock(s))
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -487,7 +487,7 @@ func TestBlockToCIDRListV6(t *testing.T) {
 		"2001:db9::1230/126",
 		"2001:db9::1234/128",
 	} {
-		want = append(want, MustBlock(NewBlock(s)))
+		want = append(want, MustBlock(s))
 	}
 
 	if !reflect.DeepEqual(got, want) {

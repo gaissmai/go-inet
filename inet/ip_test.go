@@ -6,11 +6,11 @@ import (
 )
 
 func TestMustIP(t *testing.T) {
-	MustIP(NewIP([]byte{1, 2, 3, 4}))
-	MustIP(NewIP([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}))
-	MustIP(NewIP(net.IP([]byte{1, 2, 3, 4})))
+	MustIP([]byte{1, 2, 3, 4})
+	MustIP([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16})
+	MustIP(net.IP([]byte{1, 2, 3, 4}))
 	netIP := net.IP([]byte{1, 2, 3, 4})
-	MustIP(NewIP(&netIP))
+	MustIP(&netIP)
 	_, _ = NewIP(net.IP(nil))
 }
 
@@ -22,7 +22,7 @@ func TestPanic(t *testing.T) {
 	}()
 
 	// should panic
-	MustIP(NewIP([]byte{1, 2, 3, 4, 5}))
+	MustIP([]byte{1, 2, 3, 4, 5})
 }
 
 func TestIP_IsValid(t *testing.T) {
@@ -30,12 +30,12 @@ func TestIP_IsValid(t *testing.T) {
 		t.Errorf("IPZero.IsValid() returns true, want false")
 	}
 
-	ipv4 := MustIP(NewIP("127.0.0.1"))
+	ipv4 := MustIP("127.0.0.1")
 	if !ipv4.IsValid() {
 		t.Errorf("ipv4.IsValid() returns false, want true")
 	}
 
-	ipv6 := MustIP(NewIP("::1"))
+	ipv6 := MustIP("::1")
 	if !ipv6.IsValid() {
 		t.Errorf("ipv6.IsValid() returns false, want true")
 	}

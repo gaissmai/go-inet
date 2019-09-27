@@ -32,7 +32,7 @@ func main() {
 	}
 
 	for _, s := range []string{"134.60.2.83", "2001:7c0:900:4df::dfda"} {
-		l, _ := inet.NewBlock(inet.MustIP(inet.NewIP(s)))
+		l := inet.MustBlock(inet.MustIP(s))
 		if m, ok := t.Lookup(l); ok {
 			fmt.Printf("%v found at %v\n", l, m)
 		} else {

@@ -34,11 +34,10 @@ func NewIP(i interface{}) (IP, error) {
 	}
 }
 
-// MustIP is a helper that wraps a call to a function returning (IP, error)
-// and panics if the error is non-nil. It is intended for use in variable
-// initializations such as
-//	var ip = inet.MustIP(inet.NewIP("fe80::"))
-func MustIP(ip IP, err error) IP {
+// MustIP is a helper that calls NewIP and returns just inet.IP or panics on errr.
+// It is intended for use in variable initializations.
+func MustIP(i interface{}) IP {
+	ip, err := NewIP(i)
 	if err != nil {
 		panic(err)
 	}

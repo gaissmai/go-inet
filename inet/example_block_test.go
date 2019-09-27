@@ -37,7 +37,7 @@ func ExampleSortBlock() {
 		"::-::ffff",
 		"2001:db8::/32",
 	} {
-		buf = append(buf, inet.MustBlock(inet.NewBlock(s)))
+		buf = append(buf, inet.MustBlock(s))
 	}
 
 	inet.SortBlock(buf)
@@ -49,11 +49,11 @@ func ExampleSortBlock() {
 }
 
 func ExampleBlock_FindFreeCIDR_v4() {
-	outer := inet.MustBlock(inet.NewBlock("192.168.2.0/24"))
+	outer := inet.MustBlock("192.168.2.0/24")
 
 	inner := make([]inet.Block, 0)
-	inner = append(inner, inet.MustBlock(inet.NewBlock("192.168.2.0/26")))
-	inner = append(inner, inet.MustBlock(inet.NewBlock("192.168.2.240-192.168.2.249")))
+	inner = append(inner, inet.MustBlock("192.168.2.0/26"))
+	inner = append(inner, inet.MustBlock("192.168.2.240-192.168.2.249"))
 
 	free := outer.FindFreeCIDR(inner)
 	fmt.Printf("%v - %v\nfree: %v\n", outer, inner, free)
@@ -65,10 +65,10 @@ func ExampleBlock_FindFreeCIDR_v4() {
 }
 
 func ExampleBlock_FindFreeCIDR_v6() {
-	outer := inet.MustBlock(inet.NewBlock("2001:db8:de00::/40"))
+	outer := inet.MustBlock("2001:db8:de00::/40")
 
 	inner := make([]inet.Block, 0)
-	inner = append(inner, inet.MustBlock(inet.NewBlock("2001:db8:dea0::/44")))
+	inner = append(inner, inet.MustBlock("2001:db8:dea0::/44"))
 
 	free := outer.FindFreeCIDR(inner)
 	fmt.Printf("%v - %v\nfree: %v\n", outer, inner, free)
@@ -80,7 +80,7 @@ func ExampleBlock_FindFreeCIDR_v6() {
 }
 
 func ExampleBlock_SplitCIDR_v6() {
-	a := inet.MustBlock(inet.NewBlock("2001:db8:dea0::/44"))
+	a := inet.MustBlock("2001:db8:dea0::/44")
 	splits := a.SplitCIDR(1)
 	fmt.Println(a, splits)
 
@@ -90,7 +90,7 @@ func ExampleBlock_SplitCIDR_v6() {
 }
 
 func ExampleBlock_SplitCIDR_v4() {
-	a := inet.MustBlock(inet.NewBlock("127.0.0.1/8"))
+	a := inet.MustBlock("127.0.0.1/8")
 	splits := a.SplitCIDR(2)
 	fmt.Println(a, splits)
 
@@ -105,7 +105,7 @@ func ExampleFindOuterCIDR_v4() {
 		"10.128.0.0/9",
 		"10.0.0.3-10.0.17.42",
 	} {
-		inner = append(inner, inet.MustBlock(inet.NewBlock(s)))
+		inner = append(inner, inet.MustBlock(s))
 	}
 
 	outer := inet.FindOuterCIDR(inner)
@@ -122,7 +122,7 @@ func ExampleFindOuterCIDR_v6() {
 		"fe00::/10",
 		"fe80::/10",
 	} {
-		inner = append(inner, inet.MustBlock(inet.NewBlock(s)))
+		inner = append(inner, inet.MustBlock(s))
 	}
 
 	outer := inet.FindOuterCIDR(inner)
@@ -194,20 +194,20 @@ func ExampleBlock_UnmarshalText() {
 }
 
 func ExampleBlock_Compare() {
-	a := inet.MustBlock(inet.NewBlock("127.0.0.0/8"))
-	b := inet.MustBlock(inet.NewBlock("127.0.0.0/8"))
+	a := inet.MustBlock("127.0.0.0/8")
+	b := inet.MustBlock("127.0.0.0/8")
 	fmt.Printf("Block{%v}.Compare(Block{%v}) = %d\n", a, b, a.Compare(b))
 
-	a = inet.MustBlock(inet.NewBlock("0.0.0.0/0"))
-	b = inet.MustBlock(inet.NewBlock("::/0"))
+	a = inet.MustBlock("0.0.0.0/0")
+	b = inet.MustBlock("::/0")
 	fmt.Printf("Block{%v}.Compare(Block{%v}) = %d\n", a, b, a.Compare(b))
 
-	a = inet.MustBlock(inet.NewBlock("127.128.0.0/9"))
-	b = inet.MustBlock(inet.NewBlock("127.0.0.0/8"))
+	a = inet.MustBlock("127.128.0.0/9")
+	b = inet.MustBlock("127.0.0.0/8")
 	fmt.Printf("Block{%v}.Compare(Block{%v}) = %d\n", a, b, a.Compare(b))
 
-	a = inet.MustBlock(inet.NewBlock("fe80::/10"))
-	b = inet.MustBlock(inet.NewBlock("fe80::/12"))
+	a = inet.MustBlock("fe80::/10")
+	b = inet.MustBlock("fe80::/12")
 	fmt.Printf("Block{%v}.Compare(Block{%v}) = %d\n", a, b, a.Compare(b))
 
 	// Output:
@@ -225,7 +225,7 @@ func ExampleBlock_Size() {
 		"10.0.0.0-10.0.0.43",
 		"2001:db8::-2001:c201::fe:ff",
 	} {
-		a := inet.MustBlock(inet.NewBlock(s))
+		a := inet.MustBlock(s)
 		i := a.Size()
 		fmt.Printf("size of %-30v = %3d\n", a, i)
 	}
@@ -243,7 +243,7 @@ func ExampleBlock_BlockToCIDRList() {
 		"10.128.0.0-10.128.2.7",
 		"2001:b8::3-2001:b8::f",
 	} {
-		a := inet.MustBlock(inet.NewBlock(s))
+		a := inet.MustBlock(s)
 		fmt.Printf("%v -> %v\n", a, a.BlockToCIDRList())
 	}
 
@@ -264,7 +264,7 @@ func ExampleAggregate() {
 		"fe80:0000:0000:0000:fe2d:5eff:fef0:fc64/128",
 		"fe80::/10",
 	} {
-		bs = append(bs, inet.MustBlock(inet.NewBlock(s)))
+		bs = append(bs, inet.MustBlock(s))
 	}
 
 	packed := inet.Aggregate(bs)

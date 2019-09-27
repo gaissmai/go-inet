@@ -59,15 +59,14 @@ func NewBlock(i interface{}) (Block, error) {
 	}
 }
 
-// MustBlock is a helper that wraps a call to a function returning (Block, error)
-// and panics if the error is non-nil. It is intended for use in variable
-// initializations such as
-//	var b = ip.MustBlock(ip.NewBlock("::1/128"))
-func MustBlock(a Block, err error) Block {
+// MustBlock is a helper that calls NewBlock and returns just inet.Block or panics on errr.
+// It is intended for use in variable initializations.
+func MustBlock(i interface{}) Block {
+	b, err := NewBlock(i)
 	if err != nil {
 		panic(err)
 	}
-	return a
+	return b
 }
 
 // blockFromNetIPNet converts from stdlib net.IPNet to ip.Block representation.
