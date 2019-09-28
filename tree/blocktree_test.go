@@ -8,8 +8,20 @@ import (
 	"github.com/gaissmai/go-inet/inet"
 )
 
+func TestTreeLookupMissing(t *testing.T) {
+	s1 := inet.MustBlock("0.0.0.0/0")
+	s2 := inet.MustBlock("2001:db8::/32")
+
+	tree := NewBlockTree().Insert(s1)
+
+	_, ok := tree.Lookup(s2)
+	if ok {
+		t.Errorf("Lookup(%s) got %t, want %t", s2, ok, false)
+	}
+}
+
 func TestTreeLookup(t *testing.T) {
-	s1, _ := inet.NewBlock("0.0.0.0/0")
+	s1 := inet.MustBlock("0.0.0.0/0")
 
 	tree := NewBlockTree().Insert(s1)
 
