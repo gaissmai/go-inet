@@ -1,18 +1,16 @@
-package tree
+package inet
 
 import (
 	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/gaissmai/go-inet/inet"
 )
 
 func TestTreeLookupMissing(t *testing.T) {
-	s1 := inet.MustBlock("0.0.0.0/0")
-	s2 := inet.MustBlock("2001:db8::/32")
+	s1 := MustBlock("0.0.0.0/0")
+	s2 := MustBlock("2001:db8::/32")
 
-	tree := NewBlockTree().Insert(s1)
+	tree := NewTree().Insert(s1)
 
 	_, ok := tree.Lookup(s2)
 	if ok {
@@ -21,9 +19,9 @@ func TestTreeLookupMissing(t *testing.T) {
 }
 
 func TestTreeLookup(t *testing.T) {
-	s1 := inet.MustBlock("0.0.0.0/0")
+	s1 := MustBlock("0.0.0.0/0")
 
-	tree := NewBlockTree().Insert(s1)
+	tree := NewTree().Insert(s1)
 
 	got, ok := tree.Lookup(s1)
 	if !ok {
@@ -36,7 +34,7 @@ func TestTreeLookup(t *testing.T) {
 }
 
 func TestTreeLookupLPM(t *testing.T) {
-	tr := NewBlockTree()
+	tr := NewTree()
 
 	for _, s := range []string{
 		"0.0.0.0/8",
@@ -47,12 +45,12 @@ func TestTreeLookupLPM(t *testing.T) {
 		"::/0",
 		"0.0.0.0/10",
 	} {
-		item := inet.MustBlock(s)
+		item := MustBlock(s)
 		tr.Insert(item)
 	}
 
-	look := inet.MustBlock(inet.MustIP("0.0.0.0"))
-	want := inet.MustBlock("0.0.0.0/10")
+	look := MustBlock(MustIP("0.0.0.0"))
+	want := MustBlock("0.0.0.0/10")
 
 	got, ok := tr.Lookup(look)
 	if !ok {
@@ -65,24 +63,38 @@ func TestTreeLookupLPM(t *testing.T) {
 }
 
 func TestTreeWalk(t *testing.T) {
-	tr := NewBlockTree()
+	tr := NewTree()
 
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
 		"5.0.0.0/8",
 		"0.0.0.0/0",
+		"10.0.0.0-10.0.0.17",
 		"::/64",
 		"::/0",
+		"2001:7c0:900:1c2::/64",
+		"2001:7c0:900:1c2::0/127",
+		"2001:7c0:900:1c2::1/128",
 		"0.0.0.0/10",
 	} {
-		item := inet.MustBlock(s)
+		item := MustBlock(s)
 		tr.Insert(item)
 	}
 
 	got := new(strings.Builder)
 
+	var maxDepth int
+	var maxWidth int
+
 	var walkFn WalkFunc = func(n *Node, depth int) error {
+		if depth > maxDepth {
+			maxDepth = depth
+		}
+		if l := len(n.Childs); l > maxWidth {
+			maxWidth = l
+		}
+
 		pfx := strings.Repeat("|", depth)
 		fmt.Fprintf(got, "%s-->%s\n", pfx, *n.Item)
 		return nil
@@ -100,18 +112,33 @@ func TestTreeWalk(t *testing.T) {
 ||-->0.0.0.0/10
 |-->1.0.0.0/8
 |-->5.0.0.0/8
+|-->10.0.0.0-10.0.0.17
 -->::/0
 |-->::/64
+|-->2001:7c0:900:1c2::/64
+||-->2001:7c0:900:1c2::/127
+|||-->2001:7c0:900:1c2::1/128
 `
+
 	if got.String() != want {
 		t.Errorf("got:\n%v\nwant:\n%v", got, want)
+	}
+
+	wantDepth := 3
+	wantWidth := 4
+
+	if maxDepth != wantDepth {
+		t.Errorf("got max depth: %v want: %v", maxDepth, wantDepth)
+	}
+	if maxWidth != wantWidth {
+		t.Errorf("got max width: %v want: %v", maxWidth, wantWidth)
 	}
 }
 
 func TestTreeInsertDup(t *testing.T) {
-	r1, _ := inet.NewBlock("0.0.0.0/0")
+	r1, _ := NewBlock("0.0.0.0/0")
 
-	tree := NewBlockTree()
+	tree := NewTree()
 	tree.Insert(r1)
 	tree.Insert(r1)
 
@@ -127,10 +154,10 @@ func TestTreeInsertDup(t *testing.T) {
 }
 
 func TestTreeMultiRoot(t *testing.T) {
-	r1, _ := inet.NewBlock("0.0.0.0/0")
-	r2, _ := inet.NewBlock("::/0")
+	r1, _ := NewBlock("0.0.0.0/0")
+	r2, _ := NewBlock("::/0")
 
-	tree := NewBlockTree()
+	tree := NewTree()
 	tree.Insert(r1)
 	tree.Insert(r2)
 
@@ -147,11 +174,11 @@ func TestTreeMultiRoot(t *testing.T) {
 }
 
 func TestTreeRemove(t *testing.T) {
-	s1, _ := inet.NewBlock("10.0.0.0/0")
-	s2, _ := inet.NewBlock("10.0.0.0/4")
-	s3, _ := inet.NewBlock("10.0.0.0/8")
+	s1, _ := NewBlock("10.0.0.0/0")
+	s2, _ := NewBlock("10.0.0.0/4")
+	s3, _ := NewBlock("10.0.0.0/8")
 
-	tree := NewBlockTree()
+	tree := NewTree()
 	tree.Insert(s1)
 	tree.Insert(s2)
 	tree.Insert(s3)

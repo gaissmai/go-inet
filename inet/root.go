@@ -27,6 +27,32 @@ type (
 		Last IP
 		Mask IP // IPZero for ranges without CIDR mask
 	}
+
+	// Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
+	Tree struct {
+		// Contains the root node of a multi-root tree.
+		// root-item and root-parent are nil for root-node.
+		Root *Node
+	}
+
+	// Node, recursive tree data structure, only public for easy serialization, don't rely on it.
+	// Items abstracted via Itemer interface
+	Node struct {
+		Item   *Itemer
+		Parent *Node
+		Childs []*Node
+	}
+
+	// Itemer interfcae for tree items, maybe with payload and not just ip Blocks.
+	Itemer interface {
+
+		// Contains, defines the depth in the tree, parent child relationship.
+		Contains(Itemer) bool
+
+		// Compare, defines equality and sort order on same tree level, siblings relationship.
+		Compare(Itemer) int
+	}
+
 )
 
 var (

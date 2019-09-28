@@ -1,14 +1,13 @@
-package tree_test
+package inet_test
 
 import (
 	"fmt"
 
 	"github.com/gaissmai/go-inet/inet"
-	"github.com/gaissmai/go-inet/tree"
 )
 
-func ExampleBlockTree_Lookup() {
-	bt := tree.NewBlockTree()
+func ExampleTree_Lookup() {
+	bt := inet.NewTree()
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
@@ -25,10 +24,10 @@ func ExampleBlockTree_Lookup() {
 	null := inet.MustBlock(inet.MustIP("0.0.0.0"))
 
 	if match, ok := bt.Lookup(null); ok {
-		fmt.Printf("tree.Lookup('0.0.0.0'): LPM found at: %v\n", match)
+		fmt.Printf("inet.Lookup('0.0.0.0'): LPM found at: %v\n", match)
 	}
 
 	// Output:
-	// tree.Lookup('0.0.0.0'): LPM found at: 0.0.0.0/10
+	// inet.Lookup('0.0.0.0'): LPM found at: 0.0.0.0/10
 
 }

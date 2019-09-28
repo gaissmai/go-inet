@@ -2,13 +2,10 @@ package inet
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 	"net"
 	"sort"
 	"strings"
-
-	"github.com/gaissmai/go-inet/tree/item"
 )
 
 // NewBlock parses and returns the input as type Block.
@@ -236,21 +233,6 @@ func (a Block) Size() int {
 	return new(big.Int).SetBytes(ip.Bytes()).BitLen()
 }
 
-// Contains reports whether Block a contains Block b. a and b may NOT coincide.
-//  a   |------------|    |------------|           |------------|
-//  b |-----------------| |-----------------| |-----------------|
-func (a Block) Contains(b item.Itemer) bool {
-	c, ok := b.(Block)
-	if !ok {
-		panic(fmt.Errorf("incompatible types: %T != %T", a, b))
-	}
-
-	if a == c {
-		return false
-	}
-	return bytes.Compare(a.Base[:], c.Base[:]) <= 0 && bytes.Compare(a.Last[:], c.Last[:]) >= 0
-}
-
 // IsDisjunctWith reports whether the Blocks a and b are disjunct
 //  a       |----------|
 //  b |---|
@@ -272,40 +254,6 @@ func (a Block) IsDisjunctWith(b Block) bool {
 	}
 
 	return false
-}
-
-// Compare returns an integer comparing two IP Blocks. The
-// result will be:
-//   0 if a == b,
-//
-//  -1 if a is v4 and b is v6
-//  +1 if a is v6 and b is v4
-//
-//  -1 if a.Base < b.Base
-//  +1 if a.Base > b.Base
-//
-//  -1 if a.Base == b.Base and a is SuperSet of b
-//  +1 if a.Base == b.Base and a is Subset of b
-func (a Block) Compare(b item.Itemer) int {
-	c, ok := b.(Block)
-	if !ok {
-		panic(fmt.Errorf("incompatible types: %T != %T", a, b))
-	}
-
-	if bytes.Compare(a.Base[:], c.Base[:]) < 0 {
-		return -1
-	}
-	if bytes.Compare(a.Base[:], c.Base[:]) > 0 {
-		return 1
-	}
-	// base is now equal, test for superset/subset
-	if bytes.Compare(a.Last[:], c.Last[:]) > 0 {
-		return -1
-	}
-	if bytes.Compare(a.Last[:], c.Last[:]) < 0 {
-		return 1
-	}
-	return 0
 }
 
 // OverlapsWith reports whether the Blocks overlaps.

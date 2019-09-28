@@ -137,3 +137,74 @@ func genBlockMixed(n int) []inet.Block {
 	rand.Shuffle(len(rs), func(i, j int) { rs[i], rs[j] = rs[j], rs[i] })
 	return rs
 }
+
+func BenchmarkRemoveTree(b *testing.B) {
+	bench := []int{1000, 10000, 100000}
+
+	for _, n := range bench {
+		bs := genBlockMixed(n)
+		inet.SortBlock(bs)
+		t := inet.NewTree()
+		for i := range bs {
+			t.Insert(bs[i])
+		}
+
+		vx := genBlockMixed(10)[0]
+		b.Run(fmt.Sprintf("InsertRemoveTree: %d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				t.Insert(vx)
+				t.Remove(vx)
+			}
+		})
+
+	}
+}
+
+func BenchmarkLookupTree(b *testing.B) {
+	bench := []int{1000, 10000, 100000}
+
+	for _, n := range bench {
+		bs := genBlockMixed(n)
+		inet.SortBlock(bs)
+		t := inet.NewTree()
+		for i := range bs {
+			t.Insert(bs[i])
+		}
+
+		vx := bs[rand.Intn(len(bs))]
+		b.Run(fmt.Sprintf("LookupTree: %d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				t.Lookup(vx)
+			}
+		})
+
+	}
+}
+
+func BenchmarkWalkTree(b *testing.B) {
+	bench := []int{1000, 10000, 100000}
+
+	for _, n := range bench {
+		bs := genBlockMixed(n)
+		inet.SortBlock(bs)
+		t := inet.NewTree()
+		for i := range bs {
+			t.Insert(bs[i])
+		}
+
+		var walkFn inet.WalkFunc = func(n *inet.Node, l int) error { return nil }
+
+		b.Run(fmt.Sprintf("WalkTree: %d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = t.Walk(walkFn, false)
+			}
+		})
+
+		b.Run(fmt.Sprintf("WalkTree sorted: %d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = t.Walk(walkFn, true)
+			}
+		})
+
+	}
+}

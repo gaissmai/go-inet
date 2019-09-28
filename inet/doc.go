@@ -1,7 +1,8 @@
 /*
 Package inet represents IP-addresses and IP-Blocks as comparable types.
+A tree implemetation for longest-prefix-match is included.
 
-They can be used as keys in maps, freely copied and fast sorted
+IP addresses and blocks can be used as keys in maps, freely copied and fast sorted
 without prior conversion from/to IPv4/IPv6.
 
 IP addresses are represented as fixed arrays of 21 bytes, this ensures natural sorting (IPv4 < IPv6).
@@ -19,7 +20,7 @@ Blocks are IP-networks or IP-ranges, e.g.
  10.0.0.3-10.0.17.134        // range
  2001:db8::1-2001:db8::f6    // range
 
-Blocks are represented as a struct of three IP addresses:
+A Block is represented as a struct of three IP addresses:
 
  type Block struct {
   Base IP
@@ -27,9 +28,26 @@ Blocks are represented as a struct of three IP addresses:
   Mask IP  // may be zero for begin-end ranges
  }
 
+Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
+
+ ▼
+ ├─ 10.0.0.0/9
+ │  ├─ 10.0.0.0/11
+ │  │  ├─ 10.0.0.0/20
+ │  │  ├─ 10.0.16.0/20
+ │  │  └─ 10.0.32.0/20
+ │  └─ 10.32.0.0/11
+ │     ├─ 10.32.8.0/22
+ │     ├─ 10.32.12.0/22
+ │     └─ 10.32.16.0/22
+ ├─ 2001:db8:900::/48
+ │  ├─ 2001:db8:900::/49
+ │  │  ├─ 2001:db8:900::/52
+
 Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
 
 This is a package for system programming, all fields are public for easy and fast serialization without special treatment.
+
 Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
 */
 package inet

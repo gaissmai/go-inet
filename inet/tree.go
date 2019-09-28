@@ -1,53 +1,14 @@
-// Package tree implements an IP CIDR/Block tree for fast IP lookup (longest prefix match) and clear representation.
-//
-// The primary usage is for CIDR blocks, but it's applicable for any item implementing the Itemer interface.
-package tree
+package inet
 
 import (
 	"fmt"
 	"io"
 	"sort"
-
-	"github.com/gaissmai/go-inet/tree/item"
 )
 
-// ########################################################################
-// # CIDR/Block tree implementation,
-// ########################################################################
-
-// BlockTree is an implementation of a multi-root CIDR/Block tree for fast IP lookup.
-//
-//  ▼
-//  ├─ 10.0.0.0/9
-//  │  ├─ 10.0.0.0/11
-//  │  │  ├─ 10.0.0.0/20
-//  │  │  ├─ 10.0.16.0/20
-//  │  │  └─ 10.0.32.0/20
-//  │  ├─ 10.32.0.0/11
-//  │  │  ├─ 10.32.8.0/22
-//  │  │  ├─ 10.32.12.0/22
-//  │  │  └─ 10.32.16.0/22
-//  ├─ 2001:7c0:900::/48
-//  │  ├─ 2001:7c0:900::/49
-//  │  │  ├─ 2001:7c0:900::/52
-//
-type BlockTree struct {
-	// Contains the root node(▼) of a multi-root tree.
-	// root-item and root-parent are nil for root-node.
-	Root *Node
-}
-
-// Node, recursive tree data structure, only public for easy serialization, don't rely on it.
-// Items abstracted via Itemer interface
-type Node struct {
-	Item   *item.Itemer
-	Parent *Node
-	Childs []*Node
-}
-
-// NewBlockTree allocates a new tree and returns the pointer.
-func NewBlockTree() *BlockTree {
-	return &BlockTree{
+// NewTree allocates a new tree and returns the pointer.
+func NewTree() *Tree {
+	return &Tree{
 		Root: &Node{
 			Item:   nil, // multi-root tree has no payload in root-item slot
 			Parent: nil, // parent of root-node is always nil
@@ -58,14 +19,14 @@ func NewBlockTree() *BlockTree {
 
 // Insert one item into the tree. The position within the tree is defined
 // by the Contains() method, part of the Itemer interface .
-func (t *BlockTree) Insert(b item.Itemer) *BlockTree {
+func (t *Tree) Insert(b Itemer) *Tree {
 	// parent of root is nil
 	t.Root.insert(nil, b)
 	return t
 }
 
 // recursive work horse
-func (n *Node) insert(p *Node, b item.Itemer) {
+func (n *Node) insert(p *Node, b Itemer) {
 
 	// found pos, item is nil, insert payload, but not at root level (t.Root.Parent == nil)
 	if n.Item == nil && p != nil {
@@ -111,12 +72,12 @@ func (n *Node) insert(p *Node, b item.Itemer) {
 
 // Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
 // false if not found.
-func (t *BlockTree) Remove(b item.Itemer) bool {
+func (t *Tree) Remove(b Itemer) bool {
 	return t.Root.remove(b)
 }
 
 // recursive work horse
-func (n *Node) remove(b item.Itemer) bool {
+func (n *Node) remove(b Itemer) bool {
 	// found pos
 	if n.Item != nil && (*n.Item).Compare(b) == 0 {
 
@@ -152,12 +113,12 @@ func (n *Node) remove(b item.Itemer) bool {
 
 // Lookup item for longest prefix match in the tree.
 // If not found, returns input argument and false.
-func (t *BlockTree) Lookup(b item.Itemer) (item.Itemer, bool) {
+func (t *Tree) Lookup(b Itemer) (Itemer, bool) {
 	return t.Root.lookup(b)
 }
 
 // recursive work horse
-func (n *Node) lookup(b item.Itemer) (item.Itemer, bool) {
+func (n *Node) lookup(b Itemer) (Itemer, bool) {
 
 	// found by equality
 	if n.Item != nil && (*n.Item).Compare(b) == 0 {
@@ -195,7 +156,7 @@ func (n *Node) lookup(b item.Itemer) (item.Itemer, bool) {
 //  │  └─ 3000::/4.............  "FREE"
 //  ├─ 4000::/3.............   "Reserved by IETF     [RFC3513][RFC4291]"
 //  ├─ 6000::/3.............   "Reserved by IETF     [RFC3513][RFC4291]"
-func (t *BlockTree) Fprint(w io.Writer) {
+func (t *Tree) Fprint(w io.Writer) {
 	fmt.Fprintln(w, "▼")
 
 	var walkAndPrint func(io.Writer, *Node, string)
@@ -232,11 +193,11 @@ func (t *BlockTree) Fprint(w io.Writer) {
 // The Walk() stops if the WalkFunc returns an error.
 type WalkFunc func(n *Node, depth int) error
 
-// Walk the BlockTree starting at root, calling walkFn for each node.
+// Walk the Tree starting at root, calling walkFn for each node.
 // The walk is in sorted order if requested.
 // At every node the walkFn is called with the node and the current depth as arguments.
 // The walk stops if the walkFn returns an error. The error is propagated by Walk() to the caller.
-func (t *BlockTree) Walk(walkFn WalkFunc, sorted bool) error {
+func (t *Tree) Walk(walkFn WalkFunc, sorted bool) error {
 
 	// recursive work horse, declare ahead, recurse call below
 	var walk func(*Node, WalkFunc, int) error
