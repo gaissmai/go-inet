@@ -9,10 +9,14 @@ import (
 
 func ExampleNewBlock() {
 	for _, anyOf := range []interface{}{
-		"fe80::1-fe80::2",         // from string
-		"10.0.0.0-11.255.255.255", // from string, as range but true CIDR, see output
-		net.IPNet{IP: net.IP{127, 0, 0, 0}, Mask: net.IPMask{255, 0, 0, 0}},  // from net.IPNet
-		&net.IPNet{IP: net.IP{127, 0, 0, 0}, Mask: net.IPMask{255, 0, 0, 0}}, // from *net.IPNet
+		"fe80::1-fe80::2",         // block from string
+		"10.0.0.0-11.255.255.255", // block from string, as range but true CIDR, see output
+
+		net.IP{192, 168, 0, 0},         // IP from net.IP
+		inet.MustIP("2001:db8:900::1"), // IP from inet.IP
+
+		net.IPNet{IP: net.IP{127, 0, 0, 0}, Mask: net.IPMask{255, 0, 0, 0}},  // block from net.IPNet
+		&net.IPNet{IP: net.IP{127, 0, 0, 0}, Mask: net.IPMask{255, 0, 0, 0}}, // block from *net.IPNet
 	} {
 		a, _ := inet.NewBlock(anyOf)
 		fmt.Printf("block: %v\n", a)
@@ -21,6 +25,8 @@ func ExampleNewBlock() {
 	// Output:
 	// block: fe80::1-fe80::2
 	// block: 10.0.0.0/7
+	// block: 192.168.0.0/32
+	// block: 2001:db8:900::1/128
 	// block: 127.0.0.0/8
 	// block: 127.0.0.0/8
 
