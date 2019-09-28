@@ -9,6 +9,7 @@ A Go library for reading, formatting, sorting and converting IP-addresses and IP
 This package represents IP-addresses and IP-Blocks as comparable types.
 They can be used as keys in maps, freely copied and fast sorted
 without prior conversion from/to IPv4/IPv6.
+A tree implemetation for longest-prefix-match is included.
 
 ## go-inet/inet
 
@@ -38,27 +39,44 @@ Blocks are represented as a struct of three IP addresses:
   Mask IP  // may be zero for begin-end ranges
  }
 ```
-Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
 
-## go-inet/tree
+Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
-An IP CIDR/Block-Tree is supported for fast and easy IP address lookups similar to routing tables.
+```go
+ Tree struct {
+ 	// Contains the root node of a multi-root tree.
+ 	// root-item and root-parent are nil for root-node.
+ 	Root *Node
+ }
+```
+
+Node, recursive tree data structure, only public for easy serialization, don't rely on it.
+Items are abstracted via Itemer interface
+
+ ```go
+ Node struct {
+ 	Item   *Itemer
+ 	Parent *Node
+ 	Childs []*Node
+ }
+```
 
 The tree can be visualized as:
 
 ```
-▼
-├─ ::/8.................   "Reserved by IETF     [RFC3513][RFC4291]"
-├─ 100::/8..............   "Reserved by IETF     [RFC3513][RFC4291]"
-├─ 200::/7..............   "Reserved by IETF     [RFC4048]"
-├─ 400::/6..............   "Reserved by IETF     [RFC3513][RFC4291]"
-├─ 800::/5..............   "Reserved by IETF     [RFC3513][RFC4291]"
-├─ 1000::/4.............   "Reserved by IETF     [RFC3513][RFC4291]"
-├─ 2000::/3.............   "Global Unicast       [RFC3513][RFC4291]"
-│  ├─ 2000::/4.............  "Test"
-│  └─ 3000::/4.............  "FREE"
-├─ 4000::/3.............   "Reserved by IETF     [RFC3513][RFC4291]"
-├─ 6000::/3.............   "Reserved by IETF     [RFC3513][RFC4291]"
+ ▼
+ ├─ 10.0.0.0/9
+ │  ├─ 10.0.0.0/11
+ │  │  ├─ 10.0.0.0/20
+ │  │  ├─ 10.0.16.0/20
+ │  │  └─ 10.0.32.0/20
+ │  └─ 10.32.0.0/11
+ │     ├─ 10.32.8.0/22
+ │     ├─ 10.32.12.0/22
+ │     └─ 10.32.16.0/22
+ ├─ 2001:db8:900::/48
+ │  ├─ 2001:db8:900::/49
+ │  │  ├─ 2001:db8:900::/52
 ```
 
 These are packages for system programmers, all fields are public for easy and fast serialization without special treatment.

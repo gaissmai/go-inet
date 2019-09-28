@@ -30,6 +30,23 @@ A Block is represented as a struct of three IP addresses:
 
 Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
+ Tree struct {
+ 	// Contains the root node of a multi-root tree.
+ 	// root-item and root-parent are nil for root-node.
+ 	Root *Node
+ }
+
+Node, recursive tree data structure, only public for easy serialization, don't rely on it.
+Items abstracted via Itemer interface
+
+ Node struct {
+ 	Item   *Itemer
+ 	Parent *Node
+ 	Childs []*Node
+ }
+
+The tree can be visualized as:
+
  ▼
  ├─ 10.0.0.0/9
  │  ├─ 10.0.0.0/11
