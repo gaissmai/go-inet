@@ -12,7 +12,7 @@ func NewTree() *Tree {
 		Root: &Node{
 			Item:   nil, // multi-root tree has no payload in root-item slot
 			Parent: nil, // parent of root-node is always nil
-			Childs: nil,
+			Childs: nil, // here we start to insert items
 		},
 	}
 }
@@ -28,14 +28,7 @@ func (t *Tree) Insert(b Itemer) *Tree {
 // recursive work horse
 func (n *Node) insert(p *Node, b Itemer) {
 
-	// found pos, item is nil, insert payload, but not at root level (t.Root.Parent == nil)
-	if n.Item == nil && p != nil {
-		n.Item = &b
-		n.Parent = p
-		return
-	}
-
-	// find pos, walk down
+	// find pos
 	for _, c := range n.Childs {
 		// check for dups
 		if b.Compare(*c.Item) == 0 {
@@ -43,7 +36,7 @@ func (n *Node) insert(p *Node, b Itemer) {
 			return
 		}
 
-		// go down
+		// walk down
 		if (*c.Item).Contains(b) {
 			c.insert(n, b)
 			return
