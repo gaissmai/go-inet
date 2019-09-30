@@ -53,7 +53,7 @@ func (n *Node) insert(p *Node, b Itemer) {
 	// add as new child on this level
 	x := &Node{Item: &b, Parent: n, Childs: nil}
 
-	// b is less than all others, just append
+	// b is greater than all others, just append
 	if i == l {
 		n.Childs = append(n.Childs, x)
 		return
