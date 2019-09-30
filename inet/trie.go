@@ -90,7 +90,6 @@ func (n *Node) insert(p *Node, b Itemer) {
 	buf = append(buf, n.Childs[j:]...)
 
 	n.Childs = buf
-	return
 }
 
 // Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
