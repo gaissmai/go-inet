@@ -143,13 +143,24 @@ func (t *Trie) Lookup(b Itemer) (Itemer, bool) {
 func (n *Node) lookup(b Itemer) (Itemer, bool) {
 
 	// found by equality
-	if n.Item != nil && (*n.Item).Compare(b) == 0 {
-		return b, true
-	}
+	//if n.Item != nil && (*n.Item).Compare(b) == 0 {
+	//	return b, true
+	//}
 
 	// not found, walk down
-	for _, c := range n.Childs {
-		if (*c.Item).Contains(b) || (*c.Item).Compare(b) == 0 {
+	i := binarySearch(n.Childs, b)
+	l := len(n.Childs)
+
+	if i < l {
+		c := n.Childs[i]
+		if b.Compare(*c.Item) == 0 {
+			return b, true
+		}
+	}
+
+	if i > 0 {
+		c := n.Childs[i-1]
+		if (*c.Item).Contains(b) {
 			return c.lookup(b)
 		}
 	}
