@@ -172,4 +172,3 @@ func TestTrieMultiRoot(t *testing.T) {
 		t.Errorf("got:\n%v\nwant:\n%v", got, want)
 	}
 }
-

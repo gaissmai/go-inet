@@ -31,3 +31,48 @@ func ExampleTrie_Lookup() {
 	// inet.Lookup(5.0.122.12/32): LPM found at: 5.0.0.0/8
 
 }
+
+func ExampleTrie_Walk() {
+	tr := inet.NewTrie()
+
+	for _, s := range []string{
+		"0.0.0.0/8",
+		"1.0.0.0/8",
+		"5.0.0.0/8",
+		"0.0.0.0/0",
+		"10.0.0.0-10.0.0.17",
+		"::/64",
+		"::/0",
+		"2001:db8:900:1c2::/64",
+		"2001:db8:900:1c2::0/127",
+		"2001:db8:900:1c2::1/128",
+		"0.0.0.0/10",
+	} {
+		item := inet.MustBlock(s)
+		tr.Insert(item)
+	}
+
+	var maxDepth int
+	var maxWidth int
+
+	var walkFn inet.WalkFunc = func(n *inet.Node, depth int) error {
+		if depth > maxDepth {
+			maxDepth = depth
+		}
+		if l := len(n.Childs); l > maxWidth {
+			maxWidth = l
+		}
+		return nil
+	}
+
+	_ = tr.Walk(walkFn)
+
+	fmt.Printf("max depth: %v\n", maxDepth)
+	fmt.Printf("max width: %v\n", maxWidth)
+
+	// Output:
+	// max depth: 3
+	// max width: 4
+
+
+}

@@ -53,7 +53,6 @@ type (
 		// Compare, defines equality and sort order on same tree level, siblings relationship.
 		Compare(Itemer) int
 	}
-
 )
 
 var (

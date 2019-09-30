@@ -31,7 +31,7 @@ func (n *Node) insert(p *Node, b Itemer) {
 
 	// find pos in childs on this level, binary search
 	// childs are sorted
-	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 }) 
+	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 })
 
 	l := len(n.Childs)
 
@@ -105,7 +105,7 @@ func (n *Node) lookup(b Itemer) (Itemer, bool) {
 
 	// find pos in childs on this level, binary search
 	// childs are sorted
-	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 }) 
+	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 })
 	l := len(n.Childs)
 
 	if i < l {
@@ -205,4 +205,3 @@ func (t *Trie) Walk(walkFn WalkFunc) error {
 	// just do it
 	return walk(t.Root, walkFn, -1)
 }
-
