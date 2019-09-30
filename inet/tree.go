@@ -25,18 +25,25 @@ func (t *Tree) Insert(b Itemer) *Tree {
 	return t
 }
 
-// recursive work horse
+// recursive work horse, use binary search on same level
 func (n *Node) insert(p *Node, b Itemer) {
 
-	// find pos
-	for _, c := range n.Childs {
-		// check for dups
-		if b.Compare(*c.Item) == 0 {
-			// dup found, don't insert
+	// assert childs are sorted!
+	i := searchNode(n.Childs, b)
+
+	l := len(n.Childs)
+
+	// not at end of slice
+	if i < l {
+		// check for dups, don't insert
+		if b.Compare(*n.Childs[i].Item) == 0 {
 			return
 		}
+	}
 
-		// walk down
+	// not in front of slice, check if previous child contains new Item
+	if i > 0 {
+		c := n.Childs[i-1]
 		if (*c.Item).Contains(b) {
 			c.insert(n, b)
 			return
@@ -44,23 +51,30 @@ func (n *Node) insert(p *Node, b Itemer) {
 	}
 
 	// add as new child on this level
-	newNode := &Node{Item: &b, Parent: n, Childs: nil}
+	x := &Node{Item: &b, Parent: n, Childs: nil}
 
-	// if any child in this level is subset of new item, rearrange
-	keep := make([]*Node, 0, len(n.Childs))
-
-	for _, c := range n.Childs {
-		if b.Contains(*c.Item) {
-			// put child under new Item
-			c.Parent = newNode
-			newNode.Childs = append(newNode.Childs, c)
-		} else {
-			// keep child
-			keep = append(keep, c)
-		}
+	// resort if we contain next child
+	if i < l && b.Contains(*n.Childs[i].Item) {
+		// put child under new Item
+		c := n.Childs[i]
+		c.Parent = x
+		x.Childs = append(x.Childs, c)
+		n.Childs[i] = x
+		return
 	}
 
-	n.Childs = append(keep, newNode)
+	if i == l {
+		n.Childs = append(n.Childs, x)
+		return
+	}
+
+	// TODO, slice insert, better algo?
+	buf := make([]*Node, 0, l+1)
+	buf = append(buf, n.Childs[0:i]...)
+	buf = append(buf, x)
+	buf = append(buf, n.Childs[i:]...)
+	n.Childs = buf
+	return
 }
 
 // Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
@@ -162,7 +176,7 @@ func (t *Tree) Fprint(w io.Writer) {
 		// sort the childs in ascending order before printing
 		// use Compare from Itemer interface
 		sort.Slice(n.Childs, func(i, j int) bool {
-			return (*n.Childs[i].Item).Compare(*n.Childs[j].Item) < 0
+			return lessNode(n.Childs, i, j)
 		})
 
 		for i, c := range n.Childs {
@@ -224,4 +238,15 @@ func (t *Tree) Walk(walkFn WalkFunc, sorted bool) error {
 
 	// just do it
 	return walk(t.Root, walkFn, -1)
+}
+
+func lessNode(n []*Node, i, j int) bool {
+	return (*n[i].Item).Compare(*n[j].Item) < 0
+}
+
+func searchNode(n []*Node, x Itemer) int {
+	return sort.Search(len(n), func(i int) bool {
+		// find pos where x may contain next item
+		return (*n[i].Item).Compare(x) >= 0
+	})
 }
