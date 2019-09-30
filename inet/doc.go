@@ -28,9 +28,9 @@ A Block is represented as a struct of three IP addresses:
   Mask IP  // may be zero for begin-end ranges
  }
 
-Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
+Trie is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
- Tree struct {
+ Trie struct {
  	// Contains the root node of a multi-root tree.
  	// root-item and root-parent are nil for root-node.
  	Root *Node

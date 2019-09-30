@@ -6,9 +6,9 @@ import (
 	"sort"
 )
 
-// NewTree allocates a new tree and returns the pointer.
-func NewTree() *Tree {
-	return &Tree{
+// NewTrie allocates a new tree and returns the pointer.
+func NewTrie() *Trie {
+	return &Trie{
 		Root: &Node{
 			Item:   nil, // multi-root tree has no payload in root-item slot
 			Parent: nil, // parent of root-node is always nil
@@ -19,7 +19,7 @@ func NewTree() *Tree {
 
 // Insert one item into the tree. The position within the tree is defined
 // by the Contains() method, part of the Itemer interface .
-func (t *Tree) Insert(b Itemer) *Tree {
+func (t *Trie) Insert(b Itemer) *Trie {
 	// parent of root is nil
 	t.Root.insert(nil, b)
 	return t
@@ -95,7 +95,7 @@ func (n *Node) insert(p *Node, b Itemer) {
 
 // Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
 // false if not found.
-func (t *Tree) Remove(b Itemer) bool {
+func (t *Trie) Remove(b Itemer) bool {
 	return t.Root.remove(b)
 }
 
@@ -136,7 +136,7 @@ func (n *Node) remove(b Itemer) bool {
 
 // Lookup item for longest prefix match in the tree.
 // If not found, returns input argument and false.
-func (t *Tree) Lookup(b Itemer) (Itemer, bool) {
+func (t *Trie) Lookup(b Itemer) (Itemer, bool) {
 	return t.Root.lookup(b)
 }
 
@@ -179,7 +179,7 @@ func (n *Node) lookup(b Itemer) (Itemer, bool) {
 //  │  └─ 3000::/4.............  "FREE"
 //  ├─ 4000::/3.............   "Reserved by IETF     [RFC3513][RFC4291]"
 //  ├─ 6000::/3.............   "Reserved by IETF     [RFC3513][RFC4291]"
-func (t *Tree) Fprint(w io.Writer) {
+func (t *Trie) Fprint(w io.Writer) {
 	fmt.Fprintln(w, "▼")
 
 	var walkAndPrint func(io.Writer, *Node, string)
@@ -210,10 +210,10 @@ func (t *Tree) Fprint(w io.Writer) {
 // The Walk() stops if the WalkFunc returns an error.
 type WalkFunc func(n *Node, depth int) error
 
-// Walk the Tree starting at root, calling walkFn for each node.
+// Walk the Trie starting at root, calling walkFn for each node.
 // At every node the walkFn is called with the node and the current depth as arguments.
 // The walk stops if the walkFn returns an error not nil. The error is propagated by Walk() to the caller.
-func (t *Tree) Walk(walkFn WalkFunc) error {
+func (t *Trie) Walk(walkFn WalkFunc) error {
 
 	// recursive work horse, declare ahead, recurse call below
 	var walk func(*Node, WalkFunc, int) error

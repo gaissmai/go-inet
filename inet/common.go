@@ -28,8 +28,8 @@ type (
 		Mask IP // IPZero for ranges without CIDR mask
 	}
 
-	// Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
-	Tree struct {
+	// Trie is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
+	Trie struct {
 		// Contains the root node of a multi-root tree.
 		// root-item and root-parent are nil for root-node.
 		Root *Node

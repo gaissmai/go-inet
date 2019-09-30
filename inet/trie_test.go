@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-func TestTreeLookupMissing(t *testing.T) {
+func TestTrieLookupMissing(t *testing.T) {
 	s1 := MustBlock("0.0.0.0/0")
 	s2 := MustBlock("2001:db8::/32")
 
-	tree := NewTree().Insert(s1)
+	tree := NewTrie().Insert(s1)
 
 	_, ok := tree.Lookup(s2)
 	if ok {
@@ -18,10 +18,10 @@ func TestTreeLookupMissing(t *testing.T) {
 	}
 }
 
-func TestTreeLookup(t *testing.T) {
+func TestTrieLookup(t *testing.T) {
 	s1 := MustBlock("0.0.0.0/0")
 
-	tree := NewTree().Insert(s1)
+	tree := NewTrie().Insert(s1)
 
 	got, ok := tree.Lookup(s1)
 	if !ok {
@@ -33,8 +33,8 @@ func TestTreeLookup(t *testing.T) {
 	}
 }
 
-func TestTreeLookupLPM(t *testing.T) {
-	tr := NewTree()
+func TestTrieLookupLPM(t *testing.T) {
+	tr := NewTrie()
 
 	for _, s := range []string{
 		"0.0.0.0/8",
@@ -62,8 +62,8 @@ func TestTreeLookupLPM(t *testing.T) {
 	}
 }
 
-func TestTreeWalk(t *testing.T) {
-	tr := NewTree()
+func TestTrieWalk(t *testing.T) {
+	tr := NewTrie()
 
 	for _, s := range []string{
 		"0.0.0.0/8",
@@ -135,10 +135,10 @@ func TestTreeWalk(t *testing.T) {
 	}
 }
 
-func TestTreeInsertDup(t *testing.T) {
+func TestTrieInsertDup(t *testing.T) {
 	r1, _ := NewBlock("0.0.0.0/0")
 
-	tree := NewTree()
+	tree := NewTrie()
 	tree.Insert(r1)
 	tree.Insert(r1)
 
@@ -153,11 +153,11 @@ func TestTreeInsertDup(t *testing.T) {
 	}
 }
 
-func TestTreeMultiRoot(t *testing.T) {
+func TestTrieMultiRoot(t *testing.T) {
 	r1, _ := NewBlock("0.0.0.0/0")
 	r2, _ := NewBlock("::/0")
 
-	tree := NewTree()
+	tree := NewTrie()
 	tree.Insert(r1)
 	tree.Insert(r2)
 
@@ -173,12 +173,12 @@ func TestTreeMultiRoot(t *testing.T) {
 	}
 }
 
-func TestTreeRemove(t *testing.T) {
+func TestTrieRemove(t *testing.T) {
 	s1, _ := NewBlock("10.0.0.0/0")
 	s2, _ := NewBlock("10.0.0.0/4")
 	s3, _ := NewBlock("10.0.0.0/8")
 
-	tree := NewTree()
+	tree := NewTrie()
 	tree.Insert(s1)
 	tree.Insert(s2)
 	tree.Insert(s3)
