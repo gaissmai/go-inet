@@ -43,7 +43,7 @@ type (
 		Childs []*Node
 	}
 
-	// Itemer interfcae for tree items, maybe with payload and not just ip Blocks.
+	// Itemer interface for tree items, maybe with payload and not just ip Blocks.
 	// See relation between Compare and Contains at inet.Block.Compare()
 	Itemer interface {
 
