@@ -21,13 +21,13 @@ func ExampleTrie_Lookup() {
 		bt.Insert(item)
 	}
 
-	null := inet.MustBlock(inet.MustIP("0.0.0.0"))
+	q := inet.MustBlock(inet.MustIP("5.0.122.12"))
 
-	if match, ok := bt.Lookup(null); ok {
-		fmt.Printf("inet.Lookup('0.0.0.0'): LPM found at: %v\n", match)
+	if match, ok := bt.Lookup(q); ok {
+		fmt.Printf("inet.Lookup(%v): LPM found at: %v\n", q, match)
 	}
 
 	// Output:
-	// inet.Lookup('0.0.0.0'): LPM found at: 0.0.0.0/10
+	// inet.Lookup(5.0.122.12/32): LPM found at: 5.0.0.0/8
 
 }
