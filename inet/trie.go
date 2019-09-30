@@ -26,9 +26,11 @@ func (t *Trie) Insert(b Itemer) *Trie {
 }
 
 // recursive work horse, use binary search on same level
+// sorted insert for childs
 func (n *Node) insert(p *Node, b Itemer) {
 
 	// find pos in childs on this level, binary search
+	// childs are sorted
 	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 }) 
 
 	l := len(n.Childs)
@@ -102,6 +104,7 @@ func (t *Trie) Lookup(b Itemer) (Itemer, bool) {
 func (n *Node) lookup(b Itemer) (Itemer, bool) {
 
 	// find pos in childs on this level, binary search
+	// childs are sorted
 	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 }) 
 	l := len(n.Childs)
 
