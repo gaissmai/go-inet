@@ -138,28 +138,6 @@ func genBlockMixed(n int) []inet.Block {
 	return rs
 }
 
-func BenchmarkRemoveTrie(b *testing.B) {
-	bench := []int{1000, 10000, 100000}
-
-	for _, n := range bench {
-		bs := genBlockMixed(n)
-		inet.SortBlock(bs)
-		t := inet.NewTrie()
-		for i := range bs {
-			t.Insert(bs[i])
-		}
-
-		vx := genBlockMixed(10)[0]
-		b.Run(fmt.Sprintf("InsertRemoveTrie: %d", n), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				t.Insert(vx)
-				t.Remove(vx)
-			}
-		})
-
-	}
-}
-
 func BenchmarkLookupTrie(b *testing.B) {
 	bench := []int{1000, 10000, 100000}
 

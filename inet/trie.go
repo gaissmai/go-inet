@@ -92,47 +92,6 @@ func (n *Node) insert(p *Node, b Itemer) {
 	n.Childs = buf
 }
 
-// Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
-// false if not found.
-func (t *Trie) Remove(b Itemer) bool {
-	return t.Root.remove(b)
-}
-
-// recursive work horse
-func (n *Node) remove(b Itemer) bool {
-	// found pos
-	if n.Item != nil && (*n.Item).Compare(b) == 0 {
-
-		// remove this node from parent childs, keep siblings
-		keep := make([]*Node, 0, len(n.Parent.Childs))
-		for _, c := range n.Parent.Childs {
-
-			// not me, just a sibling
-			if (*c.Item).Compare(b) != 0 {
-				keep = append(keep, c)
-			}
-
-		}
-		n.Parent.Childs = keep
-
-		// relink the childs to parent
-		for _, c := range n.Childs {
-			c.Parent = n.Parent
-			n.Parent.Childs = append(n.Parent.Childs, c)
-		}
-
-		return true
-	}
-
-	// not found, walk down
-	for _, c := range n.Childs {
-		if (*c.Item).Contains(b) || (*c.Item).Compare(b) == 0 {
-			return c.remove(b)
-		}
-	}
-	return false
-}
-
 // Lookup item for longest prefix match in the tree.
 // If not found, returns input argument and false.
 func (t *Trie) Lookup(b Itemer) (Itemer, bool) {
@@ -142,12 +101,6 @@ func (t *Trie) Lookup(b Itemer) (Itemer, bool) {
 // recursive work horse
 func (n *Node) lookup(b Itemer) (Itemer, bool) {
 
-	// found by equality
-	//if n.Item != nil && (*n.Item).Compare(b) == 0 {
-	//	return b, true
-	//}
-
-	// not found, walk down
 	i := binarySearch(n.Childs, b)
 	l := len(n.Childs)
 
