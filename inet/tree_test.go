@@ -100,7 +100,7 @@ func TestTreeWalk(t *testing.T) {
 		return nil
 	}
 
-	err := tr.Walk(walkFn, true)
+	err := tr.Walk(walkFn)
 
 	if err != nil {
 		t.Errorf("%v\n", err)

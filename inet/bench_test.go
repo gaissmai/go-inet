@@ -196,13 +196,7 @@ func BenchmarkWalkTree(b *testing.B) {
 
 		b.Run(fmt.Sprintf("WalkTree: %d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = t.Walk(walkFn, false)
-			}
-		})
-
-		b.Run(fmt.Sprintf("WalkTree sorted: %d", n), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				_ = t.Walk(walkFn, true)
+				_ = t.Walk(walkFn)
 			}
 		})
 

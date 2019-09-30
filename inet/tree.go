@@ -28,8 +28,8 @@ func (t *Tree) Insert(b Itemer) *Tree {
 // recursive work horse, use binary search on same level
 func (n *Node) insert(p *Node, b Itemer) {
 
-	// assert childs are sorted!
-	i := searchNode(n.Childs, b)
+	// find pos in childs on this level
+	i := binarySearch(n.Childs, b)
 
 	l := len(n.Childs)
 
@@ -53,26 +53,42 @@ func (n *Node) insert(p *Node, b Itemer) {
 	// add as new child on this level
 	x := &Node{Item: &b, Parent: n, Childs: nil}
 
-	// resort if we contain next child
-	if i < l && b.Contains(*n.Childs[i].Item) {
-		// put child under new Item
-		c := n.Childs[i]
-		c.Parent = x
-		x.Childs = append(x.Childs, c)
-		n.Childs[i] = x
-		return
-	}
-
+	// b is less than all others, just append
 	if i == l {
 		n.Childs = append(n.Childs, x)
 		return
 	}
 
-	// TODO, slice insert, better algo?
+	// buffer to build resorted childs
 	buf := make([]*Node, 0, l+1)
-	buf = append(buf, n.Childs[0:i]...)
+
+	// copy [:i] to buf
+	buf = append(buf, n.Childs[:i]...)
+
+	// copy x to buf at [i]
 	buf = append(buf, x)
-	buf = append(buf, n.Childs[i:]...)
+
+	// now handle [i:]
+	// resort if b contains next child...
+	j := i
+	for {
+		c := n.Childs[j]
+		if b.Contains(*c.Item) {
+			// put old child under new Item
+			x.Childs = append(x.Childs, c)
+			c.Parent = x
+			if j++; j < l {
+				continue
+			}
+		}
+
+		// childs are sorted, break after first child not being child of b
+		break
+	}
+
+	// copy rest of childs to buf
+	buf = append(buf, n.Childs[j:]...)
+
 	n.Childs = buf
 	return
 }
@@ -173,12 +189,6 @@ func (t *Tree) Fprint(w io.Writer) {
 			return
 		}
 
-		// sort the childs in ascending order before printing
-		// use Compare from Itemer interface
-		sort.Slice(n.Childs, func(i, j int) bool {
-			return lessNode(n.Childs, i, j)
-		})
-
 		for i, c := range n.Childs {
 			if i == len(n.Childs)-1 { // last child
 				fmt.Fprintf(w, "%s%s\n", prefix+"└─ ", *c.Item)
@@ -201,10 +211,9 @@ func (t *Tree) Fprint(w io.Writer) {
 type WalkFunc func(n *Node, depth int) error
 
 // Walk the Tree starting at root, calling walkFn for each node.
-// The walk is in sorted order if requested.
 // At every node the walkFn is called with the node and the current depth as arguments.
-// The walk stops if the walkFn returns an error. The error is propagated by Walk() to the caller.
-func (t *Tree) Walk(walkFn WalkFunc, sorted bool) error {
+// The walk stops if the walkFn returns an error not nil. The error is propagated by Walk() to the caller.
+func (t *Tree) Walk(walkFn WalkFunc) error {
 
 	// recursive work horse, declare ahead, recurse call below
 	var walk func(*Node, WalkFunc, int) error
@@ -216,17 +225,7 @@ func (t *Tree) Walk(walkFn WalkFunc, sorted bool) error {
 			}
 		}
 
-		// sort the childs in ascending order before walking
-		if sorted {
-			lessFn := func(i, j int) bool {
-				return (*n.Childs[i].Item).Compare(*n.Childs[j].Item) < 0
-			}
-			if !sort.SliceIsSorted(n.Childs, lessFn) {
-				sort.Slice(n.Childs, lessFn)
-			}
-		}
-
-		// now walk the childs
+		// walk the childs
 		for _, c := range n.Childs {
 			if err := walk(c, walkFn, depth+1); err != nil {
 				return err
@@ -240,13 +239,8 @@ func (t *Tree) Walk(walkFn WalkFunc, sorted bool) error {
 	return walk(t.Root, walkFn, -1)
 }
 
-func lessNode(n []*Node, i, j int) bool {
-	return (*n[i].Item).Compare(*n[j].Item) < 0
-}
-
-func searchNode(n []*Node, x Itemer) int {
+func binarySearch(n []*Node, x Itemer) int {
 	return sort.Search(len(n), func(i int) bool {
-		// find pos where x may contain next item
 		return (*n[i].Item).Compare(x) >= 0
 	})
 }
