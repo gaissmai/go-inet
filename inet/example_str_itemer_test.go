@@ -15,6 +15,7 @@ func (a trieStr) Contains(b inet.Itemer) bool {
 	if !ok {
 		panic(fmt.Errorf("incompatible types: %T != %T", a, b))
 	}
+	// e.g. a = "foo", b=c="foobar"; a contains b in the sense of a trie
 	return strings.Index(string(c), string(a)) == 0
 }
 
