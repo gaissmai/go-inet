@@ -62,7 +62,7 @@ func ExampleItemer_stringItem() {
 
 }
 
-func ExampleItemer_Block() {
+func ExampleItemer_blockItem() {
 	bs := make([]inet.Block, 0)
 	for _, s := range []string{
 		"0.0.0.0/8",
