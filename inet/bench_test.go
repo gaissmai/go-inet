@@ -180,3 +180,24 @@ func BenchmarkWalkTrie(b *testing.B) {
 
 	}
 }
+
+func BenchmarkRemove(b *testing.B) {
+	bench := []int{1000, 10000, 100000}
+
+	for _, n := range bench {
+		bs := genBlockMixed(n)
+		inet.SortBlock(bs)
+		t := inet.NewTrie()
+		for i := range bs {
+			t.Insert(bs[i])
+		}
+
+		vx := bs[rand.Intn(len(bs))]
+		b.Run(fmt.Sprintf("RemoveItem: %d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				t.Remove(vx)
+			}
+		})
+
+	}
+}

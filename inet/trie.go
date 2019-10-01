@@ -21,20 +21,19 @@ func NewTrie() *Trie {
 // by the Contains() method, part of the Itemer interface .
 func (t *Trie) Insert(b Itemer) *Trie {
 	// parent of root is nil
-	t.Root.insert(nil, b)
+	t.Root.insert(b)
 	return t
 }
 
 // recursive work horse, use binary search on same level
 // sorted insert for childs
-func (n *Node) insert(p *Node, b Itemer) {
+func (n *Node) insert(b Itemer) {
 
 	// find pos in childs on this level, binary search
 	// childs are sorted
 	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 })
 
 	l := len(n.Childs)
-
 	// not at end of slice
 	if i < l {
 		// check for dups, don't insert
@@ -47,7 +46,7 @@ func (n *Node) insert(p *Node, b Itemer) {
 	if i > 0 {
 		c := n.Childs[i-1]
 		if (*c.Item).Contains(b) {
-			c.insert(n, b)
+			c.insert(b)
 			return
 		}
 	}
@@ -92,6 +91,60 @@ func (n *Node) insert(p *Node, b Itemer) {
 	buf = append(buf, n.Childs[j:]...)
 
 	n.Childs = buf
+}
+
+// Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
+// false if not found.
+func (t *Trie) Remove(b Itemer) bool {
+	return t.Root.remove(b)
+}
+
+// recursive work horse
+func (n *Node) remove(b Itemer) bool {
+
+	// find pos in childs on this level, binary search
+	// childs are sorted
+	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 })
+
+	l := len(n.Childs)
+
+	if i != l && b.Compare(*n.Childs[i].Item) == 0 {
+		// found child to remove at [i]
+		// delete this child [i] from node
+		c := n.Childs[i]
+
+		if i < l-1 {
+			n.Childs = append(n.Childs[:i], n.Childs[i+1:]...)
+		} else {
+			n.Childs = n.Childs[:i]
+		}
+
+		// re-insert grandchilds into trie at this node
+		// just relinking of parent-child links not always possible
+		// there may be some overlaps with containment edge cases
+		// reinserting is safe
+		var walk func(*Node)
+		walk = func(c *Node) {
+			for _, gc := range c.Childs {
+				n.insert(*gc.Item)
+				walk(gc)
+			}
+		}
+
+		walk(c)
+		return true
+	}
+
+	// not found, shall we walk down
+	for j := i - 1; j >= 0; j-- {
+		c := n.Childs[j]
+		if (*c.Item).Contains(b) {
+			return c.remove(b)
+		}
+	}
+
+	// not equal to any child and not contained in any child
+	return false
 }
 
 // Lookup item for longest prefix match in the tree.

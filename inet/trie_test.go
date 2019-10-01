@@ -172,3 +172,134 @@ func TestTrieMultiRoot(t *testing.T) {
 		t.Errorf("got:\n%v\nwant:\n%v", got, want)
 	}
 }
+
+func TestTrieRemoveEdgeCase(t *testing.T) {
+	tr := NewTrie()
+
+	for _, s := range []string{
+		"10.0.0.0-10.0.0.30",
+		"10.0.0.2-10.0.0.50",
+		"10.0.0.20-10.0.0.25",
+		"10.0.0.24-10.0.0.35",
+	} {
+		item := MustBlock(s)
+		tr.Insert(item)
+	}
+
+	w1 := new(strings.Builder)
+	tr.Fprint(w1)
+
+	r := MustBlock("10.0.0.2-10.0.0.50")
+	got := tr.Remove(r)
+	if !got {
+		t.Errorf("Remove(%v), got %t, want %t\n", r, got, true)
+	}
+
+	w2 := new(strings.Builder)
+	tr.Fprint(w2)
+
+	// edge case, childs get resorted to different parents
+	want :=
+		`▼
+├─ 10.0.0.0-10.0.0.30
+│  └─ 10.0.0.20-10.0.0.25
+└─ 10.0.0.24-10.0.0.35
+`
+
+	if w2.String() != want {
+		t.Errorf("start:\n%s\nremove %v\ngot:\n%s\nwant:\n%s\n", w1.String(), r, w2, want)
+	}
+}
+
+func TestTrieRemove(t *testing.T) {
+	tr := NewTrie()
+
+	for _, s := range []string{
+		"0.0.0.0/8",
+		"1.0.0.0/8",
+		"5.0.0.0/8",
+		"0.0.0.0/0",
+		"10.0.0.0-10.0.0.17",
+		"::/64",
+		"::/0",
+		"2001:7c0:900:1c2::/64",
+		"2001:7c0:900:1c2::0/127",
+		"2001:7c0:900:1c2::1/128",
+		"0.0.0.0/10",
+	} {
+		item := MustBlock(s)
+		tr.Insert(item)
+	}
+
+	r := MustBlock("3.0.0.0/8")
+	got := tr.Remove(r)
+	if got {
+		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
+	}
+
+	w1 := new(strings.Builder)
+	tr.Fprint(w1)
+
+	r = MustBlock("2001:7c0:900:1c2::0/127")
+	got = tr.Remove(r)
+	if !got {
+		t.Errorf("Remove(%v), got %t, want %t\n", r, got, true)
+	}
+
+	w2 := new(strings.Builder)
+	tr.Fprint(w2)
+
+	want :=
+		`▼
+├─ 0.0.0.0/0
+│  ├─ 0.0.0.0/8
+│  │  └─ 0.0.0.0/10
+│  ├─ 1.0.0.0/8
+│  ├─ 5.0.0.0/8
+│  └─ 10.0.0.0-10.0.0.17
+└─ ::/0
+   ├─ ::/64
+   └─ 2001:7c0:900:1c2::/64
+      └─ 2001:7c0:900:1c2::1/128
+`
+
+	if w2.String() != want {
+		t.Errorf("start:\n%s\nremove %v\ngot:\n%s\nwant:\n%s\n", w1.String(), r, w2, want)
+	}
+}
+
+func TestTrieRemoveFalse(t *testing.T) {
+	tr := NewTrie()
+
+	for _, s := range []string{
+		"0.0.0.0/0",
+		"1.0.0.0/8",
+		"2.0.0.0/8",
+		"4.0.0.0/8",
+		"5.0.0.0/8",
+	} {
+		item := MustBlock(s)
+		tr.Insert(item)
+	}
+
+	// frist pos in childs
+	r := MustBlock("0.0.0.0/8")
+	got := tr.Remove(r)
+	if got {
+		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
+	}
+
+	// last pos in childs
+	r = MustBlock("6.0.0.0/8")
+	got = tr.Remove(r)
+	if got {
+		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
+	}
+
+	// middle pos in childs
+	r = MustBlock("6.0.0.0/8")
+	got = tr.Remove(r)
+	if got {
+		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
+	}
+}

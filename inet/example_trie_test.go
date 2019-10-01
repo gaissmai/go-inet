@@ -74,5 +74,4 @@ func ExampleTrie_Walk() {
 	// max depth: 3
 	// max width: 4
 
-
 }
