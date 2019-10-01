@@ -28,9 +28,9 @@ A Block is represented as a struct of three IP addresses:
   Mask IP  // may be zero for begin-end ranges
  }
 
-Trie is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
+Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
- Trie struct {
+ Tree struct {
  	// Contains the root node of a multi-root tree.
  	// root-item and root-parent are nil for root-node.
  	Root *Node
@@ -45,18 +45,18 @@ Items abstracted via Itemer interface
  	Childs []*Node
  }
 
-Itemer interface for Trie items, maybe with payload and not just ip Blocks.
+Itemer interface for Tree items, maybe with payload and not just ip Blocks.
 See relation between Compare and Contains at inet.Block.Compare()
  Itemer interface {
- 
+
  	// Contains, defines the depth in the tree, parent child relationship.
  	Contains(Itemer) bool
- 
+
  	// Compare, defines equality and sort order on same tree level, siblings relationship.
  	Compare(Itemer) int
  }
 
-The Trie can be visualized as:
+The tree can be visualized as:
 
  ▼
  ├─ 10.0.0.0/9

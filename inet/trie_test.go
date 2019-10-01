@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-func TestTrieLookupMissing(t *testing.T) {
+func TestTreeLookupMissing(t *testing.T) {
 	s1 := MustBlock("0.0.0.0/0")
 	s2 := MustBlock("2001:db8::/32")
 
-	tree := NewTrie().Insert(s1)
+	tree := NewTree().Insert(s1)
 
 	_, ok := tree.Lookup(s2)
 	if ok {
@@ -18,10 +18,10 @@ func TestTrieLookupMissing(t *testing.T) {
 	}
 }
 
-func TestTrieLookup(t *testing.T) {
+func TestTreeLookup(t *testing.T) {
 	s1 := MustBlock("0.0.0.0/0")
 
-	tree := NewTrie().Insert(s1)
+	tree := NewTree().Insert(s1)
 
 	got, ok := tree.Lookup(s1)
 	if !ok {
@@ -33,8 +33,8 @@ func TestTrieLookup(t *testing.T) {
 	}
 }
 
-func TestTrieLookupLPM(t *testing.T) {
-	tr := NewTrie()
+func TestTreeLookupLPM(t *testing.T) {
+	tr := NewTree()
 
 	for _, s := range []string{
 		"0.0.0.0/8",
@@ -62,8 +62,8 @@ func TestTrieLookupLPM(t *testing.T) {
 	}
 }
 
-func TestTrieWalk(t *testing.T) {
-	tr := NewTrie()
+func TestTreeWalk(t *testing.T) {
+	tr := NewTree()
 
 	for _, s := range []string{
 		"0.0.0.0/8",
@@ -135,10 +135,10 @@ func TestTrieWalk(t *testing.T) {
 	}
 }
 
-func TestTrieInsertDup(t *testing.T) {
+func TestTreeInsertDup(t *testing.T) {
 	r1, _ := NewBlock("0.0.0.0/0")
 
-	tree := NewTrie()
+	tree := NewTree()
 	tree.Insert(r1)
 	tree.Insert(r1)
 
@@ -153,11 +153,11 @@ func TestTrieInsertDup(t *testing.T) {
 	}
 }
 
-func TestTrieMultiRoot(t *testing.T) {
+func TestTreeMultiRoot(t *testing.T) {
 	r1, _ := NewBlock("0.0.0.0/0")
 	r2, _ := NewBlock("::/0")
 
-	tree := NewTrie()
+	tree := NewTree()
 	tree.Insert(r1)
 	tree.Insert(r2)
 
@@ -173,8 +173,8 @@ func TestTrieMultiRoot(t *testing.T) {
 	}
 }
 
-func TestTrieRemoveEdgeCase(t *testing.T) {
-	tr := NewTrie()
+func TestTreeRemoveEdgeCase(t *testing.T) {
+	tr := NewTree()
 
 	for _, s := range []string{
 		"10.0.0.0-10.0.0.30",
@@ -211,8 +211,8 @@ func TestTrieRemoveEdgeCase(t *testing.T) {
 	}
 }
 
-func TestTrieRemove(t *testing.T) {
-	tr := NewTrie()
+func TestTreeRemove(t *testing.T) {
+	tr := NewTree()
 
 	for _, s := range []string{
 		"0.0.0.0/8",
@@ -268,8 +268,8 @@ func TestTrieRemove(t *testing.T) {
 	}
 }
 
-func TestTrieRemoveFalse(t *testing.T) {
-	tr := NewTrie()
+func TestTreeRemoveFalse(t *testing.T) {
+	tr := NewTree()
 
 	for _, s := range []string{
 		"0.0.0.0/0",

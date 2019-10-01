@@ -6,8 +6,8 @@ import (
 	"github.com/gaissmai/go-inet/inet"
 )
 
-func ExampleTrie_Lookup() {
-	bt := inet.NewTrie()
+func ExampleTree_Lookup() {
+	bt := inet.NewTree()
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
@@ -32,8 +32,8 @@ func ExampleTrie_Lookup() {
 
 }
 
-func ExampleTrie_Walk() {
-	tr := inet.NewTrie()
+func ExampleTree_Walk() {
+	tr := inet.NewTree()
 
 	for _, s := range []string{
 		"0.0.0.0/8",
