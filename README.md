@@ -16,7 +16,7 @@ A tree implemetation for longest-prefix-match is included.
 IP addresses are represented as fixed arrays of 21 bytes, this ensures natural sorting (IPv4 < IPv6).
 
 ```go
-	type IP [21]byte
+  type IP [21]byte
 
   // IP[0]    = version information (4 or 6)
   // IP[1:5]  = IPv4 address, if version == 4, else zero
@@ -33,32 +33,32 @@ Blocks are IP-networks or IP-ranges, e.g.
 Blocks are represented as a struct of three IP addresses:
 
 ```go
-	type Block struct {
-		Base IP
-		Last IP
-		Mask IP // may be zero for begin-end ranges
-	}
+  type Block struct {
+    Base IP
+    Last IP
+    Mask IP // may be zero for begin-end ranges
+  }
 ```
 
 Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
 ```go
-	type Tree struct {
-		// Contains the root node of a multi-root tree.
-		// root-item and root-parent are nil for root-node.
-		Root *Node
-	}
+  type Tree struct {
+    // Contains the root node of a multi-root tree.
+    // root-item and root-parent are nil for root-node.
+    Root *Node
+  }
 ```
 
 Node, recursive tree data structure, only public for easy serialization, don't rely on it.
 Items are abstracted via Itemer interface
 
  ```go
-	type Node struct {
-		Item   *Itemer
-		Parent *Node
-		Childs []*Node
-	}
+  type Node struct {
+    Item   *Itemer
+    Parent *Node
+    Childs []*Node
+  }
 ```
 
 The tree can be visualized as:
