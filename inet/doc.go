@@ -28,18 +28,17 @@ A Block is represented as a struct of three IP addresses:
   Mask IP  // may be zero for begin-end ranges
  }
 
-Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
+Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
- Tree struct {
- 	// Contains the root node of a multi-root tree.
- 	// root-item and root-parent are nil for root-node.
+ type Tree struct {
+ 	// Contains the root node the tree.
  	Root *Node
  }
 
 Node, recursive tree data structure, only public for easy serialization, don't rely on it.
 Items abstracted via Itemer interface
 
- Node struct {
+ type Node struct {
  	Item   *Itemer
  	Parent *Node
  	Childs []*Node
@@ -47,7 +46,7 @@ Items abstracted via Itemer interface
 
 Itemer interface for Tree items, maybe with payload and not just ip Blocks.
 See relation between Compare and Contains at inet.Block.Compare()
- Itemer interface {
+ type Itemer interface {
 
  	// Contains, defines the depth in the tree, parent child relationship.
  	Contains(Itemer) bool
