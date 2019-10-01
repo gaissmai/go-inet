@@ -1,6 +1,6 @@
 ## ATTENTION
 
-The API is **REALLY** **NOT** **stable** yet!
+The API is not stable yet!
 
 # go-inet
 
