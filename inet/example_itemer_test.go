@@ -48,15 +48,19 @@ func ExampleItemer_stringItem() {
 
 	tr.Fprint(os.Stdout)
 
-	// ▼
-	// ├─ bar
-	// │  ├─ barbara
-	// │  └─ barber shop
-	// ├─ f
-	// │  └─ fo
-	// │     └─ foo
-	// │        └─ foo_bar
-	// └─ ha
-	//    └─ hallo
+/*
+
+▼
+├─ bar
+│  ├─ barbara
+│  └─ barber shop
+├─ f
+│  └─ fo
+│     └─ foo
+│        └─ foo_bar
+└─ ha
+	 └─ hallo
+
+*/
 
 }
