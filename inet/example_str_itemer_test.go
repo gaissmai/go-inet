@@ -8,10 +8,10 @@ import (
 	"github.com/gaissmai/go-inet/inet"
 )
 
-type trieStr string
+type stringItem string
 
-func (a trieStr) Contains(b inet.Itemer) bool {
-	c, ok := b.(trieStr)
+func (a stringItem) Contains(b inet.Itemer) bool {
+	c, ok := b.(stringItem)
 	if !ok {
 		panic(fmt.Errorf("incompatible types: %T != %T", a, b))
 	}
@@ -19,15 +19,15 @@ func (a trieStr) Contains(b inet.Itemer) bool {
 	return strings.Index(string(c), string(a)) == 0
 }
 
-func (a trieStr) Compare(b inet.Itemer) int {
-	c, ok := b.(trieStr)
+func (a stringItem) Compare(b inet.Itemer) int {
+	c, ok := b.(stringItem)
 	if !ok {
 		panic(fmt.Errorf("incompatible types: %T != %T", a, b))
 	}
 	return strings.Compare(string(a), string(c))
 }
 
-func ExampleItemer() {
+func ExampleItemer_stringItem() {
 	tr := inet.NewTrie()
 
 	for _, s := range []string{
@@ -43,7 +43,7 @@ func ExampleItemer() {
 		"barbara",
 		"fo",
 	} {
-		tr.Insert(trieStr(s))
+		tr.Insert(stringItem(s))
 	}
 
 	tr.Fprint(os.Stdout)
