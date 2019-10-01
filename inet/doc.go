@@ -45,7 +45,7 @@ Items abstracted via Itemer interface
  	Childs []*Node
  }
 
-Itemer interface for tree items, maybe with payload and not just ip Blocks.
+Itemer interface for Trie items, maybe with payload and not just ip Blocks.
 See relation between Compare and Contains at inet.Block.Compare()
  Itemer interface {
  
@@ -56,7 +56,7 @@ See relation between Compare and Contains at inet.Block.Compare()
  	Compare(Itemer) int
  }
 
-The trie can be visualized as:
+The Trie can be visualized as:
 
  ▼
  ├─ 10.0.0.0/9
