@@ -40,10 +40,10 @@ Blocks are represented as a struct of three IP addresses:
  }
 ```
 
-Trie is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
+Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
 ```go
- Trie struct {
+ Tree struct {
  	// Contains the root node of a multi-root tree.
  	// root-item and root-parent are nil for root-node.
  	Root *Node
