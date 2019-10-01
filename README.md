@@ -43,7 +43,7 @@ Blocks are represented as a struct of three IP addresses:
 Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
 ```go
- Tree struct {
+ type Tree struct {
  	// Contains the root node of a multi-root tree.
  	// root-item and root-parent are nil for root-node.
  	Root *Node
@@ -54,7 +54,7 @@ Node, recursive tree data structure, only public for easy serialization, don't r
 Items are abstracted via Itemer interface
 
  ```go
- Node struct {
+ type Node struct {
  	Item   *Itemer
  	Parent *Node
  	Childs []*Node
