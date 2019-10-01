@@ -31,28 +31,28 @@ A Block is represented as a struct of three IP addresses:
 Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
 
  type Tree struct {
- 	// Contains the root node the tree.
- 	Root *Node
+  // Contains the root node the tree.
+  Root *Node
  }
 
 Node, recursive tree data structure, only public for easy serialization, don't rely on it.
 Items abstracted via Itemer interface
 
  type Node struct {
- 	Item   *Itemer
- 	Parent *Node
- 	Childs []*Node
+  Item   *Itemer
+  Parent *Node
+  Childs []*Node
  }
 
 Itemer interface for Tree items, maybe with payload and not just ip Blocks.
 See relation between Compare and Contains at inet.Block.Compare()
  type Itemer interface {
-
- 	// Contains, defines the depth in the tree, parent child relationship.
- 	Contains(Itemer) bool
-
- 	// Compare, defines equality and sort order on same tree level, siblings relationship.
- 	Compare(Itemer) int
+  
+  // Contains, defines the depth in the tree, parent child relationship.
+  Contains(Itemer) bool
+  
+  // Compare, defines equality and sort order on same tree level, siblings relationship.
+  Compare(Itemer) int
  }
 
 The tree can be visualized as:
