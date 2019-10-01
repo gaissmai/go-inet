@@ -48,7 +48,6 @@ func ExampleItemer_stringItem() {
 
 	tr.Fprint(os.Stdout)
 
-	// Output:
 	// ▼
 	// ├─ bar
 	// │  ├─ barbara
