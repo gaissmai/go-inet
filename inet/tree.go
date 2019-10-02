@@ -164,8 +164,10 @@ func (n *Node) lookup(b Itemer) (Itemer, bool) {
 
 	if i < l {
 		c := n.Childs[i]
-		if b.Compare(*c.Item) == 0 {
-			return b, true
+
+		// found by exact match
+		if (*c.Item).Compare(b) == 0 {
+			return *c.Item, true
 		}
 	}
 
