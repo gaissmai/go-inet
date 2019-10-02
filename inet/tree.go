@@ -19,6 +19,7 @@ func NewTree() *Tree {
 
 // Insert one item into the tree. The position within the tree is defined
 // by the Contains() method, part of the Itemer interface .
+// For a lot of items, sort before insert speed things up.
 func (t *Tree) Insert(b Itemer) *Tree {
 	// parent of root is nil
 	t.Root.insert(b)
