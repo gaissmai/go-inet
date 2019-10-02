@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleTree_Lookup() {
-	bt := inet.NewTree()
+	bs := make([]inet.Block, 0)
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
@@ -17,9 +17,11 @@ func ExampleTree_Lookup() {
 		"::/0",
 		"0.0.0.0/10",
 	} {
-		item := inet.MustBlock(s)
-		bt.Insert(item)
+		bs = append(bs, inet.MustBlock(s))
 	}
+
+	bt := inet.NewTree()
+	bt.InsertBulk(bs...)
 
 	q := inet.MustBlock(inet.MustIP("5.0.122.12"))
 
