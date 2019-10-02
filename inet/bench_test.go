@@ -143,11 +143,7 @@ func BenchmarkLookupTree(b *testing.B) {
 
 	for _, n := range bench {
 		bs := genBlockMixed(n)
-		inet.SortBlock(bs)
-		t := inet.NewTree()
-		for i := range bs {
-			t.Insert(bs[i])
-		}
+		t := inet.NewTree().InsertBulk(bs)
 
 		vx := bs[rand.Intn(len(bs))]
 		b.Run(fmt.Sprintf("LookupTree: %d", n), func(b *testing.B) {
@@ -164,11 +160,7 @@ func BenchmarkWalkTree(b *testing.B) {
 
 	for _, n := range bench {
 		bs := genBlockMixed(n)
-		inet.SortBlock(bs)
-		t := inet.NewTree()
-		for i := range bs {
-			t.Insert(bs[i])
-		}
+		t := inet.NewTree().InsertBulk(bs)
 
 		var walkFn inet.WalkFunc = func(n *inet.Node, l int) error { return nil }
 
@@ -181,16 +173,12 @@ func BenchmarkWalkTree(b *testing.B) {
 	}
 }
 
-func BenchmarkRemove(b *testing.B) {
+func BenchmarkTreeRemoveItem(b *testing.B) {
 	bench := []int{1000, 10000, 100000}
 
 	for _, n := range bench {
 		bs := genBlockMixed(n)
-		inet.SortBlock(bs)
-		t := inet.NewTree()
-		for i := range bs {
-			t.Insert(bs[i])
-		}
+		t := inet.NewTree().InsertBulk(bs)
 
 		vx := bs[rand.Intn(len(bs))]
 		b.Run(fmt.Sprintf("RemoveItem: %d", n), func(b *testing.B) {

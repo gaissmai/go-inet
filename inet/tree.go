@@ -3,6 +3,7 @@ package inet
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"sort"
 )
 
@@ -17,9 +18,36 @@ func NewTree() *Tree {
 	}
 }
 
+// InsertBulk takes a slice of []items, sorts the values and inserts it into the tree.
+// If the input arg is no slice of items implementing the Itemer interface,
+// the method will panic.
+//
+// It is a convenience method. The user can also sort the slice itself and
+// insert the elements in a loop with tree.Insert()
+func (t *Tree) InsertBulk(i interface{}) *Tree {
+	slice := reflect.ValueOf(i)
+	if slice.Kind() != reflect.Slice {
+		panic("input isn't a slice of items")
+	}
+	l := slice.Len()
+	items := make([]Itemer, l)
+	for i := 0; i < l; i++ {
+		item, ok := slice.Index(i).Interface().(Itemer)
+		if !ok {
+			panic("input items don't implement the Itemer interface")
+		}
+		items[i] = item
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].Compare(items[j]) < 0 })
+	for i := range items {
+		t.Root.insert(items[i])
+	}
+	return t
+}
+
 // Insert one item into the tree. The position within the tree is defined
 // by the Contains() method, part of the Itemer interface .
-// For a lot of items, sort before insert speed things up.
+// If you insert many values you should sort them first.
 func (t *Tree) Insert(b Itemer) *Tree {
 	// parent of root is nil
 	t.Root.insert(b)

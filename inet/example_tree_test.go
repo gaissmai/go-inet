@@ -20,8 +20,7 @@ func ExampleTree_Lookup() {
 		bs = append(bs, inet.MustBlock(s))
 	}
 
-	bt := inet.NewTree()
-	bt.InsertBulk(bs...)
+	bt := inet.NewTree().InsertBulk(bs)
 
 	q := inet.MustBlock(inet.MustIP("5.0.122.12"))
 
@@ -35,8 +34,8 @@ func ExampleTree_Lookup() {
 }
 
 func ExampleTree_Walk() {
-	tr := inet.NewTree()
 
+	bs := make([]inet.Block, 0)
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
@@ -50,9 +49,9 @@ func ExampleTree_Walk() {
 		"2001:db8:900:1c2::1/128",
 		"0.0.0.0/10",
 	} {
-		item := inet.MustBlock(s)
-		tr.Insert(item)
+		bs = append(bs, inet.MustBlock(s))
 	}
+	tr := inet.NewTree().InsertBulk(bs)
 
 	var maxDepth int
 	var maxWidth int
