@@ -26,17 +26,17 @@ func (t *Tree) Insert(b Itemer) *Tree {
 }
 
 // recursive work horse, use binary search on same level
-// sorted insert for childs
+// childs stay sorted after insert
 func (n *Node) insert(b Itemer) {
 
-	// find pos in childs on this level, binary search
 	// childs are sorted
+	// find pos in childs on this level, binary search
 	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 })
 
 	l := len(n.Childs)
 	// not at end of slice
 	if i < l {
-		// check for dups, don't insert
+		// don't insert dups
 		if b.Compare(*n.Childs[i].Item) == 0 {
 			return
 		}
@@ -54,7 +54,7 @@ func (n *Node) insert(b Itemer) {
 	// add as new child on this level
 	x := &Node{Item: &b, Parent: n, Childs: nil}
 
-	// b is greater than all others, just append
+	// b is greater than all others and not contained, just append
 	if i == l {
 		n.Childs = append(n.Childs, x)
 		return
@@ -102,8 +102,8 @@ func (t *Tree) Remove(b Itemer) bool {
 // recursive work horse
 func (n *Node) remove(b Itemer) bool {
 
-	// find pos in childs on this level, binary search
 	// childs are sorted
+	// find pos in childs on this level, binary search
 	i := sort.Search(len(n.Childs), func(i int) bool { return (*n.Childs[i].Item).Compare(b) >= 0 })
 
 	l := len(n.Childs)
@@ -135,7 +135,8 @@ func (n *Node) remove(b Itemer) bool {
 		return true
 	}
 
-	// not found, shall we walk down
+	// pos in tree not found on this level
+	// walk down if any child (before b, respect sort order) includes b
 	for j := i - 1; j >= 0; j-- {
 		c := n.Childs[j]
 		if (*c.Item).Contains(b) {
