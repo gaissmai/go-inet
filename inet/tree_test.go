@@ -303,3 +303,44 @@ func TestTreeRemoveFalse(t *testing.T) {
 		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
 	}
 }
+
+func TestTreeRemoveInsert(t *testing.T) {
+	tr := NewTree()
+
+	for _, s := range []string{
+		"0.0.0.0/8",
+		"1.0.0.0/8",
+		"5.0.0.0/8",
+		"0.0.0.0/0",
+		"10.0.0.0-10.0.0.17",
+		"::/64",
+		"::/0",
+		"2001:7c0:900:1c2::/64",
+		"2001:7c0:900:1c2::0/127",
+		"2001:7c0:900:1c2::1/128",
+		"0.0.0.0/10",
+	} {
+		item := MustBlock(s)
+		tr.Insert(item)
+	}
+
+	w1 := new(strings.Builder)
+	tr.Fprint(w1)
+
+	r := MustBlock("2001:7c0:900:1c2::0/127")
+
+	// test idempotent
+	tr.Remove(r)
+
+	w2 := new(strings.Builder)
+	tr.Fprint(w2)
+
+	tr.Insert(r)
+
+	w3 := new(strings.Builder)
+	tr.Fprint(w3)
+
+	if w1.String() != w3.String() {
+		t.Errorf("remove and insert CIDR(%s) not idempotent:\n%s\n%s\n%s\n", r, w1, w2, w3)
+	}
+}
