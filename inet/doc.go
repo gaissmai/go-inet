@@ -5,6 +5,11 @@ A tree implemetation for longest-prefix-match is included.
 IP addresses and blocks can be used as keys in maps, freely copied and fast sorted
 without prior conversion from/to IPv4/IPv6.
 
+Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
+A Tree implementation for lookups with longest-prefix-match is included.
+
+This is a package for system programming, all fields are public for easy and fast serialization without special treatment. Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
+
 IP addresses are represented as fixed arrays of 21 bytes, this ensures natural sorting (IPv4 < IPv6).
 
  type IP [21]byte
@@ -29,14 +34,14 @@ A Block is represented as a struct of three IP addresses:
  }
 
 Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
+It is NOT a radix-tree, this isn't possible for general blocks not represented by bitmasks.
 
  type Tree struct {
   // Contains the root node the tree.
   Root *Node
  }
 
-Node, recursive tree data structure, only public for easy serialization, don't rely on it.
-Items abstracted via Itemer interface
+Node, recursive tree data structure. Items abstracted via Itemer interface
 
  type Node struct {
   Item   *Itemer
@@ -71,10 +76,5 @@ The tree can be visualized as:
  │  ├─ 2001:db8:900::/49
  │  │  ├─ 2001:db8:900::/52
 
-Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
-
-This is a package for system programming, all fields are public for easy and fast serialization without special treatment.
-
-Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
 */
 package inet

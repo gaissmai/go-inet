@@ -34,8 +34,7 @@ type (
 		Root *Node
 	}
 
-	// Node, recursive tree data structure, only public for easy serialization, don't rely on it.
-	// Items are abstracted via Itemer interface
+	// Node, recursive data structure. Items are abstracted via Itemer interface
 	Node struct {
 		Item   *Itemer
 		Parent *Node
