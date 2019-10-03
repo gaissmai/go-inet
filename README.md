@@ -4,14 +4,21 @@ The API is not stable yet!
 
 # go-inet
 
-A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks
-
-This package represents IP-addresses and IP-Blocks as comparable types.
-They can be used as keys in maps, freely copied and fast sorted
-without prior conversion from/to IPv4/IPv6.
-A tree implemetation for longest-prefix-match is included.
+A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks.
+A Tree implementation for lookups with longest-prefix-match is included.
 
 ## go-inet/inet
+
+Package inet represents IP-addresses and IP-Blocks as comparable types.
+A tree implemetation for longest-prefix-match is included.
+
+IP addresses and blocks can be used as keys in maps, freely copied and fast sorted
+without prior conversion from/to IPv4/IPv6.
+
+Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
+A Tree implementation for lookups with longest-prefix-match is included.
+
+This is a package for system programming, all fields are public for easy and fast serialization without special treatment. Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
 
 IP addresses are represented as fixed arrays of 21 bytes, this ensures natural sorting (IPv4 < IPv6).
 
@@ -40,24 +47,35 @@ Blocks are represented as a struct of three IP addresses:
   }
 ```
 
-Tree is an implementation of a multi-root CIDR/Block tree for fast IP lookup with longest-prefix-match.
+Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
+It is *NOT* a radix-tree, not possible for general IP blocks not represented by bitmasks.
 
 ```go
   type Tree struct {
-    // Contains the root node of a multi-root tree.
-    // root-item and root-parent are nil for root-node.
     Root *Node
   }
 ```
 
-Node, recursive tree data structure, only public for easy serialization, don't rely on it.
-Items are abstracted via Itemer interface
+Node, recursive data structure. Items are abstracted via Itemer interface
 
- ```go
+```go
   type Node struct {
     Item   *Itemer
     Parent *Node
     Childs []*Node
+  }
+```
+
+Itemer interface for Tree items, maybe with payload and not just ip Blocks.
+
+```go
+  type Itemer interface {
+   
+   // Contains, defines the depth in the tree, parent child relationship.
+   Contains(Itemer) bool
+   
+   // Compare, defines equality and sort order on same tree level, siblings relationship.
+   Compare(Itemer) int
   }
 ```
 
@@ -78,9 +96,6 @@ The tree can be visualized as:
  │  ├─ 2001:db8:900::/49
  │  │  ├─ 2001:db8:900::/52
 ```
-
-These are packages for system programmers, all fields are public for easy and fast serialization without special treatment.
-Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
 
 ## Documentation
 

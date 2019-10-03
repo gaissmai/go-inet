@@ -29,6 +29,7 @@ type (
 	}
 
 	// Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
+	// It is NOT a radix-tree, not possible for general IP blocks not represented by bitmasks.
 	Tree struct {
 		// Contains the root node of a tree.
 		Root *Node
