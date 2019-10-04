@@ -78,7 +78,7 @@ func BenchmarkFindFreeCIDRv6(b *testing.B) {
 }
 
 func BenchmarkTreeInsertBulk(b *testing.B) {
-	bench := []int{1000, 10_000, 100_000, 1_000_000}
+	bench := []int{1000, 10000, 100000, 1000000}
 
 	for _, n := range bench {
 		bs := genBlockMixed(n)
