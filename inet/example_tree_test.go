@@ -33,6 +33,43 @@ func ExampleTree_Lookup() {
 
 }
 
+func ExampleTree_Lookup_exists() {
+	bs := make([]inet.Block, 0)
+	for _, s := range []string{
+		"0.0.0.0/8",
+		"1.0.0.0/8",
+		"5.0.0.0/8",
+		"0.0.0.0/0",
+		"::/64",
+		"::/0",
+		"0.0.0.0/10",
+	} {
+		bs = append(bs, inet.MustBlock(s))
+	}
+
+	bt := inet.NewTree().InsertBulk(bs)
+
+	// look for exists, exact match, not just LPM
+	for _, s := range []string{
+		"5.0.0.0/8",
+		"5.0.1.2/32",
+	} {
+		q := inet.MustBlock(s)
+
+		match, ok := bt.Lookup(q)
+		if ok && match.Compare(q) == 0 {
+			fmt.Printf("%q exists in tree\n", q)
+		} else {
+			fmt.Printf("%q doesn't exists in tree\n", q)
+		}
+	}
+
+	// Output:
+	// "5.0.0.0/8" exists in tree
+	// "5.0.1.2/32" doesn't exists in tree
+
+}
+
 func ExampleTree_Walk() {
 
 	bs := make([]inet.Block, 0)
