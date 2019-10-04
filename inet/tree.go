@@ -23,7 +23,7 @@ func NewTree() *Tree {
 // the method will panic.
 //
 // It is a convenience method. The user can also sort the slice itself and
-// insert the elements in a loop with tree.Insert()
+// insert the elements in a loop with Insert()
 func (t *Tree) InsertBulk(i interface{}) *Tree {
 	slice := reflect.ValueOf(i)
 	if slice.Kind() != reflect.Slice {
@@ -46,7 +46,8 @@ func (t *Tree) InsertBulk(i interface{}) *Tree {
 }
 
 // Insert one item into the tree. The position within the tree is defined
-// by the Contains() method, part of the Itemer interface .
+// by the Contains() and Compare() methods, part of the Itemer interface .
+//
 // If you insert many values you should sort them first.
 func (t *Tree) Insert(b Itemer) *Tree {
 	// parent of root is nil
