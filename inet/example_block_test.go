@@ -105,40 +105,6 @@ func ExampleBlock_SplitCIDR_v4() {
 
 }
 
-func ExampleFindOuterCIDR_v4() {
-	inner := []inet.Block{}
-	for _, s := range []string{
-		"10.128.0.0/9",
-		"10.0.0.3-10.0.17.42",
-	} {
-		inner = append(inner, inet.MustBlock(s))
-	}
-
-	outer := inet.FindOuterCIDR(inner)
-	fmt.Printf("%v\n", outer)
-
-	// Output:
-	// 10.0.0.0/8
-
-}
-
-func ExampleFindOuterCIDR_v6() {
-	inner := []inet.Block{}
-	for _, s := range []string{
-		"fe00::/10",
-		"fe80::/10",
-	} {
-		inner = append(inner, inet.MustBlock(s))
-	}
-
-	outer := inet.FindOuterCIDR(inner)
-	fmt.Printf("%v\n", outer)
-
-	// Output:
-	// fe00::/8
-
-}
-
 func ExampleBlock_Version() {
 	for _, s := range []string{
 		"10.0.0.1/8",

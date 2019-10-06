@@ -343,41 +343,6 @@ func (a Block) SplitCIDR(n int) []Block {
 	return cidrs
 }
 
-// FindOuterCIDR returns the next enclosing CIDR (SuperSet) for all the inner CIDRs or ranges together.
-// All blocks must have the same IP version, panics on invalid input.
-func FindOuterCIDR(bs []Block) Block {
-	if len(bs) == 0 {
-		return BlockZero
-	}
-
-	// all blocks must have the same IP version
-	version := bs[0].Version()
-	for _, b := range bs {
-		if b.Version() != version {
-			panic(ErrVersionMismatch)
-		}
-	}
-
-	SortBlock(bs)
-
-	bits := 32
-	if version == 6 {
-		bits = 128
-	}
-
-	lower := bs[0].Base
-	upper := bs[len(bs)-1].Last
-
-	hostSize := Block{Base: lower, Last: upper}.Size()
-	maskSize := bits - hostSize
-
-	mask := setBytes(net.CIDRMask(maskSize, bits))
-	base := baseIP(lower, mask)
-	last := lastIP(base, mask)
-
-	return Block{Base: base, Last: last, Mask: mask}
-}
-
 // FindFreeCIDR returns all free CIDR blocks (of max possible size) within given CIDR, minus the inner CIDR blocks.
 // Panics if inner blocks are no subset of (or not equal to) outer block.
 func (a Block) FindFreeCIDR(bs []Block) []Block {
