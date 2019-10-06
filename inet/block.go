@@ -393,7 +393,7 @@ func (a Block) FindFreeCIDR(bs []Block) []Block {
 	return free
 }
 
-// isDisjunctWithAll is a helper method. Returns true if b is disjunct with any inner block
+// isDisjunctWithAll is a helper method. Returns true if a is disjunct with any inner block
 func (a Block) isDisjunctWithAll(bs []Block) bool {
 	for _, b := range bs {
 		if !a.IsDisjunctWith(b) {
@@ -403,7 +403,7 @@ func (a Block) isDisjunctWithAll(bs []Block) bool {
 	return true
 }
 
-// isSubsetOfAny is a helper method: Returns true if b is subset of any inner block
+// isSubsetOfAny is a helper method: Returns true if a is subset of any inner block
 func (a Block) isSubsetOfAny(bs []Block) bool {
 	for _, b := range bs {
 		if b.Contains(a) {
