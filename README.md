@@ -1,6 +1,6 @@
-## ATTENTION
+## RELASE NOTES
 
-The API is not stable yet!
+The API is now almost stable.
 
 # go-inet
 
