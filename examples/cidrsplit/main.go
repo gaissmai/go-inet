@@ -20,7 +20,7 @@ func init() {
 
 func main() {
 
-	if len(flag.Args()) < 3 || len(flag.Args()) > 4 {
+	if len(flag.Args()) < 2 || len(flag.Args()) > 3 {
 		log.Fatal(fmt.Errorf(usage()))
 	}
 
