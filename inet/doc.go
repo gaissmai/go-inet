@@ -1,7 +1,7 @@
 /*
 Package inet represents IP-addresses and IP-Blocks as comparable types.
 
-IP addresses and blocks can be used as keys in maps, freely copied and fast sorted
+The IP addresses and blocks from this package can be used as keys in maps, freely copied and fast sorted
 without prior conversion from/to IPv4/IPv6.
 A Tree implementation for lookups with longest-prefix-match is included.
 
