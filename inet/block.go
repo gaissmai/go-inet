@@ -10,19 +10,33 @@ import (
 
 // NewBlock parses and returns the input as type Block.
 // The input type may be:
+//
+//   string
+//
 //   net.IPNet
 //  *net.IPNet
-//   string
-// If a begin-end range can be represented as a CIDR, NewBlock() generates the netmask and returns the CIDR.
 //
-// IP addresses are converted to /32 oder /128 blocks
-//  inet.IP
 //   net.IP
 //  *net.IP
 //
-// The hard part parsing string representation is done by net.ParseCIDR().
-// Returns error and BlockZero on invalid input.
+//   inet.IP
 //
+// IP addresses as input are converted to /32 oder /128 blocks
+// If a begin-end range can be represented as a CIDR, NewBlock() generates the netmask
+// and returns the range as CIDR.
+//
+// Example for input strings:
+//
+//  "2001:db8:dead:/38"
+//  "2001:db8::1-2001:db8::ff00:35"
+//
+//  "10.0.0.0/8"
+//  "192.168.2.3-192.168.7.255"
+//
+//  "::"
+//  "127.0.0.1"
+//
+// Returns error and BlockZero on invalid input.
 func NewBlock(i interface{}) (Block, error) {
 	switch v := i.(type) {
 	case string:
