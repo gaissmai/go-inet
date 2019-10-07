@@ -1,12 +1,11 @@
 /*
 Package inet represents IP-addresses and IP-Blocks as comparable types.
-A tree implementation for longest-prefix-match is included.
 
 IP addresses and blocks can be used as keys in maps, freely copied and fast sorted
 without prior conversion from/to IPv4/IPv6.
+A Tree implementation for lookups with longest-prefix-match is included.
 
 Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
-A Tree implementation for lookups with longest-prefix-match is included.
 
 This is a package for system programming, all fields are public for easy and fast serialization without special treatment. Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
 
