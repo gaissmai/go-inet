@@ -93,4 +93,5 @@ $ cidrsplit -t 2001:db8:900::/48 1 2
    └─ 2001:db8:900:e000::/51
 `
 	fmt.Fprint(w, example)
+	os.Exit(1)
 }
