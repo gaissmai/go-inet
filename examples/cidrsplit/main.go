@@ -5,23 +5,26 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gaissmai/go-inet/inet"
 )
 
 var flagPrintTree = flag.Bool("t", false, "print as tree")
-
-func init() {
-	log.SetPrefix("")
-	log.SetFlags(0)
-	flag.Parse()
-}
+var progname string
 
 func main() {
+	progname = filepath.Base(os.Args[0])
+
+	log.SetPrefix(progname + ": ")
+	log.SetFlags(0)
+
+	flag.Usage = usage
+	flag.Parse()
 
 	if len(flag.Args()) < 2 || len(flag.Args()) > 3 {
-		log.Fatal(fmt.Errorf(usage()))
+		usage()
 	}
 
 	// get and check CIDR
@@ -67,9 +70,27 @@ func main() {
 	}
 }
 
-func usage() string {
-	return `Usage: cidrsplit [-t] start bits [bits]
+func usage() {
+	w := flag.CommandLine.Output()
+	fmt.Fprintf(w, "Usage of %s:\n\n", progname)
+	fmt.Fprintf(w, "$ %s [-t] start bits [bits]\n\n", progname)
+	flag.PrintDefaults()
 
-e.g.  $ cidrsplit 2001:db8:900::/48 4 3
+	example := `
+example:
+
+$ cidrsplit -t 2001:db8:900::/48 1 2
+▼
+├─ 2001:db8:900::/49
+│  ├─ 2001:db8:900::/51
+│  ├─ 2001:db8:900:2000::/51
+│  ├─ 2001:db8:900:4000::/51
+│  └─ 2001:db8:900:6000::/51
+└─ 2001:db8:900:8000::/49
+   ├─ 2001:db8:900:8000::/51
+   ├─ 2001:db8:900:a000::/51
+   ├─ 2001:db8:900:c000::/51
+   └─ 2001:db8:900:e000::/51
 `
+	fmt.Fprint(w, example)
 }
