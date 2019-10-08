@@ -198,9 +198,9 @@ func ExampleBlock_Size() {
 		"2001:db8::1-2001:db8::ffec",
 	} {
 		a := inet.MustBlock(s)
-		fmt.Printf("%-30v size min. %d bits\n", a, a.Size())
+		fmt.Printf("%-30v size min. %d bits\n", a, a.BitLen())
 
-		if a.Size() < 21 {
+		if a.BitLen() < 21 {
 			fmt.Printf("%-30v len %s IPs\n", a, a.Len())
 		}
 	}

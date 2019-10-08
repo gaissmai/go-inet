@@ -239,8 +239,8 @@ func (a Block) Version() int {
 	return a.Base.Version()
 }
 
-// Size returns the minimum size in bits to represent the block.
-func (a Block) Size() int {
+// BitLen returns the minimum size in bits to represent the block.
+func (a Block) BitLen() int {
 	// algorithm: use math.big.BitLen(lastIP-baseIP)
 	ip := a.Last
 	ip = ip.SubBytes(a.Base.Bytes())
@@ -447,7 +447,7 @@ func (a Block) getMask() IP {
 	}
 
 	// bits for hostmask
-	size := a.Size()
+	size := a.BitLen()
 
 	// netmask is inverse of hostmask, bits-size
 	mask := setBytes(net.CIDRMask(bits-size, bits))
@@ -486,7 +486,7 @@ func (a Block) BlockToCIDRList() []Block {
 
 	// stop condition, cursor > end
 	for cursor.Compare(end) <= 0 {
-		size := Block{Base: cursor, Last: end}.Size()
+		size := Block{Base: cursor, Last: end}.BitLen()
 		mask := setBytes(net.CIDRMask(bits-size, bits))
 
 		// find matching size/mask at cursor position
