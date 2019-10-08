@@ -247,6 +247,17 @@ func (a Block) Size() int {
 	return new(big.Int).SetBytes(ip.Bytes()).BitLen()
 }
 
+// Len returns the number of ip addresses as string.
+// Returns a string, since the amount of ip addresses can be greater than uint64.
+func (a Block) Len() string {
+	// algorithm: use math.big.String(lastIP-baseIP+1)
+	one := new(big.Int).SetInt64(1)
+	base := new(big.Int).SetBytes(a.Base.Bytes())
+	last := new(big.Int).SetBytes(a.Last.Bytes())
+	diff := new(big.Int).Sub(last, base)
+	return diff.Add(diff, one).String()
+}
+
 // IsDisjunctWith reports whether the Blocks a and b are disjunct
 //  a       |----------|
 //  b |---|

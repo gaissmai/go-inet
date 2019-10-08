@@ -192,21 +192,27 @@ func ExampleBlock_Compare() {
 
 func ExampleBlock_Size() {
 	for _, s := range []string{
-		"0.0.0.0/0",
+		"0.0.0.0/12",
 		"::/0",
 		"10.0.0.0-10.0.0.43",
-		"2001:db8::-2001:c201::fe:ff",
+		"2001:db8::1-2001:db8::ffec",
 	} {
 		a := inet.MustBlock(s)
-		i := a.Size()
-		fmt.Printf("size of %-30v = %3d\n", a, i)
+		fmt.Printf("%-30v size min. %d bits\n", a, a.Size())
+
+		if a.Size() < 21 {
+			fmt.Printf("%-30v len %s IPs\n", a, a.Len())
+		}
 	}
 
 	// Output:
-	// size of 0.0.0.0/0                      =  32
-	// size of ::/0                           = 128
-	// size of 10.0.0.0-10.0.0.43             =   6
-	// size of 2001:db8::-2001:c201::fe:ff    = 112
+	// 0.0.0.0/12                     size min. 20 bits
+	// 0.0.0.0/12                     len 1048576 IPs
+	// ::/0                           size min. 128 bits
+	// 10.0.0.0-10.0.0.43             size min. 6 bits
+	// 10.0.0.0-10.0.0.43             len 44 IPs
+	// 2001:db8::1-2001:db8::ffec     size min. 16 bits
+	// 2001:db8::1-2001:db8::ffec     len 65516 IPs
 
 }
 
