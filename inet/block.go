@@ -239,7 +239,7 @@ func (a Block) Version() int {
 	return a.Base.Version()
 }
 
-// BitLen returns the minimum size in bits to represent the block.
+// BitLen returns the minimum number of bits to represent the block.
 func (a Block) BitLen() int {
 	// algorithm: use math.big.BitLen(lastIP-baseIP)
 	ip := a.Last
@@ -247,14 +247,13 @@ func (a Block) BitLen() int {
 	return new(big.Int).SetBytes(ip.Bytes()).BitLen()
 }
 
-// Len returns the number of ip addresses as string.
+// Size returns the number of ip addresses as string.
 // Returns a string, since the amount of ip addresses can be greater than uint64.
-func (a Block) Len() string {
+func (a Block) Size() string {
 	// algorithm: use math.big.String(lastIP-baseIP+1)
+	ip := a.Last
+	diff := new(big.Int).SetBytes(ip.SubBytes(a.Base.Bytes()).Bytes())
 	one := new(big.Int).SetInt64(1)
-	base := new(big.Int).SetBytes(a.Base.Bytes())
-	last := new(big.Int).SetBytes(a.Last.Bytes())
-	diff := new(big.Int).Sub(last, base)
 	return diff.Add(diff, one).String()
 }
 
@@ -368,7 +367,8 @@ func (a Block) SplitCIDR(n int) []Block {
 	return cidrs
 }
 
-// FindFreeCIDR returns all free CIDR blocks (of max possible size) within given CIDR, minus the inner CIDR blocks.
+// FindFreeCIDR returns all free CIDR blocks (of max possible bitlen) within given CIDR,
+// minus the inner CIDR blocks.
 // Panics if inner blocks are no subset of (or not equal to) outer block.
 func (a Block) FindFreeCIDR(bs []Block) []Block {
 	for _, i := range bs {
@@ -447,10 +447,10 @@ func (a Block) getMask() IP {
 	}
 
 	// bits for hostmask
-	size := a.BitLen()
+	bitlen := a.BitLen()
 
-	// netmask is inverse of hostmask, bits-size
-	mask := setBytes(net.CIDRMask(bits-size, bits))
+	// netmask is inverse of hostmask, bits-bitlen
+	mask := setBytes(net.CIDRMask(bits-bitlen, bits))
 
 	// if last equals generated last with base and mask
 	base := baseIP(a.Base, mask)
@@ -486,23 +486,23 @@ func (a Block) BlockToCIDRList() []Block {
 
 	// stop condition, cursor > end
 	for cursor.Compare(end) <= 0 {
-		size := Block{Base: cursor, Last: end}.BitLen()
-		mask := setBytes(net.CIDRMask(bits-size, bits))
+		bitlen := Block{Base: cursor, Last: end}.BitLen()
+		mask := setBytes(net.CIDRMask(bits-bitlen, bits))
 
-		// find matching size/mask at cursor position
-		for size > 0 {
+		// find matching bitlen/mask at cursor position
+		for bitlen > 0 {
 			s := baseIP(cursor, mask) // try start
 			l := lastIP(cursor, mask) // try last
 
-			// size is ok, if s = (cursor & mask) is still equal to cursor
+			// bitlen is ok, if s = (cursor & mask) is still equal to cursor
 			// and the new calculated last is still <= a.Last
 			if s.Compare(cursor) == 0 && l.Compare(end) <= 0 {
 				break
 			}
 
-			// nope, no success, reduce size and try again
-			size--
-			mask = setBytes(net.CIDRMask(bits-size, bits))
+			// nope, no success, reduce bitlen and try again
+			bitlen--
+			mask = setBytes(net.CIDRMask(bits-bitlen, bits))
 		}
 
 		base := baseIP(cursor, mask)

@@ -67,10 +67,13 @@ func printBlockInfo(block inet.Block) {
 		fmt.Printf("%-10s %v\n", "Mask:", block.Mask)
 	}
 	fmt.Printf("%-10s %v-%v\n", "Range:", block.Base, block.Last)
-	if block.Size() != 1 {
-		fmt.Printf("%-10s %v bits\n", "Size:", block.Size())
+	if block.BitLen() != 1 {
+		fmt.Printf("%-10s %v bits\n", "Bits:", block.BitLen())
 	} else {
-		fmt.Printf("%-10s 1 bit\n", "Size:")
+		fmt.Printf("%-10s 1 bit\n", "Bits:")
+	}
+	if block.BitLen() < 21 {
+		fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
 	}
 }
 
@@ -79,14 +82,15 @@ func usage() {
 	fmt.Fprintf(w, "Usage of %s:\n\n", progname)
 	fmt.Fprintf(w, "$ %s ip_or_block\n\n", progname)
 	fmt.Fprint(w, "example:\n")
-	fmt.Fprintf(w, "$ %s %s\n", progname, "2001:db8::/32")
+	fmt.Fprintf(w, "$ %s %s\n", progname, "2001:db8:c::/116")
 
 	output := `
 Version:   6
-Prefix:    2001:db8::/32
-Mask:      ffff:ffff::
-Range:     2001:db8::-2001:db8:ffff:ffff:ffff:ffff:ffff:ffff
-Size:      96 bits
+Prefix:    2001:db8:c::/116
+Mask:      ffff:ffff:ffff:ffff:ffff:ffff:ffff:f000
+Range:     2001:db8:c::-2001:db8:c::fff
+Bits:      12 bits
+Size:      4096 addrs
 `
 	fmt.Fprint(w, output)
 	os.Exit(1)
