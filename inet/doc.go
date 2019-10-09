@@ -32,8 +32,8 @@ A Block is represented as a struct of three IP addresses:
   Mask IP  // may be zero for begin-end ranges
  }
 
-Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
-It is NOT a radix-tree, this isn't possible for general blocks not represented by bitmasks.
+Tree is an implementation of a CIDR/Block prefix tree for fast IP lookup with longest-prefix-match.
+It is NOT a standard patricia-trie, this isn't possible for general blocks not represented by bitmasks.
 
  type Tree struct {
   // Contains the root node the tree.

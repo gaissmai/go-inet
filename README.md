@@ -46,7 +46,7 @@ Blocks are represented as a struct of three IP addresses:
 ```
 
 Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
-It is *NOT* a radix-tree, not possible for general IP blocks not represented by bitmasks.
+It is *NOT* a standard patricia-trie, this isn't possible for general blocks not represented by bitmasks.
 
 ```go
   type Tree struct {
