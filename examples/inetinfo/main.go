@@ -67,14 +67,8 @@ func printBlockInfo(block inet.Block) {
 		fmt.Printf("%-10s %v\n", "Mask:", block.Mask)
 	}
 	fmt.Printf("%-10s %v-%v\n", "Range:", block.Base, block.Last)
-	if block.BitLen() != 1 {
-		fmt.Printf("%-10s %v bits\n", "Bits:", block.BitLen())
-	} else {
-		fmt.Printf("%-10s 1 bit\n", "Bits:")
-	}
-	if block.BitLen() < 21 {
-		fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
-	}
+	fmt.Printf("%-10s %v bits\n", "Bits:", block.BitLen())
+	fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
 }
 
 func usage() {

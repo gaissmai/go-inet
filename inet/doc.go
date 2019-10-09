@@ -51,10 +51,10 @@ Node, recursive tree data structure. Items abstracted via Itemer interface
 Itemer interface for Tree items, maybe with payload and not just ip Blocks.
 See relation between Compare and Contains at inet.Block.Compare()
  type Itemer interface {
-  
+
   // Contains, defines the depth in the tree, parent child relationship.
   Contains(Itemer) bool
-  
+
   // Compare, defines equality and sort order on same tree level, siblings relationship.
   Compare(Itemer) int
  }
