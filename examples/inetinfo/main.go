@@ -65,10 +65,14 @@ func printBlockInfo(block inet.Block) {
 	if block.Mask != inet.IPZero {
 		fmt.Printf("%-10s %v\n", "Prefix:", block)
 		fmt.Printf("%-10s %v\n", "Mask:", block.Mask)
+		fmt.Printf("%-10s %v\n", "Wildcard:", hostmask(block.Mask))
+		fmt.Printf("%-10s %v bits\n", "Bits:", block.BitLen())
+		fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
+	} else {
+		fmt.Printf("%-10s %v-%v\n", "Range:", block.Base, block.Last)
+		fmt.Printf("%-10s %v bits (min)\n", "Bits:", block.BitLen())
+		fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
 	}
-	fmt.Printf("%-10s %v-%v\n", "Range:", block.Base, block.Last)
-	fmt.Printf("%-10s %v bits\n", "Bits:", block.BitLen())
-	fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
 }
 
 func usage() {
@@ -88,4 +92,13 @@ Size:      4096 addrs
 `
 	fmt.Fprint(w, output)
 	os.Exit(1)
+}
+
+func hostmask(netmask inet.IP) inet.IP {
+	nm := netmask.Bytes()
+	hostmask := make([]byte, len(nm))
+	for i := range nm {
+		hostmask[i] = ^nm[i]
+	}
+	return inet.MustIP(hostmask)
 }
