@@ -86,7 +86,7 @@ func usage() {
 Version:   6
 Prefix:    2001:db8:c::/116
 Mask:      ffff:ffff:ffff:ffff:ffff:ffff:ffff:f000
-Range:     2001:db8:c::-2001:db8:c::fff
+Wildcard:  ::fff
 Bits:      12 bits
 Size:      4096 addrs
 `
