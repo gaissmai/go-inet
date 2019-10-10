@@ -11,7 +11,7 @@ import (
 func NewTree() Tree {
 	return Tree{
 		Root: &Node{
-			Item:   nil, // multi-root tree has no payload in root-item slot
+			Item:   nil, // tree has no payload in root-item slot
 			Parent: nil, // parent of root-node is always nil
 			Childs: nil, // here we start to insert items
 		},
