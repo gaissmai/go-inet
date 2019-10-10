@@ -138,7 +138,7 @@ func TestTreeWalk(t *testing.T) {
 }
 
 func TestTreeInsertDup(t *testing.T) {
-	r1, _ := NewBlock("0.0.0.0/0")
+	r1, _ := ParseBlock("0.0.0.0/0")
 
 	tree := NewTree()
 	tree.Insert(r1)
@@ -156,8 +156,8 @@ func TestTreeInsertDup(t *testing.T) {
 }
 
 func TestTreeMultiRoot(t *testing.T) {
-	r1, _ := NewBlock("0.0.0.0/0")
-	r2, _ := NewBlock("::/0")
+	r1, _ := ParseBlock("0.0.0.0/0")
+	r2, _ := ParseBlock("::/0")
 
 	tree := NewTree()
 	tree.Insert(r1)

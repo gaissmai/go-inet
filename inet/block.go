@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// NewBlock parses and returns the input as type Block.
+// ParseBlock parses and returns the input as type Block.
 // The input type may be:
 //
 //   string
@@ -22,7 +22,7 @@ import (
 //   inet.IP
 //
 // IP addresses as input are converted to /32 oder /128 blocks
-// If a begin-end range can be represented as a CIDR, NewBlock() generates the netmask
+// If a begin-end range can be represented as a CIDR, ParseBlock() generates the netmask
 // and returns the range as CIDR.
 //
 // Example for input strings:
@@ -37,7 +37,7 @@ import (
 //  "127.0.0.1"
 //
 // Returns error and BlockZero on invalid input.
-func NewBlock(i interface{}) (Block, error) {
+func ParseBlock(i interface{}) (Block, error) {
 	switch v := i.(type) {
 	case string:
 		return blockFromString(v)
@@ -70,10 +70,10 @@ func NewBlock(i interface{}) (Block, error) {
 	}
 }
 
-// MustBlock is a helper that calls NewBlock and returns just inet.Block or panics on errr.
+// MustBlock is a helper that calls ParseBlock and returns just inet.Block or panics on errr.
 // It is intended for use in variable initializations.
 func MustBlock(i interface{}) Block {
-	b, err := NewBlock(i)
+	b, err := ParseBlock(i)
 	if err != nil {
 		panic(err)
 	}
@@ -175,12 +175,12 @@ func newBlockFromRange(s string, i int) (Block, error) {
 	// split string
 	base, last := s[:i], s[i+1:]
 
-	baseIP, err := NewIP(base)
+	baseIP, err := ParseIP(base)
 	if err != nil {
 		return BlockZero, ErrInvalidBlock
 	}
 
-	lastIP, err := NewIP(last)
+	lastIP, err := ParseIP(last)
 	if err != nil {
 		return BlockZero, ErrInvalidBlock
 	}

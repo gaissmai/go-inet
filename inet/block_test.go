@@ -19,7 +19,7 @@ func TestString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		r, _ := NewBlock(tt.in)
+		r, _ := ParseBlock(tt.in)
 		got := r.String()
 		if got != tt.want {
 			t.Errorf("Block(%q).String() != %v, got %v", tt.in, tt.want, got)
@@ -27,7 +27,7 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestNewBlockFail(t *testing.T) {
+func TestParseBlockFail(t *testing.T) {
 	tests := []string{
 		"-10.0.0.0",
 		"/32",
@@ -45,10 +45,10 @@ func TestNewBlockFail(t *testing.T) {
 	}
 
 	for _, in := range tests {
-		_, err := NewBlock(in)
+		_, err := ParseBlock(in)
 
 		if err == nil {
-			t.Errorf("success for NewBlock(%s) is not expected!", in)
+			t.Errorf("success for ParseBlock(%s) is not expected!", in)
 		}
 	}
 }
@@ -396,7 +396,7 @@ func TestFindFreeCIDRBlockSelf(t *testing.T) {
 }
 
 func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
-	b, _ := NewBlock("::/0")
+	b, _ := ParseBlock("::/0")
 
 	var inner []Block
 	for _, s := range []string{
@@ -440,7 +440,7 @@ func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
 }
 
 func TestBlockToCIDRListV4(t *testing.T) {
-	b, _ := NewBlock("10.0.0.15-10.0.0.236")
+	b, _ := ParseBlock("10.0.0.15-10.0.0.236")
 	got := b.BlockToCIDRList()
 
 	var want []Block
@@ -464,7 +464,7 @@ func TestBlockToCIDRListV4(t *testing.T) {
 }
 
 func TestBlockToCIDRListV6(t *testing.T) {
-	b, _ := NewBlock("2001:db9::1-2001:db9::1234")
+	b, _ := ParseBlock("2001:db9::1-2001:db9::1234")
 	got := b.BlockToCIDRList()
 
 	var want []Block

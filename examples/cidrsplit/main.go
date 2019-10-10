@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// get and check CIDR
-	startCidr, err := inet.NewBlock(flag.Args()[0])
+	startCidr, err := inet.ParseBlock(flag.Args()[0])
 	if err != nil {
 		log.Fatal(err)
 	}

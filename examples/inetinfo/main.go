@@ -28,13 +28,13 @@ func main() {
 		usage()
 	}
 
-	ip, errIP := inet.NewIP(arg)
+	ip, errIP := inet.ParseIP(arg)
 	if errIP == nil {
 		printIPInfo(ip)
 		os.Exit(0)
 	}
 
-	block, errBlock := inet.NewBlock(arg)
+	block, errBlock := inet.ParseBlock(arg)
 	if errBlock == nil {
 		printBlockInfo(block)
 		os.Exit(0)

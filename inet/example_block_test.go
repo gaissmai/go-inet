@@ -7,7 +7,7 @@ import (
 	"github.com/gaissmai/go-inet/inet"
 )
 
-func ExampleNewBlock() {
+func ExampleParseBlock() {
 	for _, anyOf := range []interface{}{
 		"fe80::1-fe80::2",         // block from string
 		"10.0.0.0-11.255.255.255", // block from string, as range but true CIDR, see output
@@ -18,7 +18,7 @@ func ExampleNewBlock() {
 		net.IPNet{IP: net.IP{127, 0, 0, 0}, Mask: net.IPMask{255, 0, 0, 0}},  // block from net.IPNet
 		&net.IPNet{IP: net.IP{127, 0, 0, 0}, Mask: net.IPMask{255, 0, 0, 0}}, // block from *net.IPNet
 	} {
-		a, _ := inet.NewBlock(anyOf)
+		a, _ := inet.ParseBlock(anyOf)
 		fmt.Printf("block: %v\n", a)
 	}
 
@@ -111,7 +111,7 @@ func ExampleBlock_Version() {
 		"fe80::/10",
 		"::-::1",
 	} {
-		a, _ := inet.NewBlock(s)
+		a, _ := inet.ParseBlock(s)
 		fmt.Println(a.Version())
 	}
 
@@ -128,7 +128,7 @@ func ExampleBlock_MarshalText() {
 		"10.0.0.0-10.1.0.0",
 		"",
 	} {
-		a, _ := inet.NewBlock(s)
+		a, _ := inet.ParseBlock(s)
 		bs, _ := a.MarshalText()
 		fmt.Printf("%-20v %-20q %v\n", string(bs), string(bs), bs)
 	}

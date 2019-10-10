@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-// NewIP parses and returns the input as type IP.
+// ParseIP parses and returns the input as type IP.
 // The input type may be:
 //   string
 //   net.IP
@@ -19,7 +19,7 @@ import (
 //
 // The hard part is done by net.ParseIP().
 // Returns IPZero and error on invalid input.
-func NewIP(i interface{}) (IP, error) {
+func ParseIP(i interface{}) (IP, error) {
 	switch v := i.(type) {
 	case string:
 		return ipFromString(v)
@@ -34,10 +34,10 @@ func NewIP(i interface{}) (IP, error) {
 	}
 }
 
-// MustIP is a helper that calls NewIP and returns just inet.IP or panics on errr.
+// MustIP is a helper that calls ParseIP and returns just inet.IP or panics on errr.
 // It is intended for use in variable initializations.
 func MustIP(i interface{}) IP {
-	ip, err := NewIP(i)
+	ip, err := ParseIP(i)
 	if err != nil {
 		panic(err)
 	}

@@ -11,7 +11,7 @@ func TestMustIP(t *testing.T) {
 	MustIP(net.IP([]byte{1, 2, 3, 4}))
 	netIP := net.IP([]byte{1, 2, 3, 4})
 	MustIP(&netIP)
-	_, _ = NewIP(net.IP(nil))
+	_, _ = ParseIP(net.IP(nil))
 }
 
 func TestPanic(t *testing.T) {

@@ -31,7 +31,7 @@ func (ip IP) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface.
-// The IP address is expected in a form accepted by NewIP(string).
+// The IP address is expected in a form accepted by ParseIP(string).
 func (ip *IP) UnmarshalText(text []byte) error {
 	s := string(text)
 	if len(s) == 0 { // this is no error condition
@@ -79,7 +79,7 @@ func (a Block) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface.
-// The block is expected in a form accepted by NewBlock.
+// The block is expected in a form accepted by ParseBlock.
 func (a *Block) UnmarshalText(text []byte) error {
 	s := string(text)
 	if len(s) == 0 { // this is no error condition

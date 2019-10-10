@@ -7,7 +7,7 @@ import (
 	"github.com/gaissmai/go-inet/inet"
 )
 
-func ExampleNewIP() {
+func ExampleParseIP() {
 	for _, anyOf := range []interface{}{
 		"2001:db8::",         // string
 		net.IP{10, 0, 0, 1},  // net.IP
@@ -15,7 +15,7 @@ func ExampleNewIP() {
 		&net.IP{0: 0x20, 1: 0x01, 2: 0x0d, 3: 0xb9, 15: 0x01}, // *net.IP, IPv6
 		[]byte{0: 0xff, 1: 0xfe, 15: 0x01},                    // []byte, IPv6
 	} {
-		ip, _ := inet.NewIP(anyOf)
+		ip, _ := inet.ParseIP(anyOf)
 		fmt.Printf("ip: %v\n", ip)
 	}
 
