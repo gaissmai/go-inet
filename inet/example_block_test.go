@@ -232,7 +232,7 @@ func ExampleBlock_BlockToCIDRList() {
 }
 
 func ExampleAggregate() {
-	bs := []inet.Block{}
+	var bs []inet.Block
 	for _, s := range []string{
 		"10.0.0.0/32",
 		"10.0.0.1/32",

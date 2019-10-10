@@ -52,3 +52,23 @@ func TestIP_IsValid(t *testing.T) {
 		t.Errorf("ipv6.IsValid() returns true, want false")
 	}
 }
+
+func TestIP_MarshalUnmarshalIPZero(t *testing.T) {
+	text, err := IPZero.MarshalText()
+	if err != nil {
+		t.Errorf("marshal IPZero has error: %v", err)
+	}
+	if string(text) != "" {
+		t.Errorf("marshal IPZero isn't \"\"")
+	}
+
+	got := new(IP)
+	err = got.UnmarshalText(text)
+	if err != nil {
+		t.Errorf("unmarshal []byte has error: %v", err)
+	}
+
+	if *got != IPZero {
+		t.Errorf("marshal/unmarshal IPZero isn't idempotent")
+	}
+}

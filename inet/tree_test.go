@@ -10,7 +10,8 @@ func TestTreeLookupMissing(t *testing.T) {
 	s1 := MustBlock("0.0.0.0/0")
 	s2 := MustBlock("2001:db8::/32")
 
-	tree := NewTree().Insert(s1)
+	tree := NewTree()
+	tree.Insert(s1)
 
 	_, ok := tree.Lookup(s2)
 	if ok {
@@ -21,7 +22,8 @@ func TestTreeLookupMissing(t *testing.T) {
 func TestTreeLookup(t *testing.T) {
 	s1 := MustBlock("0.0.0.0/0")
 
-	tree := NewTree().Insert(s1)
+	tree := NewTree()
+	tree.Insert(s1)
 
 	got, ok := tree.Lookup(s1)
 	if !ok {

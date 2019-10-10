@@ -120,13 +120,13 @@ func (ip IP) IsValid() bool {
 
 	// bytes [5:] must be 0
 	if v == 4 {
-		mask := [16]byte{}
+		var mask [16]byte
 		return bytes.Equal(ip[5:], mask[:])
 	}
 
 	// bytes [1:5] must be 0
 	if v == 6 {
-		mask := [4]byte{}
+		var mask [4]byte
 		return bytes.Equal(ip[1:5], mask[:])
 	}
 
@@ -271,8 +271,8 @@ func (ip IP) AddBytes(bs []byte) IP {
 	// get the IP address as []byte slice
 	ipAsBytes := ip.Bytes()
 
-	var y = new(big.Int).SetBytes(bs)
-	var z = new(big.Int).SetBytes(ipAsBytes)
+	y := new(big.Int).SetBytes(bs)
+	z := new(big.Int).SetBytes(ipAsBytes)
 
 	z.Add(z, y)
 
@@ -308,13 +308,13 @@ func (ip IP) SubBytes(bs []byte) IP {
 	// get the IP address as []byte slice
 	ipAsBytes := ip.Bytes()
 
-	var y = new(big.Int).SetBytes(bs)
-	var z = new(big.Int).SetBytes(ipAsBytes)
+	y := new(big.Int).SetBytes(bs)
+	z := new(big.Int).SetBytes(ipAsBytes)
 
 	z.Sub(z, y)
 
 	// underflow?
-	var bigZero = new(big.Int)
+	bigZero := new(big.Int)
 	if z.Cmp(bigZero) == -1 {
 		panic(ErrUnderflow)
 	}

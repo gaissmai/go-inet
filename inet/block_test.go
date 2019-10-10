@@ -331,7 +331,7 @@ func TestSplitBlockZero(t *testing.T) {
 }
 
 func TestSplitMaskZero(t *testing.T) {
-	r := Block{}
+	var r Block
 	r.Base[0] = 4
 	r.Last[0] = 4
 
@@ -398,7 +398,7 @@ func TestFindFreeCIDRBlockSelf(t *testing.T) {
 func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
 	b, _ := NewBlock("::/0")
 
-	inner := []Block{}
+	var inner []Block
 	for _, s := range []string{
 		"0000::/8",
 		"0100::/8",
@@ -424,7 +424,7 @@ func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
 		inner = append(inner, MustBlock(s))
 	}
 
-	want := []Block{}
+	var want []Block
 	for _, s := range []string{
 		"6000::/3",
 		"fc00::/7",
@@ -443,7 +443,7 @@ func TestBlockToCIDRListV4(t *testing.T) {
 	b, _ := NewBlock("10.0.0.15-10.0.0.236")
 	got := b.BlockToCIDRList()
 
-	want := []Block{}
+	var want []Block
 	for _, s := range []string{
 		"10.0.0.15/32",
 		"10.0.0.16/28",
@@ -467,7 +467,7 @@ func TestBlockToCIDRListV6(t *testing.T) {
 	b, _ := NewBlock("2001:db9::1-2001:db9::1234")
 	got := b.BlockToCIDRList()
 
-	want := []Block{}
+	var want []Block
 	for _, s := range []string{
 		"2001:db9::1/128",
 		"2001:db9::2/127",

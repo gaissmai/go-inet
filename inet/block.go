@@ -83,7 +83,7 @@ func MustBlock(i interface{}) Block {
 // blockFromNetIPNet converts from stdlib net.IPNet to ip.Block representation.
 func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
 	var err error
-	var a = BlockZero
+	a := BlockZero
 
 	a.Base, err = ipFromNetIP(ipnet.IP)
 	if err != nil {
