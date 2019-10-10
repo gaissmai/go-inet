@@ -14,9 +14,6 @@ func ExampleParseBlock() {
 
 		net.IP{192, 168, 0, 0},         // IP from net.IP
 		inet.MustIP("2001:db8:900::1"), // IP from inet.IP
-
-		net.IPNet{IP: net.IP{127, 0, 0, 0}, Mask: net.IPMask{255, 0, 0, 0}},  // block from net.IPNet
-		&net.IPNet{IP: net.IP{127, 0, 0, 0}, Mask: net.IPMask{255, 0, 0, 0}}, // block from *net.IPNet
 	} {
 		a, _ := inet.ParseBlock(anyOf)
 		fmt.Printf("block: %v\n", a)
@@ -27,8 +24,6 @@ func ExampleParseBlock() {
 	// block: 10.0.0.0/7
 	// block: 192.168.0.0/32
 	// block: 2001:db8:900::1/128
-	// block: 127.0.0.0/8
-	// block: 127.0.0.0/8
 
 }
 

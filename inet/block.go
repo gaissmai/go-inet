@@ -21,21 +21,18 @@ import (
 //
 //   inet.IP
 //
-// IP addresses as input are converted to /32 oder /128 blocks
+// Example for valid input strings:
+//
+//  "2001:db8:dead:/38"
+//  "10.0.0.0/8"
+//
+//  "2001:db8::1-2001:db8::ff00:35"
+//  "192.168.2.3-192.168.7.255"
+//
 // If a begin-end range can be represented as a CIDR, ParseBlock() generates the netmask
 // and returns the range as CIDR.
 //
-// Example for input strings:
-//
-//  "2001:db8:dead:/38"
-//  "2001:db8::1-2001:db8::ff00:35"
-//
-//  "10.0.0.0/8"
-//  "192.168.2.3-192.168.7.255"
-//
-//  "::"
-//  "127.0.0.1"
-//
+// IP addresses in the form of net.IP or inet.IP as input are converted to /32 or /128 blocks
 // Returns error and BlockZero on invalid input.
 func ParseBlock(i interface{}) (Block, error) {
 	switch v := i.(type) {
