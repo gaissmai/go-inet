@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gaissmai/go-inet/inet"
+	"github.com/gaissmai/go-inet/tree"
 )
 
 var flagPrintTree = flag.Bool("t", false, "print as tree")
@@ -56,7 +57,7 @@ func main() {
 	}
 
 	if *flagPrintTree {
-		tree := inet.NewTree()
+		tree := tree.New()
 		tree.InsertBulk(firstCidrs)
 		tree.InsertBulk(secondCidrs)
 		tree.Fprint(os.Stdout)

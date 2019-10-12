@@ -101,7 +101,7 @@ func (a *Block) UnmarshalText(text []byte) error {
 //
 //  a   |------------|    |------------|           |------------|
 //  b |-----------------| |-----------------| |-----------------|
-func (a Block) Contains(b Itemer) bool {
+func (a Block) Contains(b interface{}) bool {
 	c, ok := b.(Block)
 	if !ok {
 		panic(fmt.Errorf("incompatible types: %T != %T", a, b))
@@ -125,7 +125,7 @@ func (a Block) Contains(b Itemer) bool {
 //
 //  -1 if a.Base == b.Base and a is SuperSet of b
 //  +1 if a.Base == b.Base and a is Subset of b
-func (a Block) Compare(b Itemer) int {
+func (a Block) Compare(b interface{}) int {
 	c, ok := b.(Block)
 	if !ok {
 		panic(fmt.Errorf("incompatible types: %T != %T", a, b))

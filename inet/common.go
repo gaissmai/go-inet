@@ -47,10 +47,10 @@ type (
 	Itemer interface {
 
 		// Contains, defines the depth in the tree, parent child relationship.
-		Contains(Itemer) bool
+		Contains(interface{}) bool
 
 		// Compare, defines equality and sort order on same tree level, siblings relationship.
-		Compare(Itemer) int
+		Compare(interface{}) int
 	}
 )
 
