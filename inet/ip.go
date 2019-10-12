@@ -4,11 +4,35 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"math/big"
 	"net"
 	"sort"
 	"strconv"
 )
+
+var (
+	ErrInvalidIP       = errors.New("invalid IP")
+	ErrVersionMismatch = errors.New("IPv4/IPv6 version mismatch")
+	ErrOverflow        = errors.New("overflow")
+	ErrUnderflow       = errors.New("underflow")
+)
+
+// IP represents a single IPv4 or IPv6 address in a fixed array of 21 bytes.
+//
+//  IP[0]    = version information (4 or 6)
+//  IP[1:5]  = IPv4 address, if version == 4, else zero
+//  IP[5:21] = IPv6 address, if version == 6, else zero
+//
+// This IP representation is comparable and can be used as key in maps
+// and fast sorted by bytes.Compare() without conversions to/from the different IP versions.
+type IP [21]byte
+
+// IPZero is the zero-value for type IP.
+//
+// IP is represented as an array, so we have no nil as zero value.
+// IPZero can be used for that.
+var IPZero = IP{}
 
 // ParseIP parses and returns the input as type IP.
 // The input type may be:

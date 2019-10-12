@@ -57,10 +57,14 @@ func main() {
 	}
 
 	if *flagPrintTree {
-		tree := tree.New()
-		tree.InsertBulk(firstCidrs)
-		tree.InsertBulk(secondCidrs)
-		tree.Fprint(os.Stdout)
+		tr := tree.New()
+		for _, c := range firstCidrs {
+			tr.Insert(tree.Item{c, nil, nil})
+		}
+		for _, c := range secondCidrs {
+			tr.Insert(tree.Item{c, nil, nil})
+		}
+		tr.Fprint(os.Stdout)
 	} else {
 		for _, cidr := range firstCidrs {
 			fmt.Println(cidr)

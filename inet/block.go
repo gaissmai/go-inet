@@ -2,10 +2,45 @@ package inet
 
 import (
 	"bytes"
+	"errors"
 	"math/big"
 	"net"
 	"sort"
 	"strings"
+)
+
+var (
+	ErrInvalidBlock = errors.New("invalid Block")
+)
+
+// Block is an IP-network or IP-range, e.g.
+//
+//  192.168.0.1/24              // network, with CIDR mask
+//  ::1/128                     // network, with CIDR mask
+//  10.0.0.3-10.0.17.134        // range
+//  2001:db8::1-2001:db8::f6    // range
+//
+// This Block representation is comparable and can be used as key in maps
+// and fast sorted without conversions to/from the different IP versions.
+type Block struct {
+	Base IP
+	Last IP
+	Mask IP // IPZero for ranges without CIDR mask
+}
+
+var (
+	// BlockZero is the zero-value for type Block.
+	//
+	// Block is represented as a struct, so we have no nil as zero value.
+	// BlockZero can be used for that.
+	BlockZero = Block{Base: IP{}, Last: IP{}, Mask: IP{}}
+
+	// MaxCIDRSplit limits the input parameter for SplitCIDR() to 20 (max 2^20 CIDRs) for security.
+	MaxCIDRSplit int = 20
+
+	// internal for overflow checks in aggregates
+	ipMaxV4 = IP{4, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	ipMaxV6 = IP{6, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 )
 
 // ParseBlock parses and returns the input as type Block.
