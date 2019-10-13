@@ -25,16 +25,18 @@ type (
 
 	// Item truct or tree items, maybe with payload and not just ip Blocks.
 	Item struct {
-		Block   inet.Block
-		Payload interface{}
-		StrFn   func(inet.Block, interface{}) string
+		Block    inet.Block
+		Payload  interface{}
+		StringFn func(Item) string
 	}
 )
 
+// String implements the Stringer Interface, callbacks to the item sender if StringFn is defined.
 func (i Item) String() string {
-	if i.StrFn != nil {
-		return i.StrFn(i.Block, i.Payload)
+	if i.StringFn != nil {
+		return i.StringFn(i)
 	}
+	// just return the String for inet.Block, no additional payload for string.
 	return i.Block.String()
 }
 

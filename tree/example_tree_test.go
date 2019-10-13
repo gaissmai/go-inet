@@ -2,10 +2,54 @@ package tree_test
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/gaissmai/go-inet/inet"
 	"github.com/gaissmai/go-inet/tree"
 )
+
+func ExampleTree_Insert() {
+
+	StringFn := func(i tree.Item) string {
+		return fmt.Sprintf("%s %s %v", i.Block, ".........", i.Payload)
+	}
+
+	tr := tree.New()
+
+	for _, r := range []tree.Item{
+		tree.Item{inet.MustBlock("0.0.0.0/8"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("1.0.0.0/8"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("::/64"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("5.0.0.0/8"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("0.0.0.0/0"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("10.0.0.0-10.0.0.17"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("::/0"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("2001:7c0:900:1c2::/64"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("2001:7c0:900:1c2::0/127"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("2001:7c0:900:1c2::1/128"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("0.0.0.0/10"), "text as payload", StringFn},
+		// ...
+	} {
+		tr.Insert(r)
+	}
+
+	tr.Fprint(os.Stdout)
+
+	// Output:
+	// ▼
+	// ├─ 0.0.0.0/0 ......... text as payload
+	// │  ├─ 0.0.0.0/8 ......... text as payload
+	// │  │  └─ 0.0.0.0/10 ......... text as payload
+	// │  ├─ 1.0.0.0/8 ......... text as payload
+	// │  ├─ 5.0.0.0/8 ......... text as payload
+	// │  └─ 10.0.0.0-10.0.0.17 ......... text as payload
+	// └─ ::/0 ......... text as payload
+	//    ├─ ::/64 ......... text as payload
+	//    └─ 2001:7c0:900:1c2::/64 ......... text as payload
+	//       └─ 2001:7c0:900:1c2::/127 ......... text as payload
+	//          └─ 2001:7c0:900:1c2::1/128 ......... text as payload
+
+}
 
 func ExampleTree_Lookup() {
 	is := make([]tree.Item, 0)
