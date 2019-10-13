@@ -8,7 +8,7 @@ import (
 )
 
 func ExampleTree_Lookup() {
-	bs := make([]inet.Block, 0)
+	is := make([]tree.Item, 0)
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
@@ -18,25 +18,25 @@ func ExampleTree_Lookup() {
 		"::/0",
 		"0.0.0.0/10",
 	} {
-		bs = append(bs, inet.MustBlock(s))
+		is = append(is, tree.Item{Block: inet.MustBlock(s)})
 	}
 
-	bt := tree.New()
-	bt.InsertBulk(bs)
+	tr := tree.New()
+	tr.InsertBulk(is)
 
-	q := inet.MustBlock(inet.MustIP("5.0.122.12"))
+	q := tree.Item{Block: inet.MustBlock(inet.MustIP("5.0.122.12"))}
 
-	if match, ok := bt.Lookup(q); ok {
-		fmt.Printf("inet.Lookup(%v): LPM found at: %v\n", q, match)
+	if match, ok := tr.Lookup(q); ok {
+		fmt.Printf("tree.Lookup(%v): LPM found at: %v\n", q, match)
 	}
 
 	// Output:
-	// inet.Lookup(5.0.122.12/32): LPM found at: 5.0.0.0/8
+	// tree.Lookup(5.0.122.12/32): LPM found at: 5.0.0.0/8
 
 }
 
 func ExampleTree_Lookup_exists() {
-	bs := make([]inet.Block, 0)
+	is := make([]tree.Item, 0)
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
@@ -46,21 +46,21 @@ func ExampleTree_Lookup_exists() {
 		"::/0",
 		"0.0.0.0/10",
 	} {
-		bs = append(bs, inet.MustBlock(s))
+		is = append(is, tree.Item{Block: inet.MustBlock(s)})
 	}
 
-	bt := tree.New()
-	bt.InsertBulk(bs)
+	tr := tree.New()
+	tr.InsertBulk(is)
 
 	// look for exists, exact match, not just LPM
 	for _, s := range []string{
 		"5.0.0.0/8",
 		"5.0.1.2/32",
 	} {
-		q := inet.MustBlock(s)
+		q := tree.Item{Block: inet.MustBlock(s)}
 
-		match, ok := bt.Lookup(q)
-		if ok && match.Compare(q) == 0 {
+		match, ok := tr.Lookup(q)
+		if ok && match.Block.Compare(q.Block) == 0 {
 			fmt.Printf("%q exists in tree\n", q)
 		} else {
 			fmt.Printf("%q doesn't exists in tree\n", q)
@@ -75,7 +75,7 @@ func ExampleTree_Lookup_exists() {
 
 func ExampleTree_Walk() {
 
-	bs := make([]inet.Block, 0)
+	is := make([]tree.Item, 0)
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
@@ -89,10 +89,10 @@ func ExampleTree_Walk() {
 		"2001:db8:900:1c2::1/128",
 		"0.0.0.0/10",
 	} {
-		bs = append(bs, inet.MustBlock(s))
+		is = append(is, tree.Item{Block: inet.MustBlock(s)})
 	}
 	tr := tree.New()
-	tr.InsertBulk(bs)
+	tr.InsertBulk(is)
 
 	var maxDepth int
 	var maxWidth int

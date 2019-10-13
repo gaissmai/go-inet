@@ -33,16 +33,20 @@ func BenchmarkTreeInsertBulk(b *testing.B) {
 	}
 }
 
-/*
 func BenchmarkLookupTree(b *testing.B) {
 	bench := []int{1000, 10000, 100000}
 
 	for _, n := range bench {
 		bs := genBlockMixed(n)
-		t := tree.New()
-		t.InsertBulk(bs)
+		is := make([]tree.Item, len(bs))
+		for i := range bs {
+			is[i] = tree.Item{bs[i], nil, nil}
+		}
 
-		vx := bs[rand.Intn(len(bs))]
+		t := tree.New()
+		t.InsertBulk(is)
+
+		vx := is[rand.Intn(len(is))]
 		b.Run(fmt.Sprintf("LookupTree: %d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				t.Lookup(vx)
@@ -57,8 +61,13 @@ func BenchmarkWalkTree(b *testing.B) {
 
 	for _, n := range bench {
 		bs := genBlockMixed(n)
+		is := make([]tree.Item, len(bs))
+		for i := range bs {
+			is[i] = tree.Item{bs[i], nil, nil}
+		}
+
 		t := tree.New()
-		t.InsertBulk(bs)
+		t.InsertBulk(is)
 
 		var walkFn tree.WalkFunc = func(n *tree.Node, l int) error { return nil }
 
@@ -76,10 +85,15 @@ func BenchmarkTreeRemoveItem(b *testing.B) {
 
 	for _, n := range bench {
 		bs := genBlockMixed(n)
-		t := tree.New()
-		t.InsertBulk(bs)
+		is := make([]tree.Item, len(bs))
+		for i := range bs {
+			is[i] = tree.Item{bs[i], nil, nil}
+		}
 
-		vx := bs[rand.Intn(len(bs))]
+		t := tree.New()
+		t.InsertBulk(is)
+
+		vx := is[rand.Intn(len(is))]
 		b.Run(fmt.Sprintf("RemoveItem: %d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				t.Remove(vx)
@@ -88,7 +102,6 @@ func BenchmarkTreeRemoveItem(b *testing.B) {
 
 	}
 }
-*/
 
 // #####################################################################
 // ### generators for IPs and CIDRs
