@@ -156,9 +156,22 @@ func ExampleTree_Walk() {
 
 	fmt.Printf("max depth: %v\n", maxDepth)
 	fmt.Printf("max width: %v\n", maxWidth)
+	tr.Fprint(os.Stdout)
 
 	// Output:
 	// max depth: 3
 	// max width: 4
+	// ▼
+	// ├─ 0.0.0.0/0
+	// │  ├─ 0.0.0.0/8
+	// │  │  └─ 0.0.0.0/10
+	// │  ├─ 1.0.0.0/8
+	// │  ├─ 5.0.0.0/8
+	// │  └─ 10.0.0.0-10.0.0.17
+	// └─ ::/0
+	//    ├─ ::/64
+	//    └─ 2001:db8:900:1c2::/64
+	//       └─ 2001:db8:900:1c2::/127
+	//          └─ 2001:db8:900:1c2::1/128
 
 }
