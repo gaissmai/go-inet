@@ -73,7 +73,7 @@ func (t *Tree) MustInsert(items ...Item) {
 // Returns error on duplicate items in the tree.
 func (t *Tree) Insert(items ...Item) error {
 
-	// sort before insert makes insertion much faster, no or less tree-rebalancing needed.
+	// sort before insert makes insertion much faster, no or less parent-child-relinking needed.
 	sort.Slice(items, func(i, j int) bool { return items[i].Block.Compare(items[j].Block) < 0 })
 
 	for i := range items {
