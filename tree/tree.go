@@ -92,8 +92,7 @@ func (n *Node) insert(b Item) error {
 	if i > 0 {
 		c := n.Childs[i-1]
 		if c.Item.Block.Contains(b.Block) {
-			c.insert(b)
-			return nil
+			return c.insert(b)
 		}
 	}
 
@@ -173,7 +172,11 @@ func (n *Node) remove(b Item) bool {
 		var walk func(*Node)
 		walk = func(c *Node) {
 			for _, gc := range c.Childs {
-				n.insert(*gc.Item)
+
+				// no dup error possible, otherwise panic on logic error
+				if err := n.insert(*gc.Item); err != nil {
+					panic(err)
+				}
 				walk(gc)
 			}
 		}

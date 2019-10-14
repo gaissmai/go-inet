@@ -21,7 +21,7 @@ func TestTreeInsertDup(t *testing.T) {
 
 func TestTreeInsertNothing(t *testing.T) {
 	tr := New()
-	tr.Insert()
+	_ = tr.Insert()
 
 	got := new(strings.Builder)
 	tr.Fprint(got)
@@ -38,7 +38,7 @@ func TestTreeLookupMissing(t *testing.T) {
 	s2 := Item{Block: inet.MustBlock("2001:db8::/32")}
 
 	tr := New()
-	tr.Insert(s1)
+	_ = tr.Insert(s1)
 
 	_, ok := tr.Lookup(s2)
 	if ok {
@@ -50,7 +50,7 @@ func TestTreeLookup(t *testing.T) {
 	s1 := Item{Block: inet.MustBlock("0.0.0.0/0")}
 
 	tr := New()
-	tr.Insert(s1)
+	_ = tr.Insert(s1)
 
 	got, ok := tr.Lookup(s1)
 	if !ok {
@@ -75,7 +75,7 @@ func TestTreeLookupLPM(t *testing.T) {
 		"0.0.0.0/10",
 	} {
 		item := Item{inet.MustBlock(s), nil, nil}
-		tr.Insert(item)
+		_ = tr.Insert(item)
 	}
 
 	look := Item{inet.MustBlock(inet.MustIP("0.0.0.0")), nil, nil}
@@ -108,7 +108,7 @@ func TestTreeWalk(t *testing.T) {
 		"0.0.0.0/10",
 	} {
 		item := Item{inet.MustBlock(s), nil, nil}
-		tr.Insert(item)
+		_ = tr.Insert(item)
 	}
 
 	got := new(strings.Builder)
@@ -168,7 +168,7 @@ func TestTreeInsertOne(t *testing.T) {
 	r1 := Item{Block: inet.MustBlock("0.0.0.0/0")}
 
 	tr := New()
-	tr.Insert(r1)
+	_ = tr.Insert(r1)
 
 	got := new(strings.Builder)
 	tr.Fprint(got)
@@ -186,8 +186,8 @@ func TestTreeMultiRoot(t *testing.T) {
 	r2 := Item{inet.MustBlock("::/0"), nil, nil}
 
 	tr := New()
-	tr.Insert(r1)
-	tr.Insert(r2)
+	_ = tr.Insert(r1)
+	_ = tr.Insert(r2)
 
 	got := new(strings.Builder)
 	tr.Fprint(got)
@@ -211,7 +211,7 @@ func TestTreeRemoveEdgeCase(t *testing.T) {
 		"10.0.0.24-10.0.0.35",
 	} {
 		item := Item{inet.MustBlock(s), nil, nil}
-		tr.Insert(item)
+		_ = tr.Insert(item)
 	}
 
 	w1 := new(strings.Builder)
@@ -256,7 +256,7 @@ func TestTreeRemove(t *testing.T) {
 		"0.0.0.0/10",
 	} {
 		item := Item{inet.MustBlock(s),nil,nil}
-		tr.Insert(item)
+		_ = tr.Insert(item)
 	}
 
 	r := Item{inet.MustBlock("3.0.0.0/8"),nil,nil}
@@ -307,7 +307,7 @@ func TestTreeRemoveFalse(t *testing.T) {
 		"5.0.0.0/8",
 	} {
 		item := Item{inet.MustBlock(s),nil,nil}
-		tr.Insert(item)
+		_ = tr.Insert(item)
 	}
 
 	// frist pos in childs
@@ -349,7 +349,7 @@ func TestTreeRemoveInsert(t *testing.T) {
 		"0.0.0.0/10",
 	} {
 		item := Item{inet.MustBlock(s),nil,nil}
-		tr.Insert(item)
+		_ = tr.Insert(item)
 	}
 
 	w1 := new(strings.Builder)
@@ -363,7 +363,7 @@ func TestTreeRemoveInsert(t *testing.T) {
 	w2 := new(strings.Builder)
 	tr.Fprint(w2)
 
-	tr.Insert(r)
+	_ = tr.Insert(r)
 
 	w3 := new(strings.Builder)
 	tr.Fprint(w3)

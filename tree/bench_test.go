@@ -26,7 +26,7 @@ func BenchmarkTreeInsert(b *testing.B) {
 
 		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				t.Insert(is...)
+				_ = t.Insert(is...)
 			}
 		})
 
@@ -44,7 +44,7 @@ func BenchmarkLookupTree(b *testing.B) {
 		}
 
 		t := tree.New()
-		t.Insert(is...)
+		_ = t.Insert(is...)
 
 		vx := is[rand.Intn(len(is))]
 		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
@@ -67,7 +67,7 @@ func BenchmarkWalkTree(b *testing.B) {
 		}
 
 		t := tree.New()
-		t.Insert(is...)
+		_ = t.Insert(is...)
 
 		var walkFn tree.WalkFunc = func(n *tree.Node, l int) error { return nil }
 
@@ -91,7 +91,7 @@ func BenchmarkTreeRemoveItem(b *testing.B) {
 		}
 
 		t := tree.New()
-		t.Insert(is...)
+		_ = t.Insert(is...)
 
 		vx := is[rand.Intn(len(is))]
 		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
@@ -127,14 +127,6 @@ func genV6(n int) []inet.IP {
 		ip, _ := inet.ParseIP(buf)
 		out[i] = ip
 	}
-	return out
-}
-
-func genMixed(n int) []inet.IP {
-	out := make([]inet.IP, 0, n)
-	out = append(out, genV4(n/2)...)
-	out = append(out, genV6(n/2)...)
-	rand.Shuffle(len(out), func(i, j int) { out[i], out[j] = out[j], out[i] })
 	return out
 }
 

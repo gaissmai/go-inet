@@ -30,7 +30,7 @@ func ExampleTree_Insert() {
 		tree.Item{inet.MustBlock("0.0.0.0/10"), "text as payload", StringFn},
 		// ...
 	} {
-		tr.Insert(r)
+		_ = tr.Insert(r)
 	}
 
 	tr.Fprint(os.Stdout)
@@ -66,7 +66,7 @@ func ExampleTree_Lookup() {
 	}
 
 	tr := tree.New()
-	tr.Insert(is...)
+	_ = tr.Insert(is...)
 
 	q := tree.Item{Block: inet.MustBlock(inet.MustIP("5.0.122.12"))}
 
@@ -94,7 +94,7 @@ func ExampleTree_Lookup_exists() {
 	}
 
 	tr := tree.New()
-	tr.Insert(is...)
+	_ = tr.Insert(is...)
 
 	// look for exists, exact match, not just LPM
 	for _, s := range []string{
@@ -136,7 +136,7 @@ func ExampleTree_Walk() {
 		is = append(is, tree.Item{Block: inet.MustBlock(s)})
 	}
 	tr := tree.New()
-	tr.Insert(is...)
+	_ = tr.Insert(is...)
 
 	var maxDepth int
 	var maxWidth int
