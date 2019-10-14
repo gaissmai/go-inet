@@ -66,8 +66,13 @@ func (t *Tree) MustInsert(items ...Item) {
 	}
 }
 
-// Insert item(s) into the tree. Returns error on duplicate items.
+// Insert item(s) into the tree. Inserting a bulk of items is much faster
+// than inserting single items in a loop.
+//
+// Returns error on duplicate items in the tree.
 func (t *Tree) Insert(items ...Item) error {
+
+	// sort before insert makes insertion much faster!
 	sort.Slice(items, func(i, j int) bool { return items[i].Block.Compare(items[j].Block) < 0 })
 
 	for i := range items {
@@ -81,34 +86,33 @@ func (t *Tree) Insert(items ...Item) error {
 
 // recursive work horse, use binary search on same level
 // childs stay sorted after insert
-func (n *Node) insert(b Item) error {
+func (n *Node) insert(item Item) error {
 
-	// childs are sorted
-	// find pos in childs on this level, binary search
-	i := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(b.Block) >= 0 })
+	// childs are sorted find pos in childs on this level, binary search
+	idx := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(item.Block) >= 0 })
 
 	l := len(n.Childs)
 	// not at end of slice
-	if i < l {
+	if idx < l {
 		// don't insert dups
-		if b.Block.Compare(n.Childs[i].Item.Block) == 0 {
-			return fmt.Errorf("duplicate item: %s", b)
+		if item.Block.Compare(n.Childs[idx].Item.Block) == 0 {
+			return fmt.Errorf("duplicate item: %s", item)
 		}
 	}
 
 	// not in front of slice, check if previous child contains new Item
-	if i > 0 {
-		c := n.Childs[i-1]
-		if c.Item.Block.Contains(b.Block) {
-			return c.insert(b)
+	if idx > 0 {
+		c := n.Childs[idx-1]
+		if c.Item.Block.Contains(item.Block) {
+			return c.insert(item)
 		}
 	}
 
 	// add as new child on this level
-	x := &Node{Item: &b, Parent: n, Childs: nil}
+	x := &Node{Item: &item, Parent: n, Childs: nil}
 
-	// b is greater than all others and not contained, just append
-	if i == l {
+	// item is greater than all others and not contained, just append
+	if idx == l {
 		n.Childs = append(n.Childs, x)
 		return nil
 	}
@@ -116,18 +120,18 @@ func (n *Node) insert(b Item) error {
 	// buffer to build resorted childs
 	buf := make([]*Node, 0, l+1)
 
-	// copy [:i] to buf
-	buf = append(buf, n.Childs[:i]...)
+	// copy [:idx] to buf
+	buf = append(buf, n.Childs[:idx]...)
 
-	// copy x to buf at [i]
+	// copy x to buf at [idx]
 	buf = append(buf, x)
 
-	// now handle [i:]
-	// resort if b contains next child...
-	j := i
+	// now handle [idx:]
+	// resort if item contains next child...
+	j := idx
 	for {
 		c := n.Childs[j]
-		if b.Block.Contains(c.Item.Block) {
+		if item.Block.Contains(c.Item.Block) {
 			// put old child under new Item
 			x.Childs = append(x.Childs, c)
 			c.Parent = x
@@ -136,7 +140,7 @@ func (n *Node) insert(b Item) error {
 			}
 		}
 
-		// childs are sorted, break after first child not being child of b
+		// childs are sorted, break after first child not being child of item
 		break
 	}
 
@@ -149,28 +153,28 @@ func (n *Node) insert(b Item) error {
 
 // Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
 // false if not found.
-func (t *Tree) Remove(b Item) bool {
-	return t.Root.remove(b)
+func (t *Tree) Remove(item Item) bool {
+	return t.Root.remove(item)
 }
 
 // recursive work horse
-func (n *Node) remove(b Item) bool {
+func (n *Node) remove(item Item) bool {
 
 	// childs are sorted
 	// find pos in childs on this level, binary search
-	i := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(b.Block) >= 0 })
+	idx := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(item.Block) >= 0 })
 
 	l := len(n.Childs)
 
-	if i != l && b.Block.Compare(n.Childs[i].Item.Block) == 0 {
-		// found child to remove at [i]
-		// delete this child [i] from node
-		c := n.Childs[i]
+	if idx != l && item.Block.Compare(n.Childs[idx].Item.Block) == 0 {
+		// found child to remove at [idx]
+		// delete this child [idx] from node
+		c := n.Childs[idx]
 
-		if i < l-1 {
-			n.Childs = append(n.Childs[:i], n.Childs[i+1:]...)
+		if idx < l-1 {
+			n.Childs = append(n.Childs[:idx], n.Childs[idx+1:]...)
 		} else {
-			n.Childs = n.Childs[:i]
+			n.Childs = n.Childs[:idx]
 		}
 
 		// re-insert grandchilds into tree at this node
@@ -194,11 +198,11 @@ func (n *Node) remove(b Item) bool {
 	}
 
 	// pos in tree not found on this level
-	// walk down if any child (before b, respect sort order) includes b
-	for j := i - 1; j >= 0; j-- {
+	// walk down if any child (before item, respect sort order) includes item
+	for j := idx - 1; j >= 0; j-- {
 		c := n.Childs[j]
-		if c.Item.Block.Contains(b.Block) {
-			return c.remove(b)
+		if c.Item.Block.Contains(item.Block) {
+			return c.remove(item)
 		}
 	}
 
@@ -208,37 +212,37 @@ func (n *Node) remove(b Item) bool {
 
 // Lookup item for longest prefix match in the tree.
 // If not found, returns input argument and false.
-func (t *Tree) Lookup(b Item) (Item, bool) {
-	return t.Root.lookup(b)
+func (t *Tree) Lookup(item Item) (Item, bool) {
+	return t.Root.lookup(item)
 }
 
 // recursive work horse
-func (n *Node) lookup(b Item) (Item, bool) {
+func (n *Node) lookup(item Item) (Item, bool) {
 
 	// find pos in childs on this level, binary search
 	// childs are sorted
-	i := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(b.Block) >= 0 })
+	idx := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(item.Block) >= 0 })
 	l := len(n.Childs)
 
-	if i < l {
-		c := n.Childs[i]
+	if idx < l {
+		c := n.Childs[idx]
 
 		// found by exact match
-		if c.Item.Block.Compare(b.Block) == 0 {
+		if c.Item.Block.Compare(item.Block) == 0 {
 			return *c.Item, true
 		}
 	}
 
-	if i > 0 {
-		c := n.Childs[i-1]
-		if c.Item.Block.Contains(b.Block) {
-			return c.lookup(b)
+	if idx > 0 {
+		c := n.Childs[idx-1]
+		if c.Item.Block.Contains(item.Block) {
+			return c.lookup(item)
 		}
 	}
 
 	// no child path, no item and no parent, we are at the root
 	if n.Parent == nil || n.Item == nil {
-		return b, false
+		return item, false
 	}
 
 	// found by longest prefix match
