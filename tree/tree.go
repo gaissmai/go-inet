@@ -26,7 +26,7 @@ type (
 
 	// Item, maybe with additonal payload, not just inet.Block.
 	Item struct {
-		// Block, Contains and Compare define the position in the tree
+		// Block, methods Contains() and Compare() defines the position in the tree.
 		Block inet.Block
 
 		// payload for this tree item
