@@ -1,3 +1,5 @@
+// Package Tree is an implementation of a CIDR/Block prefix tree for fast IP lookup with longest-prefix-match.
+// It is NOT a standard patricia-trie, this isn't possible for general blocks not represented by bitmasks.
 package tree
 
 import (
@@ -9,14 +11,13 @@ import (
 )
 
 type (
-	// Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
-	// It is NOT a standard patricia-trie, this isn't possible for general blocks not represented by bitmasks.
+	// Tree, handle for the datastructure.
 	Tree struct {
-		// Contains the root node of a tree.
+		// the entry point of the tree
 		Root *Node
 	}
 
-	// Node, recursive data structure.
+	// Node in the tree, recursive data structure.
 	Node struct {
 		Item   *Item
 		Parent *Node
@@ -25,7 +26,7 @@ type (
 
 	// Item, maybe with additonal payload, not just inet.Block.
 	Item struct {
-		// Block, Conatins and Compare define the psoition in the tree
+		// Block, Contains and Compare define the position in the tree
 		Block inet.Block
 
 		// payload for this tree item
