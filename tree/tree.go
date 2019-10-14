@@ -290,7 +290,7 @@ func (t *Tree) Fprint(w io.Writer) {
 
 // WalkFunc is the type of the function called for each node visited by Walk().
 // The arguments to the WalkFunc are the current node in the tree
-// and the depth, starting by 0.
+// and the depth, starting with 0.
 //
 // The Walk() stops if the WalkFunc returns an error.
 type WalkFunc func(n *Node, depth int) error
