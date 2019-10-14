@@ -14,9 +14,7 @@ func ExampleTree_Insert() {
 		return fmt.Sprintf("%s %s %v", i.Block, ".........", i.Payload)
 	}
 
-	tr := tree.New()
-
-	for _, r := range []tree.Item{
+	items := []tree.Item{
 		tree.Item{inet.MustBlock("0.0.0.0/8"), "text as payload", StringFn},
 		tree.Item{inet.MustBlock("1.0.0.0/8"), "text as payload", StringFn},
 		tree.Item{inet.MustBlock("::/64"), "text as payload", StringFn},
@@ -29,10 +27,12 @@ func ExampleTree_Insert() {
 		tree.Item{inet.MustBlock("2001:7c0:900:1c2::1/128"), "text as payload", StringFn},
 		tree.Item{inet.MustBlock("0.0.0.0/10"), "text as payload", StringFn},
 		// ...
-	} {
-		_ = tr.Insert(r)
 	}
 
+	tr := tree.New()
+	if err := tr.Insert(items...); err != nil {
+		panic(err)
+	}
 	tr.Fprint(os.Stdout)
 
 	// Output:
