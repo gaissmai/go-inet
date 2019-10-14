@@ -37,14 +37,15 @@ type (
 	}
 )
 
-// String implements the Stringer Interface, callbacks to the item sender if StringCb is defined.
-// If no callback is defined, returns just the string for the inet.Block, the unknown payload isn't rendered.
-func (i Item) String() string {
-	if i.StringCb != nil {
-		return i.StringCb(i)
+// String calls back to the items sender, but only if StringCb is defined.
+// The sender should know how to format the payload, this library knows just the empty interface{}.
+// If no callback for stringification is defined, return just the string for the inet.Block.
+func (item Item) String() string {
+	if item.StringCb != nil {
+		return item.StringCb(item)
 	}
-	// just return the String for inet.Block, don't know how to render the payload.
-	return i.Block.String()
+	// just return the String for inet.Block, don't know how to render the empty interface as payload.
+	return item.Block.String()
 }
 
 // New allocates a new tree and returns the pointer.
@@ -72,7 +73,7 @@ func (t *Tree) MustInsert(items ...Item) {
 // Returns error on duplicate items in the tree.
 func (t *Tree) Insert(items ...Item) error {
 
-	// sort before insert makes insertion much faster!
+	// sort before insert makes insertion much faster, no or less tree-rebalancing needed.
 	sort.Slice(items, func(i, j int) bool { return items[i].Block.Compare(items[j].Block) < 0 })
 
 	for i := range items {
@@ -160,8 +161,7 @@ func (t *Tree) Remove(item Item) bool {
 // recursive work horse
 func (n *Node) remove(item Item) bool {
 
-	// childs are sorted
-	// find pos in childs on this level, binary search
+	// childs are sorted, find pos in childs on this level, binary search
 	idx := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(item.Block) >= 0 })
 
 	l := len(n.Childs)
@@ -219,8 +219,7 @@ func (t *Tree) Lookup(item Item) (Item, bool) {
 // recursive work horse
 func (n *Node) lookup(item Item) (Item, bool) {
 
-	// find pos in childs on this level, binary search
-	// childs are sorted
+	// find pos in childs on this level, binary search, childs are sorted
 	idx := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(item.Block) >= 0 })
 	l := len(n.Childs)
 
