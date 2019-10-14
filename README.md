@@ -15,19 +15,17 @@ without prior conversion from/to IPv4/IPv6.
 
 Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
 
-IP addresses are represented as fixed arrays of 21 bytes, this ensures natural sorting (IPv4 < IPv6).
-
 Blocks are IP-networks or IP-ranges, e.g.
 
-    192.168.0.1/24              // CIDR, network
-    ::1/128                     // CIDR, network
-    10.0.0.3-10.0.17.134        // range
-    2001:db8::1-2001:db8::f6    // range
+    192.168.0.1/24              // CIDR
+    ::1/128                     // CIDR
+    10.0.0.3-10.0.17.134        // IP range, no CIDR
+    2001:db8::1-2001:db8::f6    // IP range, no CIDR
 
 ## go-inet/tree
 
-Tree is an implementation of a CIDR/Block tree for fast IP lookup with longest-prefix-match.
-It is *NOT* a standard patricia-trie, this isn't possible for general blocks not represented by bitmasks.
+Tree is an implementation of a CIDR or Block tree for fast IP lookup with longest-prefix-match.
+It is *NOT* a standard patricia-trie, this isn't possible for general blocks not represented as CIDRs.
 
 The tree can be visualized as:
 
@@ -35,12 +33,12 @@ The tree can be visualized as:
  ▼
  ├─ 10.0.0.0/9
  │  ├─ 10.0.0.0/11
- │  │  ├─ 10.0.0.0/20
+ │  │  ├─ 10.0.0.0-10.0.0.29
  │  │  ├─ 10.0.16.0/20
  │  │  └─ 10.0.32.0/20
  │  └─ 10.32.0.0/11
  │     ├─ 10.32.8.0/22
- │     ├─ 10.32.12.0/22
+ │     ├─ 10.32.12.0-10.32.12.77
  │     └─ 10.32.16.0/22
  ├─ 2001:db8:900::/48
  │  ├─ 2001:db8:900::/49
