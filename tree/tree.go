@@ -237,8 +237,9 @@ func (n *Node) lookup(b Item) (Item, bool) {
 	return *n.Item, true
 }
 
-// Fprint prints the ordered tree in ASCII graph to io.Writer.
-// The items should implement the Stringer interface for readable output.
+// Fprint prints the ordered tree in ASCII graph.
+//
+// example:
 //
 //  ▼
 //  ├─ ::/8.................   "Reserved by IETF     [RFC3513][RFC4291]"
