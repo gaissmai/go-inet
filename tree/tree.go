@@ -58,6 +58,14 @@ func New() *Tree {
 	}
 }
 
+// MustInsert is a helper that calls Insert and panics on error.
+// It is intended for use in tree initializations.
+func (t *Tree) MustInsert(items ...Item) {
+	if err := t.Insert(items...); err != nil {
+		panic(err)
+	}
+}
+
 // Insert item(s) into the tree. Returns error on duplicate items.
 func (t *Tree) Insert(items ...Item) error {
 	sort.Slice(items, func(i, j int) bool { return items[i].Block.Compare(items[j].Block) < 0 })

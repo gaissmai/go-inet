@@ -102,7 +102,7 @@ func ParseBlock(i interface{}) (Block, error) {
 	}
 }
 
-// MustBlock is a helper that calls ParseBlock and returns just inet.Block or panics on errr.
+// MustBlock is a helper that calls ParseBlock and returns just inet.Block or panics on error.
 // It is intended for use in variable initializations.
 func MustBlock(i interface{}) Block {
 	b, err := ParseBlock(i)

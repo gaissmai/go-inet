@@ -10,22 +10,23 @@ import (
 
 func ExampleTree_Insert() {
 
-	StringFn := func(i tree.Item) string {
+	// String callback function used in tree.Fprintf()
+	callback := func(i tree.Item) string {
 		return fmt.Sprintf("%s %s %v", i.Block, ".........", i.Payload)
 	}
 
 	items := []tree.Item{
-		tree.Item{inet.MustBlock("0.0.0.0/8"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("1.0.0.0/8"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("::/64"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("5.0.0.0/8"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("0.0.0.0/0"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("10.0.0.0-10.0.0.17"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("::/0"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("2001:7c0:900:1c2::/64"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("2001:7c0:900:1c2::0/127"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("2001:7c0:900:1c2::1/128"), "text as payload", StringFn},
-		tree.Item{inet.MustBlock("0.0.0.0/10"), "text as payload", StringFn},
+		tree.Item{inet.MustBlock("0.0.0.0/8"), "text as payload", callback},
+		tree.Item{inet.MustBlock("1.0.0.0/8"), "text as payload", callback},
+		tree.Item{inet.MustBlock("::/64"), "text as payload", callback},
+		tree.Item{inet.MustBlock("5.0.0.0/8"), "text as payload", callback},
+		tree.Item{inet.MustBlock("0.0.0.0/0"), "text as payload", callback},
+		tree.Item{inet.MustBlock("10.0.0.0-10.0.0.17"), "text as payload", callback},
+		tree.Item{inet.MustBlock("::/0"), "text as payload", callback},
+		tree.Item{inet.MustBlock("2001:7c0:900:1c2::/64"), "text as payload", callback},
+		tree.Item{inet.MustBlock("2001:7c0:900:1c2::0/127"), "text as payload", callback},
+		tree.Item{inet.MustBlock("2001:7c0:900:1c2::1/128"), "text as payload", callback},
+		tree.Item{inet.MustBlock("0.0.0.0/10"), "text as payload", callback},
 		// ...
 	}
 
@@ -66,7 +67,7 @@ func ExampleTree_Lookup() {
 	}
 
 	tr := tree.New()
-	_ = tr.Insert(is...)
+	tr.MustInsert(is...)
 
 	q := tree.Item{Block: inet.MustBlock(inet.MustIP("5.0.122.12"))}
 
@@ -94,7 +95,7 @@ func ExampleTree_Lookup_exists() {
 	}
 
 	tr := tree.New()
-	_ = tr.Insert(is...)
+	tr.MustInsert(is...)
 
 	// look for exists, exact match, not just LPM
 	for _, s := range []string{
@@ -136,7 +137,7 @@ func ExampleTree_Walk() {
 		is = append(is, tree.Item{Block: inet.MustBlock(s)})
 	}
 	tr := tree.New()
-	_ = tr.Insert(is...)
+	tr.MustInsert(is...)
 
 	var maxDepth int
 	var maxWidth int
