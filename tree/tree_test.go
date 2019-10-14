@@ -8,14 +8,39 @@ import (
 	"github.com/gaissmai/go-inet/inet"
 )
 
+func TestTreeInsertDup(t *testing.T) {
+	s1 := Item{Block: inet.MustBlock("0.0.0.0/0")}
+
+	tr := New()
+	err := tr.Insert(s1, s1)
+
+	if err == nil {
+		t.Errorf("Insert duplicate, missing error")
+	}
+}
+
+func TestTreeInsertNothing(t *testing.T) {
+	tr := New()
+	tr.Insert()
+
+	got := new(strings.Builder)
+	tr.Fprint(got)
+
+	want := `▼
+`
+	if got.String() != want {
+		t.Errorf("got:\n%v\nwant:\n%v", got, want)
+	}
+}
+
 func TestTreeLookupMissing(t *testing.T) {
 	s1 := Item{Block: inet.MustBlock("0.0.0.0/0")}
 	s2 := Item{Block: inet.MustBlock("2001:db8::/32")}
 
-	tree := New()
-	tree.Insert(s1)
+	tr := New()
+	tr.Insert(s1)
 
-	_, ok := tree.Lookup(s2)
+	_, ok := tr.Lookup(s2)
 	if ok {
 		t.Errorf("Lookup(%s) got %t, want %t", s2, ok, false)
 	}
@@ -24,16 +49,16 @@ func TestTreeLookupMissing(t *testing.T) {
 func TestTreeLookup(t *testing.T) {
 	s1 := Item{Block: inet.MustBlock("0.0.0.0/0")}
 
-	tree := New()
-	tree.Insert(s1)
+	tr := New()
+	tr.Insert(s1)
 
-	got, ok := tree.Lookup(s1)
+	got, ok := tr.Lookup(s1)
 	if !ok {
 		t.Errorf("Lookup(%s) got %t, want %t", s1, ok, true)
 	}
 
 	if got.Block.Compare(s1.Block) != 0 {
-		t.Errorf("tree.Lookup(%v), got: %v, want: %v", s1, got, s1)
+		t.Errorf("tr.Lookup(%v), got: %v, want: %v", s1, got, s1)
 	}
 }
 
@@ -62,7 +87,7 @@ func TestTreeLookupLPM(t *testing.T) {
 	}
 
 	if got.Block.Compare(want) != 0 {
-		t.Errorf("tree.Lookup(%v), got: %v, want: %v", look, got, want)
+		t.Errorf("tr.Lookup(%v), got: %v, want: %v", look, got, want)
 	}
 }
 
@@ -139,15 +164,14 @@ func TestTreeWalk(t *testing.T) {
 	}
 }
 
-func TestTreeInsertDup(t *testing.T) {
+func TestTreeInsertOne(t *testing.T) {
 	r1 := Item{Block: inet.MustBlock("0.0.0.0/0")}
 
-	tree := New()
-	tree.Insert(r1)
-	tree.Insert(r1)
+	tr := New()
+	tr.Insert(r1)
 
 	got := new(strings.Builder)
-	tree.Fprint(got)
+	tr.Fprint(got)
 
 	want := `▼
 └─ 0.0.0.0/0
@@ -161,12 +185,12 @@ func TestTreeMultiRoot(t *testing.T) {
 	r1 := Item{inet.MustBlock("0.0.0.0/0"), nil, nil}
 	r2 := Item{inet.MustBlock("::/0"), nil, nil}
 
-	tree := New()
-	tree.Insert(r1)
-	tree.Insert(r2)
+	tr := New()
+	tr.Insert(r1)
+	tr.Insert(r2)
 
 	got := new(strings.Builder)
-	tree.Fprint(got)
+	tr.Fprint(got)
 
 	want := `▼
 ├─ 0.0.0.0/0

@@ -18,7 +18,7 @@ func BenchmarkSortIP(b *testing.B) {
 		ips := genMixed(n)
 		rand.Shuffle(len(ips), func(i, j int) { ips[i], ips[j] = ips[j], ips[i] })
 
-		b.Run(fmt.Sprintf("SortIP: %d", n), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				inet.SortIP(ips)
 			}
@@ -34,43 +34,9 @@ func BenchmarkSortBlock(b *testing.B) {
 		rs := genBlockMixed(n)
 		rand.Shuffle(len(rs), func(i, j int) { rs[i], rs[j] = rs[j], rs[i] })
 
-		b.Run(fmt.Sprintf("SortBlock: %d", n), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				inet.SortBlock(rs)
-			}
-		})
-
-	}
-}
-
-func BenchmarkFindFreeCIDRv4(b *testing.B) {
-	bench := []int{10000, 100000, 1000000}
-
-	for _, n := range bench {
-		rs := genBlockV4(n)
-		rand.Shuffle(len(rs), func(i, j int) { rs[i], rs[j] = rs[j], rs[i] })
-
-		r, _ := inet.ParseBlock("0.0.0.0/0")
-		b.Run(fmt.Sprintf("FindFreeCIDRv4: %d", n), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				r.FindFreeCIDR(rs)
-			}
-		})
-
-	}
-}
-
-func BenchmarkFindFreeCIDRv6(b *testing.B) {
-	bench := []int{10000, 100000, 1000000}
-
-	for _, n := range bench {
-		rs := genBlockV6(n)
-		rand.Shuffle(len(rs), func(i, j int) { rs[i], rs[j] = rs[j], rs[i] })
-
-		r, _ := inet.ParseBlock("::/0")
-		b.Run(fmt.Sprintf("FindFreeCIDRv6: %d", n), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				r.FindFreeCIDR(rs)
 			}
 		})
 

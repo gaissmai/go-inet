@@ -235,6 +235,46 @@ func newBlockFromRange(s string, i int) (Block, error) {
 	return a, nil
 }
 
+// Contains reports whether Block a contains Block b. a and b may NOT coincide.
+//
+//  a   |------------|    |------------|           |------------|
+//  b |-----------------| |-----------------| |-----------------|
+func (a Block) Contains(b Block) bool {
+	if a == b {
+		return false
+	}
+	return bytes.Compare(a.Base[:], b.Base[:]) <= 0 && bytes.Compare(a.Last[:], b.Last[:]) >= 0
+}
+
+// Compare returns an integer comparing two IP Blocks.
+//
+//   0 if a == b,
+//
+//  -1 if a is v4 and b is v6
+//  +1 if a is v6 and b is v4
+//
+//  -1 if a.Base < b.Base
+//  +1 if a.Base > b.Base
+//
+//  -1 if a.Base == b.Base and a is SuperSet of b
+//  +1 if a.Base == b.Base and a is Subset of b
+func (a Block) Compare(b Block) int {
+	if bytes.Compare(a.Base[:], b.Base[:]) < 0 {
+		return -1
+	}
+	if bytes.Compare(a.Base[:], b.Base[:]) > 0 {
+		return 1
+	}
+	// base is now equal, test for superset/subset
+	if bytes.Compare(a.Last[:], b.Last[:]) > 0 {
+		return -1
+	}
+	if bytes.Compare(a.Last[:], b.Last[:]) < 0 {
+		return 1
+	}
+	return 0
+}
+
 // IsCIDR returns true if the block is a true CIDR, not just a begin-end range.
 func (a Block) IsCIDR() bool {
 	return a.Mask != IPZero

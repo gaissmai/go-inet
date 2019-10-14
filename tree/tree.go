@@ -16,27 +16,33 @@ type (
 		Root *Node
 	}
 
-	// Node, recursive data structure. Items are abstracted via Itemer interface
+	// Node, recursive data structure.
 	Node struct {
 		Item   *Item
 		Parent *Node
 		Childs []*Node
 	}
 
-	// Item truct or tree items, maybe with payload and not just ip Blocks.
+	// Item, maybe with additonal payload, not just inet.Block.
 	Item struct {
-		Block    inet.Block
-		Payload  interface{}
-		StringFn func(Item) string
+		// Block, Conatins and Compare define the psoition in the tree
+		Block inet.Block
+
+		// payload for this tree item
+		Payload interface{}
+
+		// callback, helper func for generating the string
+		StringCb func(Item) string
 	}
 )
 
-// String implements the Stringer Interface, callbacks to the item sender if StringFn is defined.
+// String implements the Stringer Interface, callbacks to the item sender if StringCb is defined.
+// If no callback is defined, returns just the string for the inet.Block, the unknown payload isn't rendered.
 func (i Item) String() string {
-	if i.StringFn != nil {
-		return i.StringFn(i)
+	if i.StringCb != nil {
+		return i.StringCb(i)
 	}
-	// just return the String for inet.Block, no additional payload for string.
+	// just return the String for inet.Block, don't know how to render the payload.
 	return i.Block.String()
 }
 
@@ -51,29 +57,22 @@ func New() *Tree {
 	}
 }
 
-// InsertBulk takes a slice of []Item, sorts the values and inserts it into the tree.
-//
-// It is a convenience method. The user can also sort the slice itself and
-// insert the elements in a loop with Insert()
-func (t *Tree) InsertBulk(items []Item) {
+// Insert item(s) into the tree. Returns error on duplicate items.
+func (t *Tree) Insert(items ...Item) error {
 	sort.Slice(items, func(i, j int) bool { return items[i].Block.Compare(items[j].Block) < 0 })
-	for i := range items {
-		t.Root.insert(items[i])
-	}
-}
 
-// Insert one item into the tree. The position within the tree is defined
-// by the Contains() and Compare() methods.
-//
-// If you insert many values you should sort them first.
-func (t *Tree) Insert(i Item) {
-	// parent of root is nil
-	t.Root.insert(i)
+	for i := range items {
+		if err := t.Root.insert(items[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // recursive work horse, use binary search on same level
 // childs stay sorted after insert
-func (n *Node) insert(b Item) {
+func (n *Node) insert(b Item) error {
 
 	// childs are sorted
 	// find pos in childs on this level, binary search
@@ -84,7 +83,7 @@ func (n *Node) insert(b Item) {
 	if i < l {
 		// don't insert dups
 		if b.Block.Compare(n.Childs[i].Item.Block) == 0 {
-			return
+			return fmt.Errorf("duplicate item: %s", b)
 		}
 	}
 
@@ -93,7 +92,7 @@ func (n *Node) insert(b Item) {
 		c := n.Childs[i-1]
 		if c.Item.Block.Contains(b.Block) {
 			c.insert(b)
-			return
+			return nil
 		}
 	}
 
@@ -103,7 +102,7 @@ func (n *Node) insert(b Item) {
 	// b is greater than all others and not contained, just append
 	if i == l {
 		n.Childs = append(n.Childs, x)
-		return
+		return nil
 	}
 
 	// buffer to build resorted childs
@@ -137,6 +136,7 @@ func (n *Node) insert(b Item) {
 	buf = append(buf, n.Childs[j:]...)
 
 	n.Childs = buf
+	return nil
 }
 
 // Remove one item from tree, relink parent/child relation at the gap. Returns true on success,

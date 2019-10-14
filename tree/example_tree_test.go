@@ -66,7 +66,7 @@ func ExampleTree_Lookup() {
 	}
 
 	tr := tree.New()
-	tr.InsertBulk(is)
+	tr.Insert(is...)
 
 	q := tree.Item{Block: inet.MustBlock(inet.MustIP("5.0.122.12"))}
 
@@ -94,7 +94,7 @@ func ExampleTree_Lookup_exists() {
 	}
 
 	tr := tree.New()
-	tr.InsertBulk(is)
+	tr.Insert(is...)
 
 	// look for exists, exact match, not just LPM
 	for _, s := range []string{
@@ -136,7 +136,7 @@ func ExampleTree_Walk() {
 		is = append(is, tree.Item{Block: inet.MustBlock(s)})
 	}
 	tr := tree.New()
-	tr.InsertBulk(is)
+	tr.Insert(is...)
 
 	var maxDepth int
 	var maxWidth int

@@ -12,7 +12,7 @@ import (
 
 var r = rand.New(rand.NewSource(42))
 
-func BenchmarkTreeInsertBulk(b *testing.B) {
+func BenchmarkTreeInsert(b *testing.B) {
 	bench := []int{1000, 10000, 100000, 1000000}
 
 	for _, n := range bench {
@@ -24,9 +24,9 @@ func BenchmarkTreeInsertBulk(b *testing.B) {
 
 		t := tree.New()
 
-		b.Run(fmt.Sprintf("InsertBulk: %d", n), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				t.InsertBulk(is)
+				t.Insert(is...)
 			}
 		})
 
@@ -44,10 +44,10 @@ func BenchmarkLookupTree(b *testing.B) {
 		}
 
 		t := tree.New()
-		t.InsertBulk(is)
+		t.Insert(is...)
 
 		vx := is[rand.Intn(len(is))]
-		b.Run(fmt.Sprintf("LookupTree: %d", n), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				t.Lookup(vx)
 			}
@@ -67,11 +67,11 @@ func BenchmarkWalkTree(b *testing.B) {
 		}
 
 		t := tree.New()
-		t.InsertBulk(is)
+		t.Insert(is...)
 
 		var walkFn tree.WalkFunc = func(n *tree.Node, l int) error { return nil }
 
-		b.Run(fmt.Sprintf("WalkTree: %d", n), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				_ = t.Walk(walkFn)
 			}
@@ -91,10 +91,10 @@ func BenchmarkTreeRemoveItem(b *testing.B) {
 		}
 
 		t := tree.New()
-		t.InsertBulk(is)
+		t.Insert(is...)
 
 		vx := is[rand.Intn(len(is))]
-		b.Run(fmt.Sprintf("RemoveItem: %d", n), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				t.Remove(vx)
 			}
