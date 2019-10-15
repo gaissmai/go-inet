@@ -19,6 +19,7 @@ func main() {
 	log.SetPrefix(progname + ": ")
 	log.SetFlags(0)
 
+	// get and check flags and args
 	if len(os.Args) != 2 {
 		usage()
 	}
@@ -28,30 +29,37 @@ func main() {
 		usage()
 	}
 
+	// parse arg as IP
 	ip, errIP := inet.ParseIP(arg)
 	if errIP == nil {
 		printIPInfo(ip)
 		os.Exit(0)
 	}
 
+	// parse arg as Block
 	block, errBlock := inet.ParseBlock(arg)
 	if errBlock == nil {
 		printBlockInfo(block)
 		os.Exit(0)
 	}
 
+	// wrong CIDR?
 	i := strings.IndexByte(arg, '/')
 	if i >= 0 {
 		log.Fatal(errBlock)
 	}
 
+	// wrong range?
 	i = strings.IndexByte(arg, '-')
 	if i >= 0 {
 		log.Fatal(errBlock)
 	}
 
+	// wrong IP
 	log.Fatal(errIP)
 }
+
+// ############################################################
 
 func printIPInfo(ip inet.IP) {
 	fmt.Printf("%-10s %v\n", "Version:", ip.Version())
@@ -62,8 +70,10 @@ func printIPInfo(ip inet.IP) {
 
 func printBlockInfo(block inet.Block) {
 	fmt.Printf("%-10s %v\n", "Version:", block.Version())
-	if block.Mask != inet.IPZero {
+	if block.IsCIDR() {
 		fmt.Printf("%-10s %v\n", "Prefix:", block)
+		fmt.Printf("%-10s %v\n", "Base:", block.Base)
+		fmt.Printf("%-10s %v\n", "Last:", block.Last)
 		fmt.Printf("%-10s %v\n", "Mask:", block.Mask)
 		fmt.Printf("%-10s %v\n", "Wildcard:", hostmask(block.Mask))
 		fmt.Printf("%-10s %v bits\n", "Bits:", block.BitLen())
@@ -85,6 +95,8 @@ func usage() {
 	output := `
 Version:   6
 Prefix:    2001:db8:c::/116
+Base:      2001:db8:c::
+Last:      2001:db8:c::fff
 Mask:      ffff:ffff:ffff:ffff:ffff:ffff:ffff:f000
 Wildcard:  ::fff
 Bits:      12 bits
