@@ -66,7 +66,7 @@ func TestBlockIsValid(t *testing.T) {
 	}
 
 	r1.Base = r1.Last.AddUint64(1)
-	r2.Last = IPZero
+	r2.Last = IP{}
 	r3.Mask = r3.Mask.SubUint64(1)
 	r4.Mask[2] = 0xff
 
@@ -323,10 +323,11 @@ func TestSortBlock(t *testing.T) {
 }
 
 func TestSplitBlockZero(t *testing.T) {
-	splits := BlockZero.SplitCIDR(1)
+	b := Block{}
+	splits := b.SplitCIDR(1)
 
 	if splits != nil {
-		t.Errorf("error in splitting BlockZero, got: %v, want nil)", splits)
+		t.Errorf("error in splitting blockZero, got: %v, want nil)", splits)
 	}
 }
 
@@ -335,7 +336,7 @@ func TestSplitMaskZero(t *testing.T) {
 	r.Base[0] = 4
 	r.Last[0] = 4
 
-	// Mask is still BlockZero, we can't cplit without a mask
+	// Mask is still blockZero, we can't cplit without a mask
 	splits := r.SplitCIDR(1)
 
 	if splits != nil {
@@ -346,7 +347,7 @@ func TestSplitMaskZero(t *testing.T) {
 func TestBlockMarshalText(t *testing.T) {
 	// test failure modes
 
-	b := BlockZero
+	b := Block{}
 	bs, _ := b.MarshalText()
 	if len(bs) != 0 {
 		t.Errorf("MarshalText for zero-value must return an empty []byte, got %#v", bs)

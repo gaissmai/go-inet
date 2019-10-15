@@ -25,16 +25,13 @@ var (
 type Block struct {
 	Base IP
 	Last IP
-	Mask IP // IPZero for ranges without CIDR mask
+	Mask IP // IP{} for ranges without CIDR mask
 }
 
-var (
-	// BlockZero is the zero-value for type Block.
-	//
-	// Block is represented as a struct, so we have no nil as zero value.
-	// BlockZero can be used for that.
-	BlockZero = Block{Base: IP{}, Last: IP{}, Mask: IP{}}
+// the zero-value for type Block, not public
+var blockZero Block = Block{}
 
+var (
 	// MaxCIDRSplit limits the input parameter for SplitCIDR() to 20 (max 2^20 CIDRs) for security.
 	MaxCIDRSplit int = 20
 
@@ -68,7 +65,7 @@ var (
 // and returns the range as CIDR.
 //
 // IP addresses in the form of net.IP or inet.IP as input are converted to /32 or /128 blocks
-// Returns error and BlockZero on invalid input.
+// Returns error and Block{} on invalid input.
 func ParseBlock(i interface{}) (Block, error) {
 	switch v := i.(type) {
 	case string:
@@ -84,7 +81,7 @@ func ParseBlock(i interface{}) (Block, error) {
 	case net.IP:
 		ip, err := ipFromNetIP(v)
 		if err != nil {
-			return BlockZero, err
+			return blockZero, err
 		}
 		b := Block{Base: ip, Last: ip}
 		b.Mask = b.getMask()
@@ -92,13 +89,13 @@ func ParseBlock(i interface{}) (Block, error) {
 	case *net.IP:
 		ip, err := ipFromNetIP(*v)
 		if err != nil {
-			return BlockZero, err
+			return blockZero, err
 		}
 		b := Block{Base: ip, Last: ip}
 		b.Mask = b.getMask()
 		return b, nil
 	default:
-		return BlockZero, ErrInvalidBlock
+		return blockZero, ErrInvalidBlock
 	}
 }
 
@@ -115,16 +112,16 @@ func MustBlock(i interface{}) Block {
 // blockFromNetIPNet converts from stdlib net.IPNet to ip.Block representation.
 func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
 	var err error
-	a := BlockZero
+	a := blockZero
 
 	a.Base, err = ipFromNetIP(ipnet.IP)
 	if err != nil {
-		return BlockZero, ErrInvalidBlock
+		return blockZero, ErrInvalidBlock
 	}
 
 	a.Mask, err = ipFromNetIP(net.IP(ipnet.Mask)) // cast needed
 	if err != nil {
-		return BlockZero, ErrInvalidBlock
+		return blockZero, ErrInvalidBlock
 	}
 
 	a.Last = lastIP(a.Base, a.Mask)
@@ -135,7 +132,7 @@ func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
 // blockFromString parses s in network CIDR or in begin-end IP address-range notation.
 func blockFromString(s string) (Block, error) {
 	if s == "" {
-		return BlockZero, ErrInvalidBlock
+		return blockZero, ErrInvalidBlock
 	}
 
 	i := strings.IndexByte(s, '/')
@@ -148,7 +145,7 @@ func blockFromString(s string) (Block, error) {
 		return newBlockFromRange(s, i)
 	}
 
-	return BlockZero, ErrInvalidBlock
+	return blockZero, ErrInvalidBlock
 }
 
 // parse IP CIDR
@@ -156,7 +153,7 @@ func blockFromString(s string) (Block, error) {
 func newBlockFromCIDR(s string) (Block, error) {
 	_, netIPNet, err := net.ParseCIDR(s)
 	if err != nil {
-		return BlockZero, err
+		return blockZero, err
 	}
 
 	return blockFromNetIPNet(*netIPNet)
@@ -209,22 +206,22 @@ func newBlockFromRange(s string, i int) (Block, error) {
 
 	baseIP, err := ParseIP(base)
 	if err != nil {
-		return BlockZero, ErrInvalidBlock
+		return blockZero, ErrInvalidBlock
 	}
 
 	lastIP, err := ParseIP(last)
 	if err != nil {
-		return BlockZero, ErrInvalidBlock
+		return blockZero, ErrInvalidBlock
 	}
 
 	// begin-end have version mismatch
 	if baseIP.Version() != lastIP.Version() {
-		return BlockZero, ErrInvalidBlock
+		return blockZero, ErrInvalidBlock
 	}
 
 	// begin > end
 	if baseIP.Compare(lastIP) == 1 {
-		return BlockZero, ErrInvalidBlock
+		return blockZero, ErrInvalidBlock
 	}
 
 	a := Block{Base: baseIP, Last: lastIP}
@@ -277,7 +274,7 @@ func (a Block) Compare(b Block) int {
 
 // IsCIDR returns true if the block is a true CIDR, not just a begin-end range.
 func (a Block) IsCIDR() bool {
-	return a.Mask != IPZero
+	return a.Mask != ipZero
 }
 
 // IsValid returns true on valid Blocks, false otherwise.
@@ -421,7 +418,7 @@ func (a Block) SplitCIDR(n int) []Block {
 	}
 
 	for {
-		next := BlockZero
+		next := blockZero
 		next.Base = baseIP(base, newMask)
 		next.Last = lastIP(next.Base, newMask)
 		next.Mask = newMask
@@ -457,7 +454,7 @@ func (a Block) FindFreeCIDR(bs []Block) []Block {
 	for i := 0; i < len(candidates); i++ {
 		c := candidates[i]
 
-		if c == BlockZero {
+		if c == blockZero {
 			continue
 		}
 
@@ -510,7 +507,7 @@ func (a Block) isSubsetOfAny(bs []Block) bool {
 	return false
 }
 
-// getMask is a helper method. Calculate a netmask from begin-end, returns IPZero if not possible.
+// getMask is a helper method. Calculate a netmask from begin-end, returns IP{} if not possible.
 func (a Block) getMask() IP {
 	// v4 or v6
 	bits := 32
@@ -530,7 +527,7 @@ func (a Block) getMask() IP {
 	if base == a.Base && last == a.Last {
 		return mask
 	}
-	return IPZero
+	return ipZero
 }
 
 // BlockToCIDRList returns a list of CIDRs spanning the range of a.

@@ -26,8 +26,8 @@ func TestPanic(t *testing.T) {
 }
 
 func TestIP_IsValid(t *testing.T) {
-	if IPZero.IsValid() {
-		t.Errorf("IPZero.IsValid() returns true, want false")
+	if ipZero.IsValid() {
+		t.Errorf("ipZero.IsValid() returns true, want false")
 	}
 
 	ipv4 := MustIP("127.0.0.1")
@@ -54,12 +54,12 @@ func TestIP_IsValid(t *testing.T) {
 }
 
 func TestIP_MarshalUnmarshalIPZero(t *testing.T) {
-	text, err := IPZero.MarshalText()
+	text, err := ipZero.MarshalText()
 	if err != nil {
-		t.Errorf("marshal IPZero has error: %v", err)
+		t.Errorf("marshal ipZero has error: %v", err)
 	}
 	if string(text) != "" {
-		t.Errorf("marshal IPZero isn't \"\"")
+		t.Errorf("marshal ipZero isn't \"\"")
 	}
 
 	got := new(IP)
@@ -68,7 +68,7 @@ func TestIP_MarshalUnmarshalIPZero(t *testing.T) {
 		t.Errorf("unmarshal []byte has error: %v", err)
 	}
 
-	if *got != IPZero {
-		t.Errorf("marshal/unmarshal IPZero isn't idempotent")
+	if *got != ipZero {
+		t.Errorf("marshal/unmarshal ipZero isn't idempotent")
 	}
 }

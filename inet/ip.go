@@ -28,11 +28,8 @@ var (
 // and fast sorted by bytes.Compare() without conversions to/from the different IP versions.
 type IP [21]byte
 
-// IPZero is the zero-value for type IP.
-//
-// IP is represented as an array, so we have no nil as zero value.
-// IPZero can be used for that.
-var IPZero = IP{}
+// the zero value for IP, not public
+var ipZero IP = IP{}
 
 // ParseIP parses and returns the input as type IP.
 // The input type may be:
@@ -42,7 +39,7 @@ var IPZero = IP{}
 //   []byte
 //
 // The hard part is done by net.ParseIP().
-// Returns IPZero and error on invalid input.
+// Returns IP{} and error on invalid input.
 func ParseIP(i interface{}) (IP, error) {
 	switch v := i.(type) {
 	case string:
@@ -54,7 +51,7 @@ func ParseIP(i interface{}) (IP, error) {
 	case []byte:
 		return ipFromBytes(v)
 	default:
-		return IPZero, ErrInvalidIP
+		return ipZero, ErrInvalidIP
 	}
 }
 
@@ -70,12 +67,12 @@ func MustIP(i interface{}) IP {
 
 // ipFromString parses s as an IP address, returning the result. The string s can be
 // in dotted decimal ("192.0.2.1") or IPv6 ("2001:db8::42") form. If s is not a
-// valid textual representation of an IP address, ipFromString returns IPZero and error.
+// valid textual representation of an IP address, ipFromString returns IP{} and error.
 // The real work is done by net.ParseIP() and converted to type IP.
 func ipFromString(s string) (IP, error) {
 	netIP := net.ParseIP(s)
 	if netIP == nil {
-		return IPZero, ErrInvalidIP
+		return ipZero, ErrInvalidIP
 	}
 	return ipFromNetIP(netIP)
 }
@@ -83,7 +80,7 @@ func ipFromString(s string) (IP, error) {
 // ipFromNetIP converts from stdlib net.IP ([]byte) to IP ([21]byte) representation.
 func ipFromNetIP(netIP net.IP) (IP, error) {
 	if netIP == nil {
-		return IPZero, ErrInvalidIP
+		return ipZero, ErrInvalidIP
 	}
 
 	if v4 := netIP.To4(); v4 != nil {
@@ -94,20 +91,20 @@ func ipFromNetIP(netIP net.IP) (IP, error) {
 		ip := setBytes(v6)
 		return ip, nil
 	}
-	return IPZero, ErrInvalidIP
+	return ipZero, ErrInvalidIP
 }
 
 // ipFromBytes sets the IP from 4 or 16 bytes. Returns error on wrong number of bytes.
 func ipFromBytes(bs []byte) (IP, error) {
 	if l := len(bs); l != 4 && l != 16 {
-		return IPZero, ErrInvalidIP
+		return ipZero, ErrInvalidIP
 	}
 	return setBytes(bs), nil
 }
 
 // set the [21]byte from []byte input.
 func setBytes(bs []byte) IP {
-	ip := IPZero
+	ip := ipZero
 
 	if l := len(bs); l == 4 {
 		ip[0] = 4

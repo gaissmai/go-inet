@@ -10,9 +10,9 @@ import (
 // ########################################################
 
 // String implements the fmt.Stringer interface.
-// Returns "" on IPZero, panics otherwise on invalid input.
+// Returns "" on IP{}, panics otherwise on invalid input.
 func (ip IP) String() string {
-	if ip == IPZero {
+	if ip == ipZero {
 		return ""
 	}
 
@@ -34,7 +34,7 @@ func (ip IP) MarshalText() ([]byte, error) {
 func (ip *IP) UnmarshalText(text []byte) error {
 	s := string(text)
 	if len(s) == 0 { // this is no error condition
-		*ip = IPZero
+		*ip = ipZero
 		return nil
 	}
 
@@ -52,9 +52,9 @@ func (ip *IP) UnmarshalText(text []byte) error {
 // ########################################################
 
 // String implements the fmt.Stringer interface.
-// Returns "" on BockZero.
+// Returns "" on Block{}
 func (a Block) String() string {
-	if a == BlockZero {
+	if a == blockZero {
 		return ""
 	}
 
@@ -62,7 +62,7 @@ func (a Block) String() string {
 		panic(ErrInvalidBlock)
 	}
 
-	if a.Mask == IPZero {
+	if a.Mask == ipZero {
 		return fmt.Sprintf("%s-%s", a.Base, a.Last)
 	}
 
@@ -82,7 +82,7 @@ func (a Block) MarshalText() ([]byte, error) {
 func (a *Block) UnmarshalText(text []byte) error {
 	s := string(text)
 	if len(s) == 0 { // this is no error condition
-		*a = BlockZero
+		*a = blockZero
 		return nil
 	}
 

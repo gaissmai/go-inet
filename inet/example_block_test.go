@@ -141,7 +141,7 @@ func ExampleBlock_UnmarshalText() {
 	for _, s := range []string{
 		"127.0.000.255/8",         // base gets truncated by CIDR mask, see output
 		"10.000.000.000-10.1.0.0", // leading zeros are normalized, see output
-		"",                        // empty input string aka []byte(nil) returns zero-value (BlockZero) on UnmarshalText()
+		"",                        // empty input string aka []byte(nil) returns zero-value Block{} on UnmarshalText()
 		"fe80::",                  // invalid
 	} {
 		err := a.UnmarshalText([]byte(s))
