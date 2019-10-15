@@ -21,6 +21,7 @@ func main() {
 	log.SetPrefix(progname + ": ")
 	log.SetFlags(0)
 
+	// get and check flags
 	flag.Usage = usage
 	flag.Parse()
 
@@ -32,6 +33,9 @@ func main() {
 	startCidr, err := inet.ParseBlock(flag.Args()[0])
 	if err != nil {
 		log.Fatal(err)
+	}
+	if !startCidr.IsCIDR() {
+		log.Fatalf("invalid input, no CIDR: %s", startCidr)
 	}
 
 	// get and check bits
@@ -48,29 +52,28 @@ func main() {
 	}
 
 	// first split
-	firstCidrs := startCidr.SplitCIDR(bits[0])
-	secondCidrs := []inet.Block{}
-	for _, cidr := range firstCidrs {
-		// second split
-		cidrs := cidr.SplitCIDR(bits[1])
-		secondCidrs = append(secondCidrs, cidrs...)
+	cidrs := startCidr.SplitCIDR(bits[0])
+
+	// second split
+	if bits[1] != 0 {
+		for _, c := range cidrs {
+			cidrs = append(cidrs, c.SplitCIDR(bits[1])...)
+		}
 	}
 
 	if *flagPrintTree {
+		// make tree.Items from cidrs
+		items := make([]tree.Item, len(cidrs))
+		for i, c := range cidrs {
+			items[i] = tree.Item{c, nil, nil}
+		}
 		tr := tree.New()
-		for _, c := range firstCidrs {
-			tr.Insert(tree.Item{c, nil, nil})
-		}
-		for _, c := range secondCidrs {
-			tr.Insert(tree.Item{c, nil, nil})
-		}
+		tr.Insert(items...)
 		tr.Fprint(os.Stdout)
 	} else {
-		for _, cidr := range firstCidrs {
-			fmt.Println(cidr)
-		}
-		for _, cidr := range secondCidrs {
-			fmt.Println(cidr)
+		inet.SortBlock(cidrs)
+		for _, c := range cidrs {
+			fmt.Println(c)
 		}
 	}
 }
