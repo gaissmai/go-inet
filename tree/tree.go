@@ -295,7 +295,7 @@ func (t *Tree) Fprint(w io.Writer) {
 // The Walk() stops if the WalkFunc returns an error.
 type WalkFunc func(n *Node, depth int) error
 
-// Walk the Tree starting at root, calling walkFn for each node.
+// Walk the Tree starting at root in depth first order, calling walkFn for each node.
 // At every node the walkFn is called with the node and the current depth as arguments.
 // The walk stops if the walkFn returns an error not nil. The error is propagated by Walk() to the caller.
 func (t *Tree) Walk(walkFn WalkFunc) error {
