@@ -9,8 +9,6 @@ import (
 	"github.com/gaissmai/go-inet/inet/internal"
 )
 
-var r = rand.New(rand.NewSource(42))
-
 func BenchmarkSortIP(b *testing.B) {
 	bench := []int{10000, 100000, 1000000}
 
