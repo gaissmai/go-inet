@@ -1,12 +1,12 @@
 package inet_test
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"testing"
 
 	"github.com/gaissmai/go-inet/inet"
+	"github.com/gaissmai/go-inet/inet/internal"
 )
 
 var r = rand.New(rand.NewSource(42))
@@ -15,7 +15,7 @@ func BenchmarkSortIP(b *testing.B) {
 	bench := []int{10000, 100000, 1000000}
 
 	for _, n := range bench {
-		ips := genMixed(n)
+		ips := internal.GenMixed(n)
 		rand.Shuffle(len(ips), func(i, j int) { ips[i], ips[j] = ips[j], ips[i] })
 
 		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
@@ -31,7 +31,7 @@ func BenchmarkSortBlock(b *testing.B) {
 	bench := []int{10000, 100000, 1000000}
 
 	for _, n := range bench {
-		rs := genBlockMixed(n)
+		rs := internal.GenBlockMixed(n)
 		rand.Shuffle(len(rs), func(i, j int) { rs[i], rs[j] = rs[j], rs[i] })
 
 		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
@@ -41,65 +41,4 @@ func BenchmarkSortBlock(b *testing.B) {
 		})
 
 	}
-}
-
-// #####################################################################
-// ### generators for IPs and CIDRs
-// #####################################################################
-
-func genV4(n int) []inet.IP {
-	out := make([]inet.IP, n)
-	for i := 0; i < n; i++ {
-		buf := make([]byte, 4)
-		binary.BigEndian.PutUint32(buf, r.Uint32())
-		ip, _ := inet.ParseIP(buf)
-		out[i] = ip
-	}
-	return out
-}
-
-func genV6(n int) []inet.IP {
-	out := make([]inet.IP, n)
-	for i := 0; i < n; i++ {
-		buf := make([]byte, 16)
-		binary.BigEndian.PutUint64(buf[:8], r.Uint64())
-		binary.BigEndian.PutUint64(buf[8:], r.Uint64())
-		ip, _ := inet.ParseIP(buf)
-		out[i] = ip
-	}
-	return out
-}
-
-func genMixed(n int) []inet.IP {
-	out := make([]inet.IP, 0, n)
-	out = append(out, genV4(n/2)...)
-	out = append(out, genV6(n/2)...)
-	rand.Shuffle(len(out), func(i, j int) { out[i], out[j] = out[j], out[i] })
-	return out
-}
-
-func genBlockV4(n int) []inet.Block {
-	rs := make([]inet.Block, n)
-	for i, v := range genV4(n) {
-		ones := r.Intn(32)
-		rs[i], _ = inet.ParseBlock(fmt.Sprintf("%s/%d", v, ones))
-	}
-	return rs
-}
-
-func genBlockV6(n int) []inet.Block {
-	rs := make([]inet.Block, n)
-	for i, v := range genV6(n) {
-		ones := r.Intn(128)
-		rs[i], _ = inet.ParseBlock(fmt.Sprintf("%s/%d", v, ones))
-	}
-	return rs
-}
-
-func genBlockMixed(n int) []inet.Block {
-	rs := make([]inet.Block, 0, n)
-	rs = append(rs, genBlockV4(n/2)...)
-	rs = append(rs, genBlockV6(n/2)...)
-	rand.Shuffle(len(rs), func(i, j int) { rs[i], rs[j] = rs[j], rs[i] })
-	return rs
 }
