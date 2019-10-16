@@ -66,7 +66,7 @@ func GenBlockV4(n int) []inet.Block {
 		binary.BigEndian.PutUint32(buf, r.Uint32())
 		ip, _ := inet.ParseIP(buf)
 
-		ones := r.Intn(16) + 16
+		ones := r.Intn(24) + 8
 		b, _ := inet.ParseBlock(fmt.Sprintf("%s/%d", ip, ones))
 
 		set[b] = true
