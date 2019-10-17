@@ -1,3 +1,4 @@
+// Package internal for generating random ip addresses and CIDRs for benchmarking.
 package internal
 
 import (
@@ -14,6 +15,7 @@ var r = rand.New(rand.NewSource(42))
 // ### generators for IPs and CIDRs
 // #####################################################################
 
+// GenV4 returns random v4 IP addresses.
 func GenV4(n int) []inet.IP {
 
 	set := make(map[inet.IP]bool, n)
@@ -32,6 +34,7 @@ func GenV4(n int) []inet.IP {
 	return out
 }
 
+// GenV6 returns random v6 IP addresses.
 func GenV6(n int) []inet.IP {
 	set := make(map[inet.IP]bool, n)
 	for len(set) < n {
@@ -50,6 +53,7 @@ func GenV6(n int) []inet.IP {
 	return out
 }
 
+// GenMixed returns random mixed v4/v6 IP addresses.
 func GenMixed(n int) []inet.IP {
 	out := make([]inet.IP, 0, n)
 	out = append(out, GenV4(n/2)...)
@@ -58,6 +62,7 @@ func GenMixed(n int) []inet.IP {
 	return out
 }
 
+// GenBlockV4 returns random v4 CIDRs
 func GenBlockV4(n int) []inet.Block {
 	set := make(map[inet.Block]bool, n)
 
@@ -80,6 +85,7 @@ func GenBlockV4(n int) []inet.Block {
 	return out
 }
 
+// GenBlockV6 returns random v6 CIDRs
 func GenBlockV6(n int) []inet.Block {
 	set := make(map[inet.Block]bool, n)
 
@@ -103,6 +109,7 @@ func GenBlockV6(n int) []inet.Block {
 	return out
 }
 
+// GenBlockMixed returns random mixed v4/v6 CIDRs
 func GenBlockMixed(n int) []inet.Block {
 	rs := make([]inet.Block, 0, n)
 	rs = append(rs, GenBlockV4(n/2)...)

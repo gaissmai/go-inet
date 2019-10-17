@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/gaissmai/go-inet/inet"
-	"github.com/gaissmai/go-inet/inet/internal"
+	"github.com/gaissmai/go-inet/internal"
 )
 
 func BenchmarkSortIP(b *testing.B) {

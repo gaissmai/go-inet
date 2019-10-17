@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/gaissmai/go-inet/tree"
-	"github.com/gaissmai/go-inet/tree/internal"
+	"github.com/gaissmai/go-inet/internal"
 )
 
 func BenchmarkTreeInsert(b *testing.B) {
