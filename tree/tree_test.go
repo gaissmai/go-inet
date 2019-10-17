@@ -300,6 +300,57 @@ func TestTreeRemove(t *testing.T) {
 	}
 }
 
+func TestTreeRemoveBranch(t *testing.T) {
+	tr := New()
+
+	for _, s := range []string{
+		"0.0.0.0/8",
+		"1.0.0.0/8",
+		"5.0.0.0/8",
+		"0.0.0.0/0",
+		"10.0.0.0-10.0.0.17",
+		"::/64",
+		"::/0",
+		"2001:7c0:900:1c2::/64",
+		"2001:7c0:900:1c2::0/96",
+		"2001:7c0:900:1c2::0/120",
+		"2001:7c0:900:1c2::1/128",
+		"2001:7c0:900:1c2::5/128",
+		"0.0.0.0/10",
+	} {
+		item := Item{inet.MustBlock(s), nil, nil}
+		tr.MustInsert(item)
+	}
+
+	w1 := new(strings.Builder)
+	tr.Fprint(w1)
+
+	r := Item{Block: inet.MustBlock("2001:7c0:900:1c2::/64")}
+	got := tr.RemoveBranch(r)
+	if !got {
+		t.Errorf("Remove(%v), got %t, want %t\n", r, got, true)
+	}
+
+	w2 := new(strings.Builder)
+	tr.Fprint(w2)
+
+	want :=
+		`▼
+├─ 0.0.0.0/0
+│  ├─ 0.0.0.0/8
+│  │  └─ 0.0.0.0/10
+│  ├─ 1.0.0.0/8
+│  ├─ 5.0.0.0/8
+│  └─ 10.0.0.0-10.0.0.17
+└─ ::/0
+   └─ ::/64
+`
+
+	if w2.String() != want {
+		t.Errorf("start:\n%s\nremove %v\ngot:\n%s\nwant:\n%s\n", w1.String(), r, w2, want)
+	}
+}
+
 func TestTreeRemoveFalse(t *testing.T) {
 	tr := New()
 

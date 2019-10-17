@@ -152,14 +152,19 @@ func (node *Node) insert(input Item) error {
 	return nil
 }
 
+// RemoveBranch from tree. Returns true on success, false if not found.
+func (t *Tree) RemoveBranch(item Item) bool {
+	return t.Root.remove(item, true)
+}
+
 // Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
 // false if not found.
 func (t *Tree) Remove(item Item) bool {
-	return t.Root.remove(item)
+	return t.Root.remove(item, false)
 }
 
 // recursive work horse
-func (node *Node) remove(input Item) bool {
+func (node *Node) remove(input Item, removeBranch bool) bool {
 
 	// childs are sorted, find pos in childs on this level, binary search
 	l := len(node.Childs)
@@ -176,12 +181,17 @@ func (node *Node) remove(input Item) bool {
 			node.Childs = node.Childs[:idx]
 		}
 
-		// re-insert grandchilds into tree at this node
-		// just relinking of parent-child links not always possible
-		// there may be some overlaps with containment edge cases
+		// remove branch, stop here
+		if removeBranch {
+			return true
+		}
+
+		// re-insert descendants from removed child into tree at this node
+		// just relinking of parent-child links is not always possible
+		// there may be some edge cases with ranges and overlaps,
 		// reinserting is safe
-		var reinsert func(*Node)
-		reinsert = func(n *Node) {
+		var walk func(*Node)
+		walk = func(n *Node) {
 			for _, descendants := range n.Childs {
 
 				// no dup error possible, otherwise panic on logic error
@@ -189,11 +199,11 @@ func (node *Node) remove(input Item) bool {
 				if err := node.insert(*descendants.Item); err != nil {
 					panic(err)
 				}
-				reinsert(descendants)
+				walk(descendants)
 			}
 		}
 		// re-insert all descendants from deleted child
-		reinsert(child)
+		walk(child)
 
 		return true
 	}
@@ -203,7 +213,7 @@ func (node *Node) remove(input Item) bool {
 	for j := idx - 1; j >= 0; j-- {
 		child := node.Childs[j]
 		if child.Item.Block.Contains(input.Block) {
-			return child.remove(input)
+			return child.remove(input, removeBranch)
 		}
 	}
 
