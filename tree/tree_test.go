@@ -251,13 +251,18 @@ func TestTreeRemove(t *testing.T) {
 		"::/64",
 		"::/0",
 		"2001:7c0:900:1c2::/64",
-		"2001:7c0:900:1c2::0/127",
+		"2001:7c0:900:1c2::0/96",
+		"2001:7c0:900:1c2::0/120",
 		"2001:7c0:900:1c2::1/128",
+		"2001:7c0:900:1c2::5/128",
 		"0.0.0.0/10",
 	} {
 		item := Item{inet.MustBlock(s),nil,nil}
 		tr.MustInsert(item)
 	}
+
+	w1 := new(strings.Builder)
+	tr.Fprint(w1)
 
 	r := Item{inet.MustBlock("3.0.0.0/8"),nil,nil}
 	got := tr.Remove(r)
@@ -265,10 +270,7 @@ func TestTreeRemove(t *testing.T) {
 		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
 	}
 
-	w1 := new(strings.Builder)
-	tr.Fprint(w1)
-
-	r = Item{Block: inet.MustBlock("2001:7c0:900:1c2::0/127")}
+	r = Item{Block: inet.MustBlock("2001:7c0:900:1c2::/64")}
 	got = tr.Remove(r)
 	if !got {
 		t.Errorf("Remove(%v), got %t, want %t\n", r, got, true)
@@ -287,8 +289,10 @@ func TestTreeRemove(t *testing.T) {
 │  └─ 10.0.0.0-10.0.0.17
 └─ ::/0
    ├─ ::/64
-   └─ 2001:7c0:900:1c2::/64
-      └─ 2001:7c0:900:1c2::1/128
+   └─ 2001:7c0:900:1c2::/96
+      └─ 2001:7c0:900:1c2::/120
+         ├─ 2001:7c0:900:1c2::1/128
+         └─ 2001:7c0:900:1c2::5/128
 `
 
 	if w2.String() != want {

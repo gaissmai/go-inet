@@ -180,13 +180,21 @@ func (node *Node) remove(input Item) bool {
 		// just relinking of parent-child links not always possible
 		// there may be some overlaps with containment edge cases
 		// reinserting is safe
-		for _, grandChild := range child.Childs {
+		var reinsert func(*Node)
+		reinsert = func(n *Node) {
+			for _, descendants := range n.Childs {
 
-			// no dup error possible, otherwise panic on logic error
-			if err := node.insert(*grandChild.Item); err != nil {
-				panic(err)
+				// no dup error possible, otherwise panic on logic error
+				// insert in outer node
+				if err := node.insert(*descendants.Item); err != nil {
+					panic(err)
+				}
+				reinsert(descendants)
 			}
 		}
+		// re-insert all descendants from deleted child
+		reinsert(child)
+
 		return true
 	}
 
