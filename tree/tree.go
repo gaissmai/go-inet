@@ -25,6 +25,7 @@ type (
 	}
 
 	// Item, maybe with additonal payload, not just inet.Block.
+	// It is intended that there is no Itemer interface.
 	Item struct {
 		// Block, methods Contains() and Compare() defines the position in the tree.
 		Block inet.Block
@@ -41,7 +42,7 @@ type (
 // The sender should better know how to format the payload, this library knows just the empty interface{}.
 // If no callback for stringification is defined, return just the string for the inet.Block.
 //
-// Item is intentionally no interface.
+// It is intended that there is no Itemer interface.
 func (item Item) String() string {
 	if item.StringCb != nil {
 		return item.StringCb(item)
