@@ -80,15 +80,13 @@ func ExampleTree_Lookup() {
 
 }
 
-func ExampleTree_Lookup_exists() {
+func ExampleTree_Contains() {
 	is := make([]tree.Item, 0)
 	for _, s := range []string{
 		"0.0.0.0/8",
 		"1.0.0.0/8",
 		"5.0.0.0/8",
-		"0.0.0.0/0",
 		"::/64",
-		"::/0",
 		"0.0.0.0/10",
 	} {
 		is = append(is, tree.Item{Block: inet.MustBlock(s)})
@@ -97,24 +95,24 @@ func ExampleTree_Lookup_exists() {
 	tr := tree.New()
 	tr.MustInsert(is...)
 
-	// look for exists, exact match, not just LPM
+	// look for containment in tree
 	for _, s := range []string{
-		"5.0.0.0/8",
 		"5.0.1.2/32",
+		"6.0.0.0/8",
 	} {
 		q := tree.Item{Block: inet.MustBlock(s)}
 
-		match, ok := tr.Lookup(q)
-		if ok && match.Block.Compare(q.Block) == 0 {
-			fmt.Printf("%q exists in tree\n", q)
+		ok := tr.Contains(q)
+		if ok {
+			fmt.Printf("%-12s is    contained in tree\n", q)
 		} else {
-			fmt.Printf("%q doesn't exists in tree\n", q)
+			fmt.Printf("%-12s isn't contained in tree\n", q)
 		}
 	}
 
 	// Output:
-	// "5.0.0.0/8" exists in tree
-	// "5.0.1.2/32" doesn't exists in tree
+	// 5.0.1.2/32   is    contained in tree
+	// 6.0.0.0/8    isn't contained in tree
 
 }
 
