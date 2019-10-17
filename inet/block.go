@@ -638,7 +638,7 @@ func Aggregate(bs []Block) []Block {
 
 	for i := 0; i < len(unique); i++ {
 		pack := unique[i]
-		skip := 0
+		var cursor int
 
 		// pack adjacencies to cursor at pos i
 		for j := i + 1; j < len(unique); j++ {
@@ -652,7 +652,7 @@ func Aggregate(bs []Block) []Block {
 			if pack.Last.AddUint64(1) == unique[j].Base {
 				// combine adjacent cidrs
 				pack.Last = unique[j].Last
-				skip = j
+				cursor = j
 				continue
 			}
 			break
@@ -663,8 +663,8 @@ func Aggregate(bs []Block) []Block {
 		packed = append(packed, pack)
 
 		// move cursor
-		if skip != 0 {
-			i = skip
+		if cursor != 0 {
+			i = cursor
 		}
 	}
 
