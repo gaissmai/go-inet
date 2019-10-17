@@ -217,7 +217,7 @@ func TestTreeRemoveEdgeCase(t *testing.T) {
 	w1 := new(strings.Builder)
 	tr.Fprint(w1)
 
-	r := Item{inet.MustBlock("10.0.0.2-10.0.0.50"),nil,nil}
+	r := Item{inet.MustBlock("10.0.0.2-10.0.0.50"), nil, nil}
 	got := tr.Remove(r)
 	if !got {
 		t.Errorf("Remove(%v), got %t, want %t\n", r, got, true)
@@ -257,14 +257,14 @@ func TestTreeRemove(t *testing.T) {
 		"2001:7c0:900:1c2::5/128",
 		"0.0.0.0/10",
 	} {
-		item := Item{inet.MustBlock(s),nil,nil}
+		item := Item{inet.MustBlock(s), nil, nil}
 		tr.MustInsert(item)
 	}
 
 	w1 := new(strings.Builder)
 	tr.Fprint(w1)
 
-	r := Item{inet.MustBlock("3.0.0.0/8"),nil,nil}
+	r := Item{inet.MustBlock("3.0.0.0/8"), nil, nil}
 	got := tr.Remove(r)
 	if got {
 		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
@@ -310,26 +310,26 @@ func TestTreeRemoveFalse(t *testing.T) {
 		"4.0.0.0/8",
 		"5.0.0.0/8",
 	} {
-		item := Item{inet.MustBlock(s),nil,nil}
+		item := Item{inet.MustBlock(s), nil, nil}
 		tr.MustInsert(item)
 	}
 
 	// frist pos in childs
-	r := Item{inet.MustBlock("0.0.0.0/8"),nil,nil}
+	r := Item{inet.MustBlock("0.0.0.0/8"), nil, nil}
 	got := tr.Remove(r)
 	if got {
 		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
 	}
 
 	// last pos in childs
-	r = Item{inet.MustBlock("6.0.0.0/8"),nil,nil}
+	r = Item{inet.MustBlock("6.0.0.0/8"), nil, nil}
 	got = tr.Remove(r)
 	if got {
 		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
 	}
 
 	// middle pos in childs
-	r = Item{inet.MustBlock("6.0.0.0/8"),nil,nil}
+	r = Item{inet.MustBlock("6.0.0.0/8"), nil, nil}
 	got = tr.Remove(r)
 	if got {
 		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
@@ -352,7 +352,7 @@ func TestTreeRemoveInsert(t *testing.T) {
 		"2001:7c0:900:1c2::1/128",
 		"0.0.0.0/10",
 	} {
-		item := Item{inet.MustBlock(s),nil,nil}
+		item := Item{inet.MustBlock(s), nil, nil}
 		tr.MustInsert(item)
 	}
 

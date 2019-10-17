@@ -202,7 +202,6 @@ func ExampleBlock_Size() {
 	// 2001:db8::1-2001:db8::ffec     size: 65516
 	// fe80::/96                      size: 4294967296
 
-
 }
 
 func ExampleBlock_BlockToCIDRList() {

@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/gaissmai/go-inet/tree"
 	"github.com/gaissmai/go-inet/internal"
+	"github.com/gaissmai/go-inet/tree"
 )
 
 func BenchmarkTreeInsert(b *testing.B) {
