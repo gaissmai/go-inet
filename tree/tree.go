@@ -206,9 +206,9 @@ func (node *Node) remove(input Item) bool {
 // Contains reports whether the item is contained in any element of the tree.
 // Just returns true or false and not the matching prefix,
 // this is faster than a full Lookup for the longest-prefix-match.
-func (t *Tree) Contains(query Item) bool {
+func (t *Tree) Contains(item Item) bool {
 	// just look in root childs, therefore much faster than a full tree lookup
-	return t.Root.contains(query, t.Root.Childs)
+	return t.Root.contains(item, t.Root.Childs)
 }
 
 // returns true if item is contained in any node
