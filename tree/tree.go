@@ -47,7 +47,7 @@ func (item Item) String() string {
 	if item.StringCb != nil {
 		return item.StringCb(item)
 	}
-	// just return the String for inet.Block, don't know how to render the empty interface as payload.
+	// just return the String for inet.Block, don't know how to render the payload.
 	return item.Block.String()
 }
 
@@ -71,7 +71,7 @@ func (t *Tree) MustInsert(items ...Item) {
 }
 
 // Insert item(s) into the tree. Inserting a bulk of items is much faster
-// than inserting single items in a loop.
+// than inserting unsorted single items in a loop.
 //
 // Returns error on duplicate items in the tree.
 func (t *Tree) Insert(items ...Item) error {
