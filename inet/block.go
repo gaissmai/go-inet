@@ -594,49 +594,46 @@ func Aggregate(bs []Block) []Block {
 	}
 
 	// first step: expand input blocks (maybe ranges) to real CIDRs
-	cidrs := make([]Block, 0, len(bs))
+	// use a set, get rid of dup cidrs
+	set := map[Block]bool{}
 	for i := range bs {
-		expand := bs[i].BlockToCIDRList()
-		cidrs = append(cidrs, expand...)
+		cidrs := bs[i].BlockToCIDRList()
+		for _, cidr := range cidrs {
+			set[cidr] = true
+		}
 	}
 
-	// next step: real cidrs have no overlaps, just dups and subsets
-	// remove the dups and subsets, keep just unique cidrs
-	unique := make([]Block, 0, len(cidrs))
+	// next step: maybe we still have supersets and subsets, remove the subsets
+	// back from map to slice
+	cidrs := make([]Block, 0, len(set))
+	for cidr := range set {
+		cidrs = append(cidrs, cidr)
+	}
 
-	// use sort order
+	// sort slice
 	SortBlock(cidrs)
 
+	// skip subsets
+	unique := make([]Block, 0, len(cidrs))
 	for i := 0; i < len(cidrs); i++ {
 		unique = append(unique, cidrs[i])
-		skip := 0
 
-		// skip dups and subsets after cursor at pos i
+		var cursor int
 		for j := i + 1; j < len(cidrs); j++ {
-
-			// skip dups
-			if cidrs[i].Compare(cidrs[j]) == 0 {
-				// skip next identical cidr in row
-				skip = j
-				continue
-			}
-
-			// skip subsets
 			if cidrs[i].Contains(cidrs[j]) {
-				// skip next subset in row
-				skip = j
+				cursor = j
 				continue
 			}
 			break
 		}
 
 		// move cursor
-		if skip != 0 {
-			i = skip
+		if cursor != 0 {
+			i = cursor
 		}
 	}
 
-	// next step: no more dups and subsets, pack adjacent cidrs to blocks
+	// next step: no more subsets, pack adjacent cidrs to blocks
 	packed := make([]Block, 0, len(unique))
 
 	for i := 0; i < len(unique); i++ {
