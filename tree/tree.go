@@ -229,28 +229,30 @@ func (node *Node) remove(input Item, removeBranch bool) bool {
 // this is faster than a full Lookup for the longest-prefix-match.
 func (t *Tree) Contains(item Item) bool {
 	// just look in root childs, therefore much faster than a full tree lookup
-	return t.Root.contains(item, t.Root.Childs)
+	return t.Root.contains(item)
 }
 
 // returns true if item is contained in any node
-func (n *Node) contains(query Item, nodes []*Node) bool {
-	// nodes are sorted, binary search
-	l := len(nodes)
-	idx := sort.Search(l, func(i int) bool { return nodes[i].Item.Block.Compare(query.Block) >= 0 })
+func (node *Node) contains(query Item) bool {
+	// find pos in childs on root level, binary search, childs are sorted
+	l := len(node.Childs)
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(query.Block) >= 0 })
 
 	if idx == 0 {
 		return false
 	}
 
 	if idx < l {
+		child := node.Childs[idx]
 		// found by exact match?
-		if nodes[idx].Item.Block.Compare(query.Block) == 0 {
+		if child.Item.Block.Compare(query.Block) == 0 {
 			return true
 		}
 	}
 
 	// item before idx contains query?
-	if nodes[idx-1].Item.Block.Contains(query.Block) {
+	child := node.Childs[idx-1]
+	if child.Item.Block.Contains(query.Block) {
 		return true
 	}
 
@@ -271,20 +273,22 @@ func (node *Node) lookup(query Item) (Item, bool) {
 	l := len(node.Childs)
 	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(query.Block) >= 0 })
 
+	if idx == 0 {
+		return query, false
+	}
+
 	if idx < l {
 		child := node.Childs[idx]
-
 		// found by exact match
 		if child.Item.Block.Compare(query.Block) == 0 {
 			return *child.Item, true
 		}
 	}
 
-	if idx > 0 {
-		child := node.Childs[idx-1]
-		if child.Item.Block.Contains(query.Block) {
-			return child.lookup(query)
-		}
+	// item before idx contains query?
+	child := node.Childs[idx-1]
+	if child.Item.Block.Contains(query.Block) {
+		return child.lookup(query)
 	}
 
 	// no child path, no Item, we are at the root node
