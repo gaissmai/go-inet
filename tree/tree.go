@@ -40,6 +40,8 @@ type (
 // String calls back to the items sender, but only if StringCb is defined.
 // The sender should better know how to format the payload, this library knows just the empty interface{}.
 // If no callback for stringification is defined, return just the string for the inet.Block.
+//
+// Item is intentionally no interface.
 func (item Item) String() string {
 	if item.StringCb != nil {
 		return item.StringCb(item)
