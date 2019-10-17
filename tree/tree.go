@@ -210,6 +210,40 @@ func (n *Node) remove(item Item) bool {
 	return false
 }
 
+// Contains reports whether the item is contained in any element of the tree.
+// Just returns true or false and not the matching prefix,
+// this is faster than a full Lookup for the longest-prefix-match.
+func (t *Tree) Contains(query Item) bool {
+	// just look in root childs, therefore much faster than a full tree lookup
+	return t.Root.contains(query, t.Root.Childs)
+}
+
+// returns true if item is contained in any node
+func (n *Node) contains(query Item, nodes []*Node) bool {
+	// nodes are sorted, binary search
+	l := len(nodes)
+	idx := sort.Search(l, func(i int) bool { return nodes[i].Item.Block.Compare(query.Block) >= 0 })
+
+	if idx == 0 {
+		return false
+	}
+
+	if idx < l {
+		// found by exact match?
+		if nodes[idx].Item.Block.Compare(query.Block) == 0 {
+			return true
+		}
+	}
+
+	// item before idx contains query?
+	if nodes[idx-1].Item.Block.Contains(query.Block) {
+		return true
+	}
+
+	// not found
+	return false
+}
+
 // Lookup item for longest prefix match in the tree.
 // If not found, returns input argument and false.
 func (t *Tree) Lookup(item Item) (Item, bool) {
