@@ -70,11 +70,7 @@ func MustIP(i interface{}) IP {
 // valid textual representation of an IP address, ipFromString returns IP{} and error.
 // The real work is done by net.ParseIP() and converted to type IP.
 func ipFromString(s string) (IP, error) {
-	netIP := net.ParseIP(s)
-	if netIP == nil {
-		return ipZero, ErrInvalidIP
-	}
-	return ipFromNetIP(netIP)
+	return ipFromNetIP(net.ParseIP(s))
 }
 
 // ipFromNetIP converts from stdlib net.IP ([]byte) to IP ([21]byte) representation.
