@@ -38,7 +38,7 @@ type (
 )
 
 // String calls back to the items sender, but only if StringCb is defined.
-// The sender should know how to format the payload, this library knows just the empty interface{}.
+// The sender should better know how to format the payload, this library knows just the empty interface{}.
 // If no callback for stringification is defined, return just the string for the inet.Block.
 func (item Item) String() string {
 	if item.StringCb != nil {
@@ -87,34 +87,34 @@ func (t *Tree) Insert(items ...Item) error {
 
 // recursive work horse, use binary search on same level
 // childs stay sorted after insert
-func (n *Node) insert(item Item) error {
+func (node *Node) insert(input Item) error {
 
 	// childs are sorted find pos in childs on this level, binary search
-	idx := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(item.Block) >= 0 })
+	l := len(node.Childs)
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Block) >= 0 })
 
-	l := len(n.Childs)
 	// not at end of slice
 	if idx < l {
 		// don't insert dups
-		if item.Block.Compare(n.Childs[idx].Item.Block) == 0 {
-			return fmt.Errorf("duplicate item: %s", item)
+		if input.Block.Compare(node.Childs[idx].Item.Block) == 0 {
+			return fmt.Errorf("duplicate item: %s", input)
 		}
 	}
 
 	// not in front of slice, check if previous child contains new Item
 	if idx > 0 {
-		c := n.Childs[idx-1]
-		if c.Item.Block.Contains(item.Block) {
-			return c.insert(item)
+		child := node.Childs[idx-1]
+		if child.Item.Block.Contains(input.Block) {
+			return child.insert(input)
 		}
 	}
 
 	// add as new child on this level
-	x := &Node{Item: &item, Parent: n, Childs: nil}
+	x := &Node{Item: &input, Parent: node, Childs: nil}
 
-	// item is greater than all others and not contained, just append
+	// input is greater than all others and not contained, just append
 	if idx == l {
-		n.Childs = append(n.Childs, x)
+		node.Childs = append(node.Childs, x)
 		return nil
 	}
 
@@ -122,33 +122,33 @@ func (n *Node) insert(item Item) error {
 	buf := make([]*Node, 0, l+1)
 
 	// copy [:idx] to buf
-	buf = append(buf, n.Childs[:idx]...)
+	buf = append(buf, node.Childs[:idx]...)
 
 	// copy x to buf at [idx]
 	buf = append(buf, x)
 
 	// now handle [idx:]
-	// resort if item contains next child...
+	// resort if input contains next child...
 	j := idx
 	for {
-		c := n.Childs[j]
-		if item.Block.Contains(c.Item.Block) {
+		child := node.Childs[j]
+		if input.Block.Contains(child.Item.Block) {
 			// put old child under new Item
-			x.Childs = append(x.Childs, c)
-			c.Parent = x
+			x.Childs = append(x.Childs, child)
+			child.Parent = x
 			if j++; j < l {
 				continue
 			}
 		}
 
-		// childs are sorted, break after first child not being child of item
+		// childs are sorted, break after first child not being child of input
 		break
 	}
 
 	// copy rest of childs to buf
-	buf = append(buf, n.Childs[j:]...)
+	buf = append(buf, node.Childs[j:]...)
 
-	n.Childs = buf
+	node.Childs = buf
 	return nil
 }
 
@@ -159,50 +159,43 @@ func (t *Tree) Remove(item Item) bool {
 }
 
 // recursive work horse
-func (n *Node) remove(item Item) bool {
+func (node *Node) remove(input Item) bool {
 
 	// childs are sorted, find pos in childs on this level, binary search
-	idx := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(item.Block) >= 0 })
+	l := len(node.Childs)
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Block) >= 0 })
 
-	l := len(n.Childs)
-
-	if idx != l && item.Block.Compare(n.Childs[idx].Item.Block) == 0 {
+	if idx != l && input.Block.Compare(node.Childs[idx].Item.Block) == 0 {
 		// found child to remove at [idx]
 		// delete this child [idx] from node
-		c := n.Childs[idx]
+		child := node.Childs[idx]
 
 		if idx < l-1 {
-			n.Childs = append(n.Childs[:idx], n.Childs[idx+1:]...)
+			node.Childs = append(node.Childs[:idx], node.Childs[idx+1:]...)
 		} else {
-			n.Childs = n.Childs[:idx]
+			node.Childs = node.Childs[:idx]
 		}
 
 		// re-insert grandchilds into tree at this node
 		// just relinking of parent-child links not always possible
 		// there may be some overlaps with containment edge cases
 		// reinserting is safe
-		var walk func(*Node)
-		walk = func(c *Node) {
-			for _, gc := range c.Childs {
+		for _, grandChild := range child.Childs {
 
-				// no dup error possible, otherwise panic on logic error
-				if err := n.insert(*gc.Item); err != nil {
-					panic(err)
-				}
-				walk(gc)
+			// no dup error possible, otherwise panic on logic error
+			if err := node.insert(*grandChild.Item); err != nil {
+				panic(err)
 			}
 		}
-
-		walk(c)
 		return true
 	}
 
 	// pos in tree not found on this level
-	// walk down if any child (before item, respect sort order) includes item
+	// walk down if any child (before input, respect sort order) includes input
 	for j := idx - 1; j >= 0; j-- {
-		c := n.Childs[j]
-		if c.Item.Block.Contains(item.Block) {
-			return c.remove(item)
+		child := node.Childs[j]
+		if child.Item.Block.Contains(input.Block) {
+			return child.remove(input)
 		}
 	}
 
@@ -251,35 +244,35 @@ func (t *Tree) Lookup(item Item) (Item, bool) {
 }
 
 // recursive work horse
-func (n *Node) lookup(item Item) (Item, bool) {
+func (node *Node) lookup(query Item) (Item, bool) {
 
 	// find pos in childs on this level, binary search, childs are sorted
-	idx := sort.Search(len(n.Childs), func(i int) bool { return n.Childs[i].Item.Block.Compare(item.Block) >= 0 })
-	l := len(n.Childs)
+	l := len(node.Childs)
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(query.Block) >= 0 })
 
 	if idx < l {
-		c := n.Childs[idx]
+		child := node.Childs[idx]
 
 		// found by exact match
-		if c.Item.Block.Compare(item.Block) == 0 {
-			return *c.Item, true
+		if child.Item.Block.Compare(query.Block) == 0 {
+			return *child.Item, true
 		}
 	}
 
 	if idx > 0 {
-		c := n.Childs[idx-1]
-		if c.Item.Block.Contains(item.Block) {
-			return c.lookup(item)
+		child := node.Childs[idx-1]
+		if child.Item.Block.Contains(query.Block) {
+			return child.lookup(query)
 		}
 	}
 
-	// no child path, no item and no parent, we are at the root
-	if n.Parent == nil || n.Item == nil {
-		return item, false
+	// no child path, no Item, we are at the root node
+	if node.Item == nil {
+		return query, false
 	}
 
 	// found by longest prefix match
-	return *n.Item, true
+	return *node.Item, true
 }
 
 // Fprint prints the ordered tree in ASCII graph.
@@ -303,18 +296,18 @@ func (t *Tree) Fprint(w io.Writer) {
 
 	var walkAndPrint func(io.Writer, *Node, string)
 
-	walkAndPrint = func(w io.Writer, n *Node, prefix string) {
-		if n.Childs == nil {
+	walkAndPrint = func(w io.Writer, node *Node, prefix string) {
+		if node.Childs == nil {
 			return
 		}
 
-		for i, c := range n.Childs {
-			if i == len(n.Childs)-1 { // last child
-				fmt.Fprintf(w, "%s%s\n", prefix+"└─ ", *c.Item)
-				walkAndPrint(w, c, prefix+"   ")
+		for i, child := range node.Childs {
+			if i == len(node.Childs)-1 { // last child
+				fmt.Fprintf(w, "%s%s\n", prefix+"└─ ", *child.Item)
+				walkAndPrint(w, child, prefix+"   ")
 			} else {
-				fmt.Fprintf(w, "%s%s\n", prefix+"├─ ", *c.Item)
-				walkAndPrint(w, c, prefix+"│  ")
+				fmt.Fprintf(w, "%s%s\n", prefix+"├─ ", *child.Item)
+				walkAndPrint(w, child, prefix+"│  ")
 			}
 		}
 	}
@@ -327,7 +320,7 @@ func (t *Tree) Fprint(w io.Writer) {
 // and the depth, starting with 0.
 //
 // The Walk() stops if the WalkFunc returns an error.
-type WalkFunc func(n *Node, depth int) error
+type WalkFunc func(node *Node, depth int) error
 
 // Walk the Tree starting at root in depth first order, calling walkFn for each node.
 // At every node the walkFn is called with the node and the current depth as arguments.
@@ -337,16 +330,16 @@ func (t *Tree) Walk(walkFn WalkFunc) error {
 	// recursive work horse, declare ahead, recurse call below
 	var walk func(*Node, WalkFunc, int) error
 
-	walk = func(n *Node, walkFn WalkFunc, depth int) error {
-		if n.Item != nil {
-			if err := walkFn(n, depth); err != nil {
+	walk = func(node *Node, walkFn WalkFunc, depth int) error {
+		if node.Item != nil {
+			if err := walkFn(node, depth); err != nil {
 				return err
 			}
 		}
 
 		// walk the childs
-		for _, c := range n.Childs {
-			if err := walk(c, walkFn, depth+1); err != nil {
+		for _, child := range node.Childs {
+			if err := walk(child, walkFn, depth+1); err != nil {
 				return err
 			}
 		}
