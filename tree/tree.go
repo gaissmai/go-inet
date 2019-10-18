@@ -298,8 +298,10 @@ func (node *Node) contains(query Item) bool {
 		}
 	}
 
-	// item before idx contains query?
+	// maybe item before idx contains query?
 	child := node.Childs[idx-1]
+
+	// false or recursive descent
 	return child.Item.Block.Contains(query.Block)
 }
 

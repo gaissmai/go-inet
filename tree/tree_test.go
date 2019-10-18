@@ -36,41 +36,6 @@ func TestTreeInsertBulk(t *testing.T) {
 	}
 }
 
-func TestTreeBulkContains(t *testing.T) {
-	n := 20000
-	cidrs := internal.GenBlockMixed(n)
-	ranges := internal.GenRangeMixed(n)
-
-	blocks := make([]inet.Block, 0, len(cidrs)+len(ranges))
-	blocks = append(blocks, cidrs...)
-	blocks = append(blocks, ranges...)
-
-	items := make([]Item, len(blocks))
-	for i := range blocks {
-		items[i] = Item{Block: blocks[i]}
-	}
-
-	tr := New()
-	err := tr.Insert(items...)
-	if err != nil {
-		t.Errorf("Insert error: %s", err)
-	}
-
-	n = n / 10
-	cidrs = internal.GenBlockMixed(n)
-	ranges = internal.GenRangeMixed(n)
-
-	blocks = make([]inet.Block, 0, len(cidrs)+len(ranges))
-	blocks = append(blocks, cidrs...)
-	blocks = append(blocks, ranges...)
-
-	items = make([]Item, len(blocks))
-	for i := range blocks {
-		items[i] = Item{Block: blocks[i]}
-		_ = tr.Contains(items[i])
-	}
-}
-
 func TestTreeInsertBulkRemoveRandom(t *testing.T) {
 	n := 20000
 	cidrs := internal.GenBlockMixed(n)
