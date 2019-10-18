@@ -311,12 +311,7 @@ func (node *Node) contains(query Item) bool {
 
 	// item before idx contains query?
 	child := node.Childs[idx-1]
-	if child.Item.Block.Contains(query.Block) {
-		return true
-	}
-
-	// not found
-	return false
+	return child.Item.Block.Contains(query.Block)
 }
 
 // Lookup item for longest prefix match in the tree.
