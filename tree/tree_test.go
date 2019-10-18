@@ -218,9 +218,8 @@ func TestTreeRemoveEdgeCase(t *testing.T) {
 	tr.Fprint(w1)
 
 	r := Item{inet.MustBlock("10.0.0.2-10.0.0.50"), nil, nil}
-	got := tr.Remove(r)
-	if !got {
-		t.Errorf("Remove(%v), got %t, want %t\n", r, got, true)
+	if err := tr.Remove(r); err != nil {
+		t.Errorf("Remove(%v): %s\n", r, err)
 	}
 
 	w2 := new(strings.Builder)
@@ -264,16 +263,9 @@ func TestTreeRemove(t *testing.T) {
 	w1 := new(strings.Builder)
 	tr.Fprint(w1)
 
-	r := Item{inet.MustBlock("3.0.0.0/8"), nil, nil}
-	got := tr.Remove(r)
-	if got {
-		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
-	}
-
-	r = Item{Block: inet.MustBlock("2001:7c0:900:1c2::/64")}
-	got = tr.Remove(r)
-	if !got {
-		t.Errorf("Remove(%v), got %t, want %t\n", r, got, true)
+	r := Item{Block: inet.MustBlock("2001:7c0:900:1c2::/64")}
+	if err := tr.Remove(r); err != nil {
+		t.Errorf("Remove(%v): %s\n", r, err)
 	}
 
 	w2 := new(strings.Builder)
@@ -326,9 +318,8 @@ func TestTreeRemoveBranch(t *testing.T) {
 	tr.Fprint(w1)
 
 	r := Item{Block: inet.MustBlock("2001:7c0:900:1c2::/64")}
-	got := tr.RemoveBranch(r)
-	if !got {
-		t.Errorf("Remove(%v), got %t, want %t\n", r, got, true)
+	if err := tr.RemoveBranch(r); err != nil {
+		t.Errorf("RemoveBranch(%v): %s\n", r, err)
 	}
 
 	w2 := new(strings.Builder)
@@ -365,25 +356,19 @@ func TestTreeRemoveFalse(t *testing.T) {
 		tr.MustInsert(item)
 	}
 
-	// frist pos in childs
 	r := Item{inet.MustBlock("0.0.0.0/8"), nil, nil}
-	got := tr.Remove(r)
-	if got {
-		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
+	if err := tr.Remove(r); err == nil {
+		t.Errorf("Remove(%v): not in tree, expected error\n", r)
 	}
 
-	// last pos in childs
 	r = Item{inet.MustBlock("6.0.0.0/8"), nil, nil}
-	got = tr.Remove(r)
-	if got {
-		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
+	if err := tr.Remove(r); err == nil {
+		t.Errorf("Remove(%v): not in tree, expected error\n", r)
 	}
 
-	// middle pos in childs
-	r = Item{inet.MustBlock("6.0.0.0/8"), nil, nil}
-	got = tr.Remove(r)
-	if got {
-		t.Errorf("Remove(%v), got %t, want %t\n", r, got, false)
+	r = Item{inet.MustBlock("3.0.0.0/8"), nil, nil}
+	if err := tr.Remove(r); err == nil {
+		t.Errorf("Remove(%v): not in tree, expected error\n", r)
 	}
 }
 
@@ -413,7 +398,9 @@ func TestTreeRemoveInsert(t *testing.T) {
 	r := Item{Block: inet.MustBlock("2001:7c0:900:1c2::0/127")}
 
 	// test idempotent
-	tr.Remove(r)
+	if err := tr.Remove(r); err != nil {
+		t.Errorf("Remove(%v): %s\n", r, err)
+	}
 
 	w2 := new(strings.Builder)
 	tr.Fprint(w2)

@@ -223,19 +223,19 @@ func (node *Node) relinkNode(input *Node) error {
 	return nil
 }
 
-// RemoveBranch from tree. Returns true on success, false if not found.
-func (t *Tree) RemoveBranch(item Item) bool {
+// RemoveBranch from tree. Returns error on failure or not found.
+func (t *Tree) RemoveBranch(item Item) error {
 	return t.Root.remove(item, true)
 }
 
-// Remove one item from tree, relink parent/child relation at the gap. Returns true on success,
+// Remove one item from tree, relink parent/child relation at the gap. Returns error on failure or not found.
 // false if not found.
-func (t *Tree) Remove(item Item) bool {
+func (t *Tree) Remove(item Item) error {
 	return t.Root.remove(item, false)
 }
 
 // recursive work horse
-func (node *Node) remove(input Item, andBranch bool) bool {
+func (node *Node) remove(input Item, andBranch bool) error {
 
 	// childs are sorted, find pos in childs on this level, binary search
 	l := len(node.Childs)
@@ -254,7 +254,7 @@ func (node *Node) remove(input Item, andBranch bool) bool {
 
 		// remove branch, stop here
 		if andBranch {
-			return true
+			return nil
 		}
 
 		// re-insert grandChilds from removed child into tree
@@ -263,11 +263,11 @@ func (node *Node) remove(input Item, andBranch bool) bool {
 
 			// insert this grandchild at/under outer node
 			if err := node.relinkNode(grandChild); err != nil {
-				panic(err)
+				return err
 			}
 		}
 
-		return true
+		return nil
 	}
 
 	// pos in tree not found on this level
@@ -280,7 +280,7 @@ func (node *Node) remove(input Item, andBranch bool) bool {
 	}
 
 	// not equal to any child and not contained in any child
-	return false
+	return fmt.Errorf("remove, item not found: %s", input)
 }
 
 // Contains reports whether the item is contained in any element of the tree.
