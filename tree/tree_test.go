@@ -201,44 +201,6 @@ func TestTreeMultiRoot(t *testing.T) {
 	}
 }
 
-func TestTreeRemove2EdgeCase(t *testing.T) {
-	tr := New()
-
-	for _, s := range []string{
-		"10.0.0.0-10.0.0.30",
-		"10.0.0.2-10.0.0.50",
-		"10.0.0.20-10.0.0.25",
-		"10.0.0.24-10.0.0.35",
-	} {
-		item := Item{inet.MustBlock(s), nil, nil}
-		tr.MustInsert(item)
-	}
-
-	w1 := new(strings.Builder)
-	tr.Fprint(w1)
-
-	r := Item{inet.MustBlock("10.0.0.2-10.0.0.50"), nil, nil}
-	got := tr.Remove2(r)
-	if !got {
-		t.Errorf("Remove2(%v), got %t, want %t\n", r, got, true)
-	}
-
-	w2 := new(strings.Builder)
-	tr.Fprint(w2)
-
-	// edge case, childs get resorted to different parents
-	want :=
-		`▼
-├─ 10.0.0.0-10.0.0.30
-│  └─ 10.0.0.20-10.0.0.25
-└─ 10.0.0.24-10.0.0.35
-`
-
-	if w2.String() != want {
-		t.Errorf("start:\n%s\nremove2 %v\ngot:\n%s\nwant:\n%s\n", w1.String(), r, w2, want)
-	}
-}
-
 func TestTreeRemoveEdgeCase(t *testing.T) {
 	tr := New()
 

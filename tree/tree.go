@@ -137,8 +137,76 @@ func (node *Node) insert(input Item) error {
 		child := node.Childs[j]
 		if input.Block.Contains(child.Item.Block) {
 			// put old child under new Item
-			x.Childs = append(x.Childs, child)
-			child.Parent = x
+			if err := x.relinkNode(child); err != nil {
+				return err
+			}
+			if j++; j < l {
+				continue
+			}
+		}
+
+		// childs are sorted, break after first child not being child of input
+		break
+	}
+
+	// copy rest of childs to buf
+	buf = append(buf, node.Childs[j:]...)
+
+	node.Childs = buf
+	return nil
+}
+
+// relinkNode with subtree/branch into tree
+func (node *Node) relinkNode(input *Node) error {
+
+	// childs are sorted find pos in childs on this level, binary search
+	l := len(node.Childs)
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Item.Block) >= 0 })
+
+	// not at end of slice
+	if idx < l {
+		// don't insert dups
+		if input.Item.Block.Compare(node.Childs[idx].Item.Block) == 0 {
+			return fmt.Errorf("duplicate item: %s", input.Item)
+		}
+	}
+
+	// not in front of slice, check if previous child contains this new node
+	if idx > 0 {
+		child := node.Childs[idx-1]
+		if child.Item.Block.Contains(input.Item.Block) {
+			return child.relinkNode(input)
+		}
+	}
+
+	// add as new child on this level
+	input.Parent = node
+
+	// input is greater than all others and not contained, just append
+	if idx == l {
+		node.Childs = append(node.Childs, input)
+		return nil
+	}
+
+	// buffer to build resorted childs
+	buf := make([]*Node, 0, l+1)
+
+	// copy [:idx] to buf
+	buf = append(buf, node.Childs[:idx]...)
+
+	// copy x to buf at [idx]
+	buf = append(buf, input)
+
+	// now handle [idx:]
+	// resort if input contains next child...
+	j := idx
+	for {
+		child := node.Childs[j]
+		if input.Item.Block.Contains(child.Item.Block) {
+			// recursive call, put next child in row under new input.Item
+			if err := input.relinkNode(child); err != nil {
+				panic(err)
+			}
 			if j++; j < l {
 				continue
 			}
@@ -167,7 +235,7 @@ func (t *Tree) Remove(item Item) bool {
 }
 
 // recursive work horse
-func (node *Node) remove(input Item, removeBranch bool) bool {
+func (node *Node) remove(input Item, andBranch bool) bool {
 
 	// childs are sorted, find pos in childs on this level, binary search
 	l := len(node.Childs)
@@ -185,28 +253,19 @@ func (node *Node) remove(input Item, removeBranch bool) bool {
 		}
 
 		// remove branch, stop here
-		if removeBranch {
+		if andBranch {
 			return true
 		}
 
-		// re-insert descendants from removed child into tree at this node
-		// just relinking of parent-child links is not always possible
-		// there may be some edge cases with ranges and overlaps,
-		// reinserting is safe
-		var walk func(*Node)
-		walk = func(n *Node) {
-			for _, descendants := range n.Childs {
+		// re-insert grandChilds from removed child into tree
+		// just relinking parent-child not possible when blocks(ranges) overlaps.
+		for _, grandChild := range child.Childs {
 
-				// no dup error possible, otherwise panic on logic error
-				// insert in outer node
-				if err := node.insert(*descendants.Item); err != nil {
-					panic(err)
-				}
-				walk(descendants)
+			// insert this grandchild at/under outer node
+			if err := node.relinkNode(grandChild); err != nil {
+				panic(err)
 			}
 		}
-		// re-insert all descendants from deleted child
-		walk(child)
 
 		return true
 	}
@@ -216,7 +275,7 @@ func (node *Node) remove(input Item, removeBranch bool) bool {
 	for j := idx - 1; j >= 0; j-- {
 		child := node.Childs[j]
 		if child.Item.Block.Contains(input.Block) {
-			return child.remove(input, removeBranch)
+			return child.remove(input, andBranch)
 		}
 	}
 
