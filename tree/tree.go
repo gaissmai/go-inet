@@ -273,22 +273,20 @@ func (node *Node) lookup(query Item) (Item, bool) {
 	l := len(node.Childs)
 	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(query.Block) >= 0 })
 
-	if idx == 0 {
-		return query, false
-	}
-
 	if idx < l {
 		child := node.Childs[idx]
+
 		// found by exact match
 		if child.Item.Block.Compare(query.Block) == 0 {
 			return *child.Item, true
 		}
 	}
 
-	// item before idx contains query?
-	child := node.Childs[idx-1]
-	if child.Item.Block.Contains(query.Block) {
-		return child.lookup(query)
+	if idx > 0 {
+		child := node.Childs[idx-1]
+		if child.Item.Block.Contains(query.Block) {
+			return child.lookup(query)
+		}
 	}
 
 	// no child path, no Item, we are at the root node
