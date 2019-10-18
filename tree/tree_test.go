@@ -2,20 +2,125 @@ package tree
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
 
 	"github.com/gaissmai/go-inet/inet"
+	"github.com/gaissmai/go-inet/internal"
 )
 
-func TestTreeInsertDup(t *testing.T) {
-	s1 := Item{Block: inet.MustBlock("0.0.0.0/0")}
+func TestTreeInsertBulk(t *testing.T) {
+	n := 20000
+	cidrs := internal.GenBlockMixed(n)
+	ranges := internal.GenRangeMixed(n)
+
+	blocks := make([]inet.Block, 0, len(cidrs)+len(ranges))
+	blocks = append(blocks, cidrs...)
+	blocks = append(blocks, ranges...)
+
+	items := make([]Item, len(blocks))
+	for i := range blocks {
+		items[i] = Item{Block: blocks[i]}
+	}
 
 	tr := New()
-	err := tr.Insert(s1, s1)
+	err := tr.Insert(items...)
+	if err != nil {
+		t.Errorf("Insert error: %s", err)
+	}
+}
 
-	if err == nil {
-		t.Errorf("Insert duplicate, missing error")
+func TestTreeBulkContains(t *testing.T) {
+	n := 20000
+	cidrs := internal.GenBlockMixed(n)
+	ranges := internal.GenRangeMixed(n)
+
+	blocks := make([]inet.Block, 0, len(cidrs)+len(ranges))
+	blocks = append(blocks, cidrs...)
+	blocks = append(blocks, ranges...)
+
+	items := make([]Item, len(blocks))
+	for i := range blocks {
+		items[i] = Item{Block: blocks[i]}
+	}
+
+	tr := New()
+	err := tr.Insert(items...)
+	if err != nil {
+		t.Errorf("Insert error: %s", err)
+	}
+
+	n = n / 10
+	cidrs = internal.GenBlockMixed(n)
+	ranges = internal.GenRangeMixed(n)
+
+	blocks = make([]inet.Block, 0, len(cidrs)+len(ranges))
+	blocks = append(blocks, cidrs...)
+	blocks = append(blocks, ranges...)
+
+	items = make([]Item, len(blocks))
+	for i := range blocks {
+		items[i] = Item{Block: blocks[i]}
+		_ = tr.Contains(items[i])
+	}
+}
+
+func TestTreeInsertBulkRemoveRandom(t *testing.T) {
+	n := 20000
+	cidrs := internal.GenBlockMixed(n)
+	ranges := internal.GenRangeMixed(n)
+
+	blocks := make([]inet.Block, 0, len(cidrs)+len(ranges))
+	blocks = append(blocks, cidrs...)
+	blocks = append(blocks, ranges...)
+
+	items := make([]Item, len(blocks))
+	for i := range blocks {
+		items[i] = Item{Block: blocks[i]}
+	}
+
+	tr := New()
+	err := tr.Insert(items...)
+	if err != nil {
+		t.Errorf("Insert error: %s", err)
+	}
+
+	r := rand.New(rand.NewSource(42))
+	set := map[int]bool{}
+	for m := 0; m < n/100; {
+		i := r.Intn(n)
+		if set[i] {
+			continue
+		}
+		m++
+		set[i] = true
+		if err := tr.Remove(items[i]); err != nil {
+			t.Errorf("Remove error: %s", err)
+		}
+	}
+}
+
+func TestTreeInsertDups(t *testing.T) {
+	n := 200
+	cidrs := internal.GenBlockMixed(n)
+	ranges := internal.GenRangeMixed(n)
+
+	blocks := make([]inet.Block, 0, len(cidrs)+len(ranges))
+	blocks = append(blocks, cidrs...)
+	blocks = append(blocks, ranges...)
+	// make dups
+	blocks = append(blocks, blocks...)
+
+	items := make([]Item, len(blocks))
+	for i := range blocks {
+		items[i] = Item{Block: blocks[i]}
+	}
+
+	tr := New()
+	err := tr.Insert(items...)
+	if err != nil && !strings.Contains(err.Error(), "duplicate") {
+		t.Errorf("Insert error: %s", err)
 	}
 }
 

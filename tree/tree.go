@@ -135,8 +135,8 @@ func (node *Node) insert(input Item) error {
 	j := idx
 	for {
 		child := node.Childs[j]
-		if input.Block.Contains(child.Item.Block) {
-			// put old child under new Item
+		if x.Item.Block.Contains(child.Item.Block) {
+			// relink child under node to new Item
 			if err := x.relinkNode(child); err != nil {
 				return err
 			}
@@ -156,7 +156,7 @@ func (node *Node) insert(input Item) error {
 	return nil
 }
 
-// relinkNode with subtree/branch into tree
+// relinkNode with subtree/branch within tree
 func (node *Node) relinkNode(input *Node) error {
 
 	// childs are sorted find pos in childs on this level, binary search
@@ -165,9 +165,9 @@ func (node *Node) relinkNode(input *Node) error {
 
 	// not at end of slice
 	if idx < l {
-		// don't insert dups
+		// don't insert dups, MUST NOT happen during relinking
 		if input.Item.Block.Compare(node.Childs[idx].Item.Block) == 0 {
-			return fmt.Errorf("duplicate item: %s", input.Item)
+			panic(fmt.Errorf("logic error! duplicate item during relinking: %s", input.Item))
 		}
 	}
 
@@ -205,7 +205,7 @@ func (node *Node) relinkNode(input *Node) error {
 		if input.Item.Block.Contains(child.Item.Block) {
 			// recursive call, put next child in row under new input.Item
 			if err := input.relinkNode(child); err != nil {
-				panic(err)
+				return err
 			}
 			if j++; j < l {
 				continue
