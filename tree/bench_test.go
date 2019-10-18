@@ -95,7 +95,7 @@ func BenchmarkTreeRemoveItem(b *testing.B) {
 		vx := is[rand.Intn(len(is))]
 		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				t.Remove(vx)
+				_ = t.Remove(vx)
 			}
 		})
 
