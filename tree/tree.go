@@ -427,3 +427,10 @@ func (t *Tree) Walk(walkFn WalkFunc) error {
 	// just do it
 	return walk(t.Root, walkFn, -1)
 }
+
+// Len returns the number of items in the tree.
+func (t *Tree) Len() int {
+	var nodes int
+	_ = t.Walk(func(*Node, int) error { nodes++; return nil })
+	return nodes
+}

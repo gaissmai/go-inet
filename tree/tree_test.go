@@ -29,6 +29,11 @@ func TestTreeInsertBulk(t *testing.T) {
 	if err != nil {
 		t.Errorf("Insert error: %s", err)
 	}
+
+	got := tr.Len()
+	if got != 2*n {
+		t.Errorf("Len() = %d, want %d", got, n)
+	}
 }
 
 func TestTreeBulkContains(t *testing.T) {
