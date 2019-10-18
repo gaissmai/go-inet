@@ -108,6 +108,7 @@ func (node *Node) insert(input Item) error {
 	if idx > 0 {
 		child := node.Childs[idx-1]
 		if child.Item.Block.Contains(input.Block) {
+			// recursive descent
 			return child.insert(input)
 		}
 	}
@@ -121,7 +122,9 @@ func (node *Node) insert(input Item) error {
 		return nil
 	}
 
-	// buffer to build resorted childs
+	// buffer to build reordered childs
+	// buf = ([:idx], input, [idx:])
+	// don't be to clever, don't use slice tricks
 	buf := make([]*Node, 0, l+1)
 
 	// copy [:idx] to buf
@@ -131,7 +134,7 @@ func (node *Node) insert(input Item) error {
 	buf = append(buf, x)
 
 	// now handle [idx:]
-	// resort if input contains next child...
+	// reorder if new item contains next child...
 	j := idx
 	for {
 		child := node.Childs[j]
@@ -156,7 +159,7 @@ func (node *Node) insert(input Item) error {
 	return nil
 }
 
-// relinkNode with subtree/branch within tree
+// relinkNode with subtree/branch at node or below
 func (node *Node) relinkNode(input *Node) error {
 
 	// childs are sorted find pos in childs on this level, binary search
@@ -164,17 +167,16 @@ func (node *Node) relinkNode(input *Node) error {
 	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Item.Block) >= 0 })
 
 	// not at end of slice
-	if idx < l {
+	if idx < l && input.Item.Block.Compare(node.Childs[idx].Item.Block) == 0 {
 		// don't insert dups, MUST NOT happen during relinking
-		if input.Item.Block.Compare(node.Childs[idx].Item.Block) == 0 {
-			panic(fmt.Errorf("logic error! duplicate item during relinking: %s", input.Item))
-		}
+		panic(fmt.Errorf("logic error! duplicate item during relinking: %s", input.Item))
 	}
 
 	// not in front of slice, check if previous child contains this new node
 	if idx > 0 {
 		child := node.Childs[idx-1]
 		if child.Item.Block.Contains(input.Item.Block) {
+			// recursive descent
 			return child.relinkNode(input)
 		}
 	}
@@ -188,38 +190,22 @@ func (node *Node) relinkNode(input *Node) error {
 		return nil
 	}
 
-	// buffer to build resorted childs
+	// buffer to build reordered childs
+	// buf = ([:idx], input, [idx:])
+	// don't be to clever, don't use slice tricks
 	buf := make([]*Node, 0, l+1)
 
 	// copy [:idx] to buf
 	buf = append(buf, node.Childs[:idx]...)
 
-	// copy x to buf at [idx]
+	// copy input to buf at [idx]
 	buf = append(buf, input)
 
-	// now handle [idx:]
-	// resort if input contains next child...
-	j := idx
-	for {
-		child := node.Childs[j]
-		if input.Item.Block.Contains(child.Item.Block) {
-			// recursive call, put next child in row under new input.Item
-			if err := input.relinkNode(child); err != nil {
-				return err
-			}
-			if j++; j < l {
-				continue
-			}
-		}
-
-		// childs are sorted, break after first child not being child of input
-		break
-	}
-
 	// copy rest of childs to buf
-	buf = append(buf, node.Childs[j:]...)
+	buf = append(buf, node.Childs[idx:]...)
 
 	node.Childs = buf
+
 	return nil
 }
 
@@ -246,19 +232,22 @@ func (node *Node) remove(input Item, andBranch bool) error {
 		// delete this child [idx] from node
 		child := node.Childs[idx]
 
+		// if idx at end of slice?
 		if idx < l-1 {
+			// delete child, not at end of slice
 			node.Childs = append(node.Childs[:idx], node.Childs[idx+1:]...)
 		} else {
+			// delete child, at end of slice
 			node.Childs = node.Childs[:idx]
 		}
 
-		// remove branch, stop here
+		// if we are in remove branch mode, stop here, no relinking of grand childs
 		if andBranch {
 			return nil
 		}
 
-		// re-insert grandChilds from removed child into tree
-		// just relinking parent-child not possible when blocks(ranges) overlaps.
+		// re-insert grandChilds from deleted child into tree
+		// just relinking parent-child not possible if blocks(ranges) overlaps.
 		for _, grandChild := range child.Childs {
 
 			// insert this grandchild at/under outer node
@@ -270,8 +259,8 @@ func (node *Node) remove(input Item, andBranch bool) error {
 		return nil
 	}
 
-	// pos in tree not found on this level
-	// walk down if any child (before input, respect sort order) includes input
+	// pos in tree not found at this level
+	// walk down if any child (before input, respect sort order) contains input
 	for j := idx - 1; j >= 0; j-- {
 		child := node.Childs[j]
 		if child.Item.Block.Contains(input.Block) {
