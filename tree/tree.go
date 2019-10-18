@@ -365,7 +365,7 @@ func (t *Tree) Fprint(w io.Writer) {
 	var walkAndPrint func(io.Writer, *Node, string)
 
 	walkAndPrint = func(w io.Writer, node *Node, prefix string) {
-		if node.Childs == nil {
+		if len(node.Childs) == 0 {
 			return
 		}
 
