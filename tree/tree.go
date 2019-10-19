@@ -27,14 +27,9 @@ type (
 	// Item, maybe with additonal payload, not just inet.Block.
 	// It is intended that there is no Itemer interface.
 	Item struct {
-		// Block, methods Contains() and Compare() defines the position in the tree.
-		Block inet.Block
-
-		// payload for this tree item
-		Payload interface{}
-
-		// callback, helper func for generating the string
-		StringCb func(Item) string
+		Block    inet.Block        // Block.Contains() and Block.Compare() define the position in the tree.
+		Payload  interface{}       // payload for this tree item
+		StringCb func(Item) string // callback, helper func for generating the string
 	}
 )
 
@@ -76,135 +71,16 @@ func (t *Tree) MustInsert(items ...Item) {
 // Returns error on duplicate items in the tree.
 func (t *Tree) Insert(items ...Item) error {
 
-	// sort before insert makes insertion much faster, no or less parent-child-relinking needed.
-	sort.Slice(items, func(i, j int) bool { return items[i].Block.Compare(items[j].Block) < 0 })
+	if len(items) > 1 {
+		// sort before insert makes insertion much faster, no or less parent-child-relinking needed.
+		sort.Slice(items, func(i, j int) bool { return items[i].Block.Compare(items[j].Block) < 0 })
+	}
 
 	for i := range items {
-		if err := t.Root.insert(items[i]); err != nil {
+		if err := t.Root.insertItem(items[i]); err != nil {
 			return err
 		}
 	}
-
-	return nil
-}
-
-// recursive work horse, use binary search on same level
-// childs stay sorted after insert
-func (node *Node) insert(input Item) error {
-
-	// childs are sorted find pos in childs on this level, binary search
-	l := len(node.Childs)
-	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Block) >= 0 })
-
-	// not at end of slice
-	if idx < l {
-		// don't insert dups
-		if input.Block.Compare(node.Childs[idx].Item.Block) == 0 {
-			return fmt.Errorf("duplicate item: %s", input)
-		}
-	}
-
-	// not in front of slice, check if previous child contains new Item
-	if idx > 0 {
-		child := node.Childs[idx-1]
-		if child.Item.Block.Contains(input.Block) {
-			// recursive descent
-			return child.insert(input)
-		}
-	}
-
-	// add as new child on this level
-	x := &Node{Item: &input, Parent: node, Childs: nil}
-
-	// input is greater than all others and not contained, just append
-	if idx == l {
-		node.Childs = append(node.Childs, x)
-		return nil
-	}
-
-	// buffer to build reordered childs
-	// buf = ([:idx], input, [idx:])
-	// don't be to clever, don't use slice tricks
-	buf := make([]*Node, 0, l+1)
-
-	// copy [:idx] to buf
-	buf = append(buf, node.Childs[:idx]...)
-
-	// copy x to buf at [idx]
-	buf = append(buf, x)
-
-	// now handle [idx:]
-	// reorder if new item contains next child...
-	j := idx
-	for {
-		child := node.Childs[j]
-		if x.Item.Block.Contains(child.Item.Block) {
-			// relink child under node to new Item
-			if err := x.relinkNode(child); err != nil {
-				return err
-			}
-			if j++; j < l {
-				continue
-			}
-		}
-
-		// childs are sorted, break after first child not being child of input
-		break
-	}
-
-	// copy rest of childs to buf
-	buf = append(buf, node.Childs[j:]...)
-
-	node.Childs = buf
-	return nil
-}
-
-// relinkNode with subtree/branch at node or below
-func (node *Node) relinkNode(input *Node) error {
-
-	// childs are sorted find pos in childs on this level, binary search
-	l := len(node.Childs)
-	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Item.Block) >= 0 })
-
-	// not at end of slice
-	if idx < l && input.Item.Block.Compare(node.Childs[idx].Item.Block) == 0 {
-		// don't insert dups, MUST NOT happen during relinking
-		panic(fmt.Errorf("logic error! duplicate item during relinking: %s", input.Item))
-	}
-
-	// not in front of slice, check if previous child contains this new node
-	if idx > 0 {
-		child := node.Childs[idx-1]
-		if child.Item.Block.Contains(input.Item.Block) {
-			// recursive descent
-			return child.relinkNode(input)
-		}
-	}
-
-	// add as new child on this level
-	input.Parent = node
-
-	// input is greater than all others and not contained, just append
-	if idx == l {
-		node.Childs = append(node.Childs, input)
-		return nil
-	}
-
-	// buffer to build reordered childs
-	// buf = ([:idx], input, [idx:])
-	// don't be to clever, don't use slice tricks
-	buf := make([]*Node, 0, l+1)
-
-	// copy [:idx] to buf
-	buf = append(buf, node.Childs[:idx]...)
-
-	// copy input to buf at [idx]
-	buf = append(buf, input)
-
-	// copy rest of childs to buf
-	buf = append(buf, node.Childs[idx:]...)
-
-	node.Childs = buf
 
 	return nil
 }
@@ -220,127 +96,18 @@ func (t *Tree) Remove(item Item) error {
 	return t.Root.remove(item, false)
 }
 
-// recursive work horse
-func (node *Node) remove(input Item, andBranch bool) error {
-
-	// childs are sorted, find pos in childs on this level, binary search
-	l := len(node.Childs)
-	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Block) >= 0 })
-
-	if idx != l && input.Block.Compare(node.Childs[idx].Item.Block) == 0 {
-		// found child to remove at [idx]
-		// delete this child [idx] from node
-		child := node.Childs[idx]
-
-		// if idx at end of slice?
-		if idx < l-1 {
-			// delete child, not at end of slice
-			node.Childs = append(node.Childs[:idx], node.Childs[idx+1:]...)
-		} else {
-			// delete child, at end of slice
-			node.Childs = node.Childs[:idx]
-		}
-
-		// if we are in remove branch mode, stop here, no relinking of grand childs
-		if andBranch {
-			return nil
-		}
-
-		// re-insert grandChilds from deleted child into tree
-		// just relinking parent-child not possible if blocks(ranges) overlaps.
-		for _, grandChild := range child.Childs {
-
-			// insert this grandchild at/under outer node
-			if err := node.relinkNode(grandChild); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	// pos in tree not found at this level
-	// walk down if any child (before input, respect sort order) contains input
-	for j := idx - 1; j >= 0; j-- {
-		child := node.Childs[j]
-		if child.Item.Block.Contains(input.Block) {
-			return child.remove(input, andBranch)
-		}
-	}
-
-	// not equal to any child and not contained in any child
-	return fmt.Errorf("remove, item not found: %s", input)
-}
-
 // Contains reports whether the item is contained in any element of the tree.
 // Just returns true or false and not the matching prefix,
 // this is faster than a full Lookup for the longest-prefix-match.
 func (t *Tree) Contains(item Item) bool {
-	// just look in root childs, therefore much faster than a full tree lookup
+	// just look in root childs, therefore maybe faster than a full tree lookup
 	return t.Root.contains(item)
-}
-
-// returns true if item is contained in any node
-func (node *Node) contains(query Item) bool {
-	// find pos in childs on root level, binary search, childs are sorted
-	l := len(node.Childs)
-	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(query.Block) >= 0 })
-
-	if idx == 0 {
-		return false
-	}
-
-	if idx < l {
-		child := node.Childs[idx]
-		// found by exact match?
-		if child.Item.Block.Compare(query.Block) == 0 {
-			return true
-		}
-	}
-
-	// maybe item before idx contains query?
-	child := node.Childs[idx-1]
-
-	// false or recursive descent
-	return child.Item.Block.Contains(query.Block)
 }
 
 // Lookup item for longest prefix match in the tree.
 // If not found, returns input argument and false.
 func (t *Tree) Lookup(item Item) (Item, bool) {
 	return t.Root.lookup(item)
-}
-
-// recursive work horse
-func (node *Node) lookup(query Item) (Item, bool) {
-
-	// find pos in childs on this level, binary search, childs are sorted
-	l := len(node.Childs)
-	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(query.Block) >= 0 })
-
-	if idx < l {
-		child := node.Childs[idx]
-
-		// found by exact match
-		if child.Item.Block.Compare(query.Block) == 0 {
-			return *child.Item, true
-		}
-	}
-
-	if idx > 0 {
-		child := node.Childs[idx-1]
-		if child.Item.Block.Contains(query.Block) {
-			return child.lookup(query)
-		}
-	}
-
-	// no child path, no Item, we are at the root node
-	if node.Item == nil {
-		return query, false
-	}
-
-	// found by longest prefix match
-	return *node.Item, true
 }
 
 // Fprint prints the ordered tree in ASCII graph.
@@ -395,7 +162,7 @@ type WalkFunc func(node *Node, depth int) error
 // The walk stops if the walkFn returns an error not nil. The error is propagated by Walk() to the caller.
 func (t *Tree) Walk(walkFn WalkFunc) error {
 
-	// recursive work horse, declare ahead, recurse call below
+	// recursive func, declare ahead, recurse call below
 	var walk func(*Node, WalkFunc, int) error
 
 	walk = func(node *Node, walkFn WalkFunc, depth int) error {
@@ -424,4 +191,205 @@ func (t *Tree) Len() int {
 	var nodes int
 	_ = t.Walk(func(*Node, int) error { nodes++; return nil })
 	return nodes
+}
+
+// insert single item, make a node and link node in tree
+func (node *Node) insertItem(item Item) error {
+
+	// convert item to node and use general insertNode
+	newNode := &Node{Item: &item, Parent: nil, Childs: nil}
+
+	return node.insertNode(newNode)
+}
+
+// insertNode, one method for new nodes and parent-child relinking
+// recursive descent
+func (node *Node) insertNode(input *Node) error {
+
+	// childs are sorted find pos in childs on this level, binary search
+	l := len(node.Childs)
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Item.Block) >= 0 })
+
+	// not at end of slice
+	if idx < l && input.Item.Block.Compare(node.Childs[idx].Item.Block) == 0 {
+		// don't insert dups
+		return fmt.Errorf("duplicate item: %s", input.Item)
+	}
+
+	// not in front of slice, check if previous child contains this new node
+	if idx > 0 {
+		child := node.Childs[idx-1]
+		if child.Item.Block.Contains(input.Item.Block) {
+			// recursive descent
+			return child.insertNode(input)
+		}
+	}
+
+	// add as new child on this level
+	input.Parent = node
+
+	// input is greater than all others and not contained, just append
+	if idx == l {
+		node.Childs = append(node.Childs, input)
+		return nil
+	}
+
+	// buffer to build reordered childs
+	// buf = ([:idx], input, [idx:])
+	// don't be to clever, don't use slice tricks
+	buf := make([]*Node, 0, l+1)
+
+	// copy [:idx] to buf
+	buf = append(buf, node.Childs[:idx]...)
+
+	// copy input to buf at [idx]
+	buf = append(buf, input)
+
+	// now handle [idx:]
+	// resort if input contains next child...
+	j := idx
+	for {
+		child := node.Childs[j]
+		if input.Item.Block.Contains(child.Item.Block) {
+
+			// recursive descent, relink next child in row
+			if err := input.insertNode(child); err != nil {
+				return err
+			}
+			if j++; j < l {
+				continue
+			}
+		}
+
+		// childs are sorted, break after first child not being child of input
+		break
+	}
+
+	// copy rest of childs to buf
+	buf = append(buf, node.Childs[j:]...)
+
+	node.Childs = buf
+
+	return nil
+}
+
+// recursive descent
+func (node *Node) remove(input Item, delBranch bool) error {
+
+	// childs are sorted, find pos in childs on this level, binary search
+	l := len(node.Childs)
+
+	// no childs, empty tree
+	if l == 0 {
+		return fmt.Errorf("remove, item not found: %s", input)
+	}
+
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Block) >= 0 })
+
+	if idx != l && input.Block.Compare(node.Childs[idx].Item.Block) == 0 {
+		// found child to remove at [idx]
+		// delete this child [idx] from node
+		child := node.Childs[idx]
+
+		// if idx at end of slice?
+		if idx < l-1 {
+			// delete child, not at end of slice
+			node.Childs = append(node.Childs[:idx], node.Childs[idx+1:]...)
+		} else {
+			// delete child, at end of slice
+			node.Childs = node.Childs[:idx]
+		}
+
+		// if we are in remove branch mode, stop here, no relinking of grand childs
+		if delBranch {
+			return nil
+		}
+
+		// re-insert grandChilds from deleted child into tree
+		// just relinking parent-child not possible if blocks(ranges) overlaps.
+		for _, grandChild := range child.Childs {
+
+			// insert this grandchild at/under outer node
+			if err := node.insertNode(grandChild); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	// pos in tree not found at this level
+	// walk down if any child (before input, respect sort order) contains input
+	for j := idx - 1; j >= 0; j-- {
+		child := node.Childs[j]
+		if child.Item.Block.Contains(input.Block) {
+			return child.remove(input, delBranch)
+		}
+	}
+
+	// not equal to any child and not contained in any child
+	return fmt.Errorf("remove, item not found: %s", input)
+}
+
+// shallow test in root childs
+func (node *Node) contains(query Item) bool {
+	l := len(node.Childs)
+
+	// find pos in root-childs, binary search, childs are always sorted
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(query.Block) >= 0 })
+
+	// search index may be at l, take care for index panics
+	if idx < l {
+
+		// child at idx may be equal to item
+		if node.Childs[idx].Item.Block.Compare(query.Block) == 0 {
+			return true
+		}
+	}
+
+	// search index may be 0, take care for index panics
+	if idx > 0 {
+		// child before idx may contain the item
+		if node.Childs[idx-1].Item.Block.Contains(query.Block) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// find exact match or longest-prefix-match
+// recursive descent algo
+func (node *Node) lookup(query Item) (Item, bool) {
+
+	l := len(node.Childs)
+
+	// find pos in childs on this level, binary search, childs are sorted
+	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(query.Block) >= 0 })
+
+	// found by exact match?
+	if idx < l {
+		if node.Childs[idx].Item.Block.Compare(query.Block) == 0 {
+			return *node.Childs[idx].Item, true
+		}
+	}
+
+	// search index may be 0, take care for index panics
+	if idx > 0 {
+		// make alias, better to read or debug
+		child := node.Childs[idx-1]
+
+		if child.Item.Block.Contains(query.Block) {
+			// recursive descent
+			return child.lookup(query)
+		}
+	}
+
+	// no child contains item and node has no Item, we are at the root node
+	if node.Item == nil {
+		return query, false
+	}
+
+	// ok, this node is the end of recurse descent, return longest prefix match
+	return *node.Item, true
 }

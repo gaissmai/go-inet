@@ -239,6 +239,40 @@ func TestTreeWalk(t *testing.T) {
 	}
 }
 
+func TestTreeWalkStop(t *testing.T) {
+	tr := New()
+
+	for _, s := range []string{
+		"0.0.0.0/8",
+		"1.0.0.0/8",
+		"5.0.0.0/8",
+		"0.0.0.0/0",
+		"10.0.0.0-10.0.0.17",
+		"::/64",
+		"::/0",
+		"2001:7c0:900:1c2::/64",
+		"2001:7c0:900:1c2::0/127",
+		"2001:7c0:900:1c2::1/128",
+		"0.0.0.0/10",
+	} {
+		item := Item{inet.MustBlock(s), nil, nil}
+		tr.MustInsert(item)
+	}
+
+	var walkFn WalkFunc = func(n *Node, depth int) error {
+		if depth > 2 {
+			return fmt.Errorf("stop")
+		}
+		return nil
+	}
+
+	err := tr.Walk(walkFn)
+
+	if err == nil {
+		t.Errorf("walkFunc with stop condition, expected error!")
+	}
+}
+
 func TestTreeInsertOne(t *testing.T) {
 	r1 := Item{Block: inet.MustBlock("0.0.0.0/0")}
 
@@ -273,6 +307,16 @@ func TestTreeMultiRoot(t *testing.T) {
 `
 	if got.String() != want {
 		t.Errorf("got:\n%v\nwant:\n%v", got, want)
+	}
+}
+
+func TestTreeRemoveEmpty(t *testing.T) {
+	tr := New()
+	r := Item{inet.MustBlock("0.0.0.0/0"), nil, nil}
+
+	err := tr.Remove(r)
+	if err == nil {
+		t.Error("Remove() in empty tree, expected error!")
 	}
 }
 

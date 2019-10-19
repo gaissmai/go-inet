@@ -83,7 +83,6 @@ func ExampleTree_Lookup() {
 func ExampleTree_Contains() {
 	is := make([]tree.Item, 0)
 	for _, s := range []string{
-		"0.0.0.0/8",
 		"1.0.0.0/8",
 		"5.0.0.0/8",
 		"::/64",
@@ -97,22 +96,24 @@ func ExampleTree_Contains() {
 
 	// look for containment in tree
 	for _, s := range []string{
+		"0.0.0.2/8",
 		"5.0.1.2/32",
-		"6.0.0.0/8",
+		"2001:db8::1/128",
 	} {
 		q := tree.Item{Block: inet.MustBlock(s)}
 
 		ok := tr.Contains(q)
 		if ok {
-			fmt.Printf("%-12s is    contained in tree\n", q)
+			fmt.Printf("%-15s is    contained in tree\n", q)
 		} else {
-			fmt.Printf("%-12s isn't contained in tree\n", q)
+			fmt.Printf("%-15s isn't contained in tree\n", q)
 		}
 	}
 
 	// Output:
-	// 5.0.1.2/32   is    contained in tree
-	// 6.0.0.0/8    isn't contained in tree
+	// 0.0.0.0/8       isn't contained in tree
+	// 5.0.1.2/32      is    contained in tree
+	// 2001:db8::1/128 isn't contained in tree
 
 }
 
