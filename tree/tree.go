@@ -90,8 +90,7 @@ func (t *Tree) RemoveBranch(item Item) error {
 	return t.Root.remove(item, true)
 }
 
-// Remove one item from tree, relink parent/child relation at the gap. Returns error on failure or not found.
-// false if not found.
+// Remove one item from tree, relink parent/child relation at the gap. Returns error if not found.
 func (t *Tree) Remove(item Item) error {
 	return t.Root.remove(item, false)
 }
@@ -236,7 +235,6 @@ func (node *Node) insertNode(input *Node) error {
 
 	// buffer to build reordered childs
 	// buf = ([:idx], input, [idx:])
-	// don't be to clever, don't use slice tricks
 	buf := make([]*Node, 0, l+1)
 
 	// copy [:idx] to buf
@@ -246,7 +244,7 @@ func (node *Node) insertNode(input *Node) error {
 	buf = append(buf, input)
 
 	// now handle [idx:]
-	// resort if input contains next child...
+	// resort if input contains next child(s)...
 	j := idx
 	for {
 		child := node.Childs[j]
@@ -265,8 +263,14 @@ func (node *Node) insertNode(input *Node) error {
 		break
 	}
 
-	// copy rest of childs to buf
+	// now copy rest of childs to buf
 	buf = append(buf, node.Childs[j:]...)
+
+	// delete elems without memory leaks in underlying array, see golang wiki slice tricks
+	for k := len(buf); k < l; k++ {
+		// reset pointers in underlying array
+		node.Childs[k] = nil
+	}
 
 	node.Childs = buf
 
@@ -278,27 +282,20 @@ func (node *Node) remove(input Item, delBranch bool) error {
 
 	// childs are sorted, find pos in childs on this level, binary search
 	l := len(node.Childs)
-
-	// no childs, empty tree
-	if l == 0 {
-		return fmt.Errorf("remove, item not found: %s", input)
-	}
-
 	idx := sort.Search(l, func(i int) bool { return node.Childs[i].Item.Block.Compare(input.Block) >= 0 })
 
+	// check for exact match
 	if idx != l && input.Block.Compare(node.Childs[idx].Item.Block) == 0 {
-		// found child to remove at [idx]
-		// delete this child [idx] from node
-		child := node.Childs[idx]
 
-		// if idx at end of slice?
+		// save for relinking of grandchilds, delete this child at idx from node
+		match := node.Childs[idx]
+
+		// cut elem without memory leak, see golang wiki slice tricks
 		if idx < l-1 {
-			// delete child, not at end of slice
-			node.Childs = append(node.Childs[:idx], node.Childs[idx+1:]...)
-		} else {
-			// delete child, at end of slice
-			node.Childs = node.Childs[:idx]
+			copy(node.Childs[idx:], node.Childs[idx+1:])
 		}
+		node.Childs[l-1] = nil
+		node.Childs = node.Childs[:l-1]
 
 		// if we are in remove branch mode, stop here, no relinking of grand childs
 		if delBranch {
@@ -306,10 +303,9 @@ func (node *Node) remove(input Item, delBranch bool) error {
 		}
 
 		// re-insert grandChilds from deleted child into tree
-		// just relinking parent-child not possible if blocks(ranges) overlaps.
-		for _, grandChild := range child.Childs {
+		for _, grandChild := range match.Childs {
 
-			// insert this grandchild at/under outer node
+			// insert this grandchild, start at node
 			if err := node.insertNode(grandChild); err != nil {
 				return err
 			}
@@ -318,10 +314,9 @@ func (node *Node) remove(input Item, delBranch bool) error {
 		return nil
 	}
 
-	// pos in tree not found at this level
-	// walk down if any child (before input, respect sort order) contains input
-	for j := idx - 1; j >= 0; j-- {
-		child := node.Childs[j]
+	// no exact match at this level, check if child before idx contains the input?
+	if idx > 0 {
+		child := node.Childs[idx-1]
 		if child.Item.Block.Contains(input.Block) {
 			return child.remove(input, delBranch)
 		}
