@@ -6,8 +6,8 @@ git:
   depth: 1
 
 script:
- - go test -v ./... -covermode=count -coverprofile=count.out
+ - go test -v ./... -coverprofile=cover.out
  
  after_success:
  - go get -v github.com/mattn/goveralls
- - goveralls -coverprofile=count.out -service=travis-ci
+ - goveralls -coverprofile=cover.out -service=travis-ci
