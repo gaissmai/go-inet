@@ -1,3 +1,6 @@
+// Command inetinfo, print information about IP addresses, CIDRs and ranges.
+//
+// Usage: inetinfo ip_or_block
 package main
 
 import (

@@ -1,3 +1,6 @@
+// Command cidrsplit, split CIDR into smaller CIDRs
+//
+// Usage: cidrsplit [-t] start bits [bits]
 package main
 
 import (
