@@ -7,4 +7,4 @@ git:
 
 script:
  - go get -v github.com/mattn/goveralls
- - goveralls -coverprofile=profile.cov -service=travis-ci
+ - goveralls -service=travis-ci
