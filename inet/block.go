@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrInvalidBlock = errors.New("invalid Block")
+	errInvalidBlock = errors.New("invalid Block")
 )
 
 // Block is an IP-network or IP-range, e.g.
@@ -95,7 +95,7 @@ func ParseBlock(i interface{}) (Block, error) {
 		b.Mask = b.getMask()
 		return b, nil
 	default:
-		return blockZero, ErrInvalidBlock
+		return blockZero, errInvalidBlock
 	}
 }
 
@@ -116,12 +116,12 @@ func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
 
 	a.Base, err = ipFromNetIP(ipnet.IP)
 	if err != nil {
-		return blockZero, ErrInvalidBlock
+		return blockZero, errInvalidBlock
 	}
 
 	a.Mask, err = ipFromNetIP(net.IP(ipnet.Mask)) // cast needed
 	if err != nil {
-		return blockZero, ErrInvalidBlock
+		return blockZero, errInvalidBlock
 	}
 
 	a.Last = lastIP(a.Base, a.Mask)
@@ -132,7 +132,7 @@ func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
 // blockFromString parses s in network CIDR or in begin-end IP address-range notation.
 func blockFromString(s string) (Block, error) {
 	if s == "" {
-		return blockZero, ErrInvalidBlock
+		return blockZero, errInvalidBlock
 	}
 
 	i := strings.IndexByte(s, '/')
@@ -145,7 +145,7 @@ func blockFromString(s string) (Block, error) {
 		return newBlockFromRange(s, i)
 	}
 
-	return blockZero, ErrInvalidBlock
+	return blockZero, errInvalidBlock
 }
 
 // parse IP CIDR
@@ -206,22 +206,22 @@ func newBlockFromRange(s string, i int) (Block, error) {
 
 	baseIP, err := ParseIP(base)
 	if err != nil {
-		return blockZero, ErrInvalidBlock
+		return blockZero, errInvalidBlock
 	}
 
 	lastIP, err := ParseIP(last)
 	if err != nil {
-		return blockZero, ErrInvalidBlock
+		return blockZero, errInvalidBlock
 	}
 
 	// begin-end have version mismatch
 	if baseIP.Version() != lastIP.Version() {
-		return blockZero, ErrInvalidBlock
+		return blockZero, errInvalidBlock
 	}
 
 	// begin > end
 	if baseIP.Compare(lastIP) == 1 {
-		return blockZero, ErrInvalidBlock
+		return blockZero, errInvalidBlock
 	}
 
 	a := Block{Base: baseIP, Last: lastIP}
@@ -303,7 +303,7 @@ func (a Block) IsValid() bool {
 // Version returns the IP version, 4 or 6, panics on invalid block.
 func (a Block) Version() int {
 	if !a.IsValid() {
-		panic(ErrInvalidBlock)
+		panic(errInvalidBlock)
 	}
 	return a.Base.Version()
 }
@@ -533,7 +533,7 @@ func (a Block) getMask() IP {
 // BlockToCIDRList returns a list of CIDRs spanning the range of a.
 func (a Block) BlockToCIDRList() []Block {
 	if !a.IsValid() {
-		panic(ErrInvalidBlock)
+		panic(errInvalidBlock)
 	}
 
 	if a.IsCIDR() {
@@ -587,7 +587,7 @@ func (a Block) BlockToCIDRList() []Block {
 	return out
 }
 
-// Aggregate, returns the minimal number of CIDRs spanning the range of input blocks.
+// Aggregate returns the minimal number of CIDRs spanning the range of input blocks.
 func Aggregate(bs []Block) []Block {
 	if len(bs) == 0 {
 		return nil

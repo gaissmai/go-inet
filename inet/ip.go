@@ -12,10 +12,9 @@ import (
 )
 
 var (
-	ErrInvalidIP       = errors.New("invalid IP")
-	ErrVersionMismatch = errors.New("IPv4/IPv6 version mismatch")
-	ErrOverflow        = errors.New("overflow")
-	ErrUnderflow       = errors.New("underflow")
+	errInvalidIP       = errors.New("invalid IP")
+	errOverflow        = errors.New("overflow")
+	errUnderflow       = errors.New("underflow")
 )
 
 // IP represents a single IPv4 or IPv6 address in a fixed array of 21 bytes.
@@ -51,7 +50,7 @@ func ParseIP(i interface{}) (IP, error) {
 	case []byte:
 		return ipFromBytes(v)
 	default:
-		return ipZero, ErrInvalidIP
+		return ipZero, errInvalidIP
 	}
 }
 
@@ -76,7 +75,7 @@ func ipFromString(s string) (IP, error) {
 // ipFromNetIP converts from stdlib net.IP ([]byte) to IP ([21]byte) representation.
 func ipFromNetIP(netIP net.IP) (IP, error) {
 	if netIP == nil {
-		return ipZero, ErrInvalidIP
+		return ipZero, errInvalidIP
 	}
 
 	if v4 := netIP.To4(); v4 != nil {
@@ -87,13 +86,13 @@ func ipFromNetIP(netIP net.IP) (IP, error) {
 		ip := setBytes(v6)
 		return ip, nil
 	}
-	return ipZero, ErrInvalidIP
+	return ipZero, errInvalidIP
 }
 
 // ipFromBytes sets the IP from 4 or 16 bytes. Returns error on wrong number of bytes.
 func ipFromBytes(bs []byte) (IP, error) {
 	if l := len(bs); l != 4 && l != 16 {
-		return ipZero, ErrInvalidIP
+		return ipZero, errInvalidIP
 	}
 	return setBytes(bs), nil
 }
@@ -109,7 +108,7 @@ func setBytes(bs []byte) IP {
 		ip[0] = 6
 		copy(ip[5:], bs)
 	} else {
-		panic(ErrInvalidIP)
+		panic(errInvalidIP)
 	}
 
 	return ip
@@ -123,7 +122,7 @@ func (ip IP) Bytes() []byte {
 	} else if v == 6 {
 		return ip[5:]
 	}
-	panic(ErrInvalidIP)
+	panic(errInvalidIP)
 }
 
 // ToNetIP converts to net.IP. Panics on invalid input.
@@ -157,7 +156,7 @@ func (ip IP) Version() int {
 	} else if v == 6 {
 		return 6
 	}
-	panic(ErrInvalidIP)
+	panic(errInvalidIP)
 }
 
 // Compare returns an integer comparing two IP addresses lexicographically. The
@@ -165,8 +164,8 @@ func (ip IP) Version() int {
 //   0 if a == b
 //  -1 if a < b
 //  +1 if a > b
-func (a IP) Compare(b IP) int {
-	return bytes.Compare(a[:], b[:])
+func (ip IP) Compare(ip2 IP) int {
+	return bytes.Compare(ip[:], ip2[:])
 }
 
 // SortIP sorts the given slice in place.
@@ -182,7 +181,7 @@ func (ip IP) Expand() string {
 	} else if v == 6 {
 		return expandIPv6(ip.Bytes())
 	}
-	panic(ErrInvalidIP)
+	panic(errInvalidIP)
 }
 
 //  127.0.0.1 -> 127.000.000.001
@@ -232,7 +231,7 @@ func (ip IP) Reverse() string {
 	} else if v == 6 {
 		return reverseIPv6(ip.Bytes())
 	}
-	panic(ErrInvalidIP)
+	panic(errInvalidIP)
 }
 
 // []byte{127,0,0,1}} -> "1.0.0.127"
@@ -298,7 +297,7 @@ func (ip IP) AddBytes(bs []byte) IP {
 
 	// overflow?
 	if len(zbs) > len(ipAsBytes) {
-		panic(ErrOverflow)
+		panic(errOverflow)
 	}
 
 	// left padding with zeros
@@ -333,7 +332,7 @@ func (ip IP) SubBytes(bs []byte) IP {
 	// underflow?
 	bigZero := new(big.Int)
 	if z.Cmp(bigZero) == -1 {
-		panic(ErrUnderflow)
+		panic(errUnderflow)
 	}
 
 	// get the big.Int as []byte slice

@@ -1,4 +1,4 @@
-// Package Tree is an implementation of a CIDR/Block prefix tree for fast IP lookup with longest-prefix-match.
+// Package tree is an implementation of a CIDR/Block prefix tree for fast IP lookup with longest-prefix-match.
 // It is NOT a standard patricia-trie, this isn't possible for general blocks not represented by bitmasks.
 package tree
 
@@ -10,28 +10,26 @@ import (
 	"github.com/gaissmai/go-inet/inet"
 )
 
-type (
-	// Tree, handle for the datastructure.
-	Tree struct {
-		// the entry point of the tree
-		Root *Node
-	}
+// Tree, handle for the datastructure.
+type Tree struct {
+	// the entry point of the tree
+	Root *Node
+}
 
-	// Node in the tree, recursive data structure.
-	Node struct {
-		Item   *Item
-		Parent *Node
-		Childs []*Node
-	}
+// Node in the tree, recursive data structure.
+type Node struct {
+	Item   *Item
+	Parent *Node
+	Childs []*Node
+}
 
-	// Item, maybe with additonal payload, not just inet.Block.
-	// It is intended that there is no Itemer interface.
-	Item struct {
-		Block    inet.Block        // Block.Contains() and Block.Compare() define the position in the tree.
-		Payload  interface{}       // payload for this tree item
-		StringCb func(Item) string // callback, helper func for generating the string
-	}
-)
+// Item, maybe with additional payload, not just inet.Block.
+// It is intended that there is no Itemer interface.
+type Item struct {
+	Block    inet.Block        // Block.Contains() and Block.Compare() define the position in the tree.
+	Payload  interface{}       // payload for this tree item
+	StringCb func(Item) string // callback, helper func for generating the string
+}
 
 // String calls back to the items sender, but only if StringCb is defined.
 // The sender should better know how to format the payload, this library knows just the empty interface{}.

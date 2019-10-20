@@ -17,7 +17,7 @@ func (ip IP) String() string {
 	}
 
 	if !ip.IsValid() {
-		panic(ErrInvalidIP)
+		panic(errInvalidIP)
 	}
 
 	return ip.ToNetIP().String()
@@ -59,7 +59,7 @@ func (a Block) String() string {
 	}
 
 	if !a.IsValid() {
-		panic(ErrInvalidBlock)
+		panic(errInvalidBlock)
 	}
 
 	if a.Mask == ipZero {

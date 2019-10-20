@@ -48,6 +48,7 @@ The tree can be visualized as:
 ## Documentation
 
 [![GoDoc](https://godoc.org/github.com/gaissmai/go-inet?status.svg)](https://godoc.org/github.com/gaissmai/go-inet)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/go-inet)](https://goreportcard.com/report/github.com/gaissmai/go-inet)
 
 Full `go doc` style documentation for the project can be viewed online without
 installing this package by using the excellent GoDoc site here:
