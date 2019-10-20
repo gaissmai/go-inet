@@ -2,6 +2,7 @@ package inet
 
 import (
 	"math/rand"
+	"net"
 	"reflect"
 	"strings"
 	"testing"
@@ -23,6 +24,24 @@ func TestString(t *testing.T) {
 		got := r.String()
 		if got != tt.want {
 			t.Errorf("Block(%q).String() != %v, got %v", tt.in, tt.want, got)
+		}
+	}
+}
+
+func TestFromStdlib(t *testing.T) {
+	tests := []interface{}{
+		net.IP([]byte{10, 0, 0, 1}),
+		net.IP([]byte{0x20, 0x01, 0x0d, 0xdb}),
+		net.IPNet{
+			IP:   net.IP([]byte{0: 0x20, 1: 0x01, 2: 0x0d, 3: 0xdb, 15: 0}),
+			Mask: net.IPMask([]byte{0: 0xff, 1: 0xfe, 15: 0}),
+		},
+	}
+
+	for _, ip := range tests {
+		_, err := ParseBlock(ip)
+		if err != nil {
+			t.Errorf("Block from net.IP, got error %s", err)
 		}
 	}
 }
@@ -118,6 +137,21 @@ func TestBlockHasOverlapWith(t *testing.T) {
 			a:    "10.0.0.0-10.0.0.3",
 			b:    "10.0.0.3-10.0.0.14",
 			want: true,
+		},
+		{
+			a:    "::/0",
+			b:    "::/0",
+			want: false,
+		},
+		{
+			a:    "::/0",
+			b:    "::/60",
+			want: false,
+		},
+		{
+			a:    "4.4.4.4/32",
+			b:    "4.4.4.4/32",
+			want: false,
 		},
 	}
 

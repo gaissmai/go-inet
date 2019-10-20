@@ -44,13 +44,8 @@ var (
 // The input type may be:
 //
 //   string
-//
 //   net.IPNet
-//  *net.IPNet
-//
 //   net.IP
-//  *net.IP
-//
 //   inet.IP
 //
 // Example for valid input strings:
@@ -72,22 +67,12 @@ func ParseBlock(i interface{}) (Block, error) {
 		return blockFromString(v)
 	case net.IPNet:
 		return blockFromNetIPNet(v)
-	case *net.IPNet:
-		return blockFromNetIPNet(*v)
 	case IP:
 		b := Block{Base: v, Last: v}
 		b.Mask = b.getMask()
 		return b, nil
 	case net.IP:
 		ip, err := ipFromNetIP(v)
-		if err != nil {
-			return blockZero, err
-		}
-		b := Block{Base: ip, Last: ip}
-		b.Mask = b.getMask()
-		return b, nil
-	case *net.IP:
-		ip, err := ipFromNetIP(*v)
 		if err != nil {
 			return blockZero, err
 		}

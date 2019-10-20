@@ -34,7 +34,6 @@ var ipZero IP = IP{}
 // The input type may be:
 //   string
 //   net.IP
-//  *net.IP
 //   []byte
 //
 // The hard part is done by net.ParseIP().
@@ -45,8 +44,6 @@ func ParseIP(i interface{}) (IP, error) {
 		return ipFromString(v)
 	case net.IP:
 		return ipFromNetIP(v)
-	case *net.IP:
-		return ipFromNetIP(*v)
 	case []byte:
 		return ipFromBytes(v)
 	default:

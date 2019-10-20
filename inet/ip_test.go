@@ -9,8 +9,6 @@ func TestMustIP(t *testing.T) {
 	MustIP([]byte{1, 2, 3, 4})
 	MustIP([]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16})
 	MustIP(net.IP([]byte{1, 2, 3, 4}))
-	netIP := net.IP([]byte{1, 2, 3, 4})
-	MustIP(&netIP)
 	_, _ = ParseIP(net.IP(nil))
 }
 
