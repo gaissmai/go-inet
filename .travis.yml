@@ -8,6 +8,6 @@ git:
 script:
  - go test -v ./... -coverprofile=cover.out
  
- after_success:
+after_success:
  - go get -v github.com/mattn/goveralls
  - goveralls -coverprofile=cover.out -service=travis-ci
