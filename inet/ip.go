@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	errInvalidIP       = errors.New("invalid IP")
-	errOverflow        = errors.New("overflow")
-	errUnderflow       = errors.New("underflow")
+	errInvalidIP = errors.New("invalid IP")
+	errOverflow  = errors.New("overflow")
+	errUnderflow = errors.New("underflow")
 )
 
 // IP represents a single IPv4 or IPv6 address in a fixed array of 21 bytes.

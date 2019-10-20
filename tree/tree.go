@@ -10,7 +10,7 @@ import (
 	"github.com/gaissmai/go-inet/inet"
 )
 
-// Tree, handle for the datastructure.
+// Tree handle for the datastructure.
 type Tree struct {
 	// the entry point of the tree
 	Root *Node
@@ -23,7 +23,7 @@ type Node struct {
 	Childs []*Node
 }
 
-// Item, maybe with additional payload, not just inet.Block.
+// Item in the node, maybe with additional payload, not just inet.Block.
 // It is intended that there is no Itemer interface.
 type Item struct {
 	Block    inet.Block        // Block.Contains() and Block.Compare() define the position in the tree.
