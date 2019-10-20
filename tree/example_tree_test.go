@@ -16,17 +16,17 @@ func ExampleTree_Insert() {
 	}
 
 	items := []tree.Item{
-		tree.Item{inet.MustBlock("0.0.0.0/8"), "text as payload", callback},
-		tree.Item{inet.MustBlock("1.0.0.0/8"), "text as payload", callback},
-		tree.Item{inet.MustBlock("::/64"), "text as payload", callback},
-		tree.Item{inet.MustBlock("5.0.0.0/8"), "text as payload", callback},
-		tree.Item{inet.MustBlock("0.0.0.0/0"), "text as payload", callback},
-		tree.Item{inet.MustBlock("10.0.0.0-10.0.0.17"), "text as payload", callback},
-		tree.Item{inet.MustBlock("::/0"), "text as payload", callback},
-		tree.Item{inet.MustBlock("2001:7c0:900:1c2::/64"), "text as payload", callback},
-		tree.Item{inet.MustBlock("2001:7c0:900:1c2::0/127"), "text as payload", callback},
-		tree.Item{inet.MustBlock("2001:7c0:900:1c2::1/128"), "text as payload", callback},
-		tree.Item{inet.MustBlock("0.0.0.0/10"), "text as payload", callback},
+		{inet.MustBlock("0.0.0.0/8"), "text as payload", callback},
+		{inet.MustBlock("1.0.0.0/8"), "text as payload", callback},
+		{inet.MustBlock("::/64"), "text as payload", callback},
+		{inet.MustBlock("5.0.0.0/8"), "text as payload", callback},
+		{inet.MustBlock("0.0.0.0/0"), "text as payload", callback},
+		{inet.MustBlock("10.0.0.0-10.0.0.17"), "text as payload", callback},
+		{inet.MustBlock("::/0"), "text as payload", callback},
+		{inet.MustBlock("2001:7c0:900:1c2::/64"), "text as payload", callback},
+		{inet.MustBlock("2001:7c0:900:1c2::0/127"), "text as payload", callback},
+		{inet.MustBlock("2001:7c0:900:1c2::1/128"), "text as payload", callback},
+		{inet.MustBlock("0.0.0.0/10"), "text as payload", callback},
 		// ...
 	}
 
