@@ -6,4 +6,5 @@ git:
   depth: 1
 
 script:
- - go test -v ./...
+ - go get -v github.com/mattn/goveralls
+ - goveralls -coverprofile=profile.cov -service=travis-ci
