@@ -3,6 +3,7 @@ package tree
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"strings"
 	"testing"
 
@@ -69,6 +70,10 @@ func TestTreeInsertBulkRemoveRandom(t *testing.T) {
 			t.Errorf("Remove error: %s", err)
 		}
 	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
 }
 
 func TestTreeInsertDups(t *testing.T) {
@@ -92,6 +97,10 @@ func TestTreeInsertDups(t *testing.T) {
 	if err != nil && !strings.Contains(err.Error(), "duplicate") {
 		t.Errorf("Insert error: %s", err)
 	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
 }
 
 func TestTreeInsertNothing(t *testing.T) {
@@ -105,6 +114,10 @@ func TestTreeInsertNothing(t *testing.T) {
 `
 	if got.String() != want {
 		t.Errorf("got:\n%v\nwant:\n%v", got, want)
+	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
 	}
 }
 
@@ -288,6 +301,10 @@ func TestTreeInsertOne(t *testing.T) {
 	if got.String() != want {
 		t.Errorf("got:\n%v\nwant:\n%v", got, want)
 	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
 }
 
 func TestTreeMultiRoot(t *testing.T) {
@@ -308,6 +325,10 @@ func TestTreeMultiRoot(t *testing.T) {
 	if got.String() != want {
 		t.Errorf("got:\n%v\nwant:\n%v", got, want)
 	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
 }
 
 func TestTreeRemoveEmpty(t *testing.T) {
@@ -317,6 +338,10 @@ func TestTreeRemoveEmpty(t *testing.T) {
 	err := tr.Remove(r)
 	if err == nil {
 		t.Error("Remove() in empty tree, expected error!")
+	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
 	}
 }
 
@@ -354,6 +379,10 @@ func TestTreeRemoveEdgeCase(t *testing.T) {
 
 	if w2.String() != want {
 		t.Errorf("start:\n%s\nremove %v\ngot:\n%s\nwant:\n%s\n", w1.String(), r, w2, want)
+	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
 	}
 }
 
@@ -409,6 +438,10 @@ func TestTreeRemove(t *testing.T) {
 	if w2.String() != want {
 		t.Errorf("start:\n%s\nremove %v\ngot:\n%s\nwant:\n%s\n", w1.String(), r, w2, want)
 	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
 }
 
 func TestTreeRemoveBranch(t *testing.T) {
@@ -459,6 +492,10 @@ func TestTreeRemoveBranch(t *testing.T) {
 	if w2.String() != want {
 		t.Errorf("start:\n%s\nremove %v\ngot:\n%s\nwant:\n%s\n", w1.String(), r, w2, want)
 	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
 }
 
 func TestTreeRemoveFalse(t *testing.T) {
@@ -488,6 +525,10 @@ func TestTreeRemoveFalse(t *testing.T) {
 	r = Item{inet.MustBlock("3.0.0.0/8"), nil, nil}
 	if err := tr.Remove(r); err == nil {
 		t.Errorf("Remove(%v): not in tree, expected error\n", r)
+	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
 	}
 }
 
@@ -532,4 +573,52 @@ func TestTreeRemoveInsert(t *testing.T) {
 	if w1.String() != w3.String() {
 		t.Errorf("remove and insert CIDR(%s) not idempotent:\n%s\n%s\n%s\n", r, w1, w2, w3)
 	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
+}
+
+func nodeIsValid(n *Node, d int) error {
+
+	// check parent-child relationship
+	if n.Parent != nil && n.Parent.Item != nil && n.Item != nil {
+		if !n.Parent.Item.Block.Contains(n.Item.Block) {
+			return fmt.Errorf("parent (%s) doesn't contain node (%s)", n.Parent.Item, n.Item)
+		}
+	}
+
+	if len(n.Childs) == 0 {
+		return nil
+	}
+
+	// check if node contains any child
+	for i := range n.Childs {
+		if !n.Item.Block.Contains(n.Childs[i].Item.Block) {
+			return fmt.Errorf("node (%s) doesn't contain child (%s)", n.Item, n.Childs[i].Item)
+		}
+	}
+
+	// check if childs are sorted
+	less := func(i, j int) bool { return n.Childs[i].Item.Block.Compare(n.Childs[j].Item.Block) < 0 }
+
+	if !sort.SliceIsSorted(n.Childs, less) {
+		return fmt.Errorf("node: %s, childs aren't sorted", n.Item)
+	}
+
+	// check if the childs in row contains themselves
+	for i := 0; i < len(n.Childs)-1; i++ {
+		if n.Childs[i].Item.Block.Contains(n.Childs[i+1].Item.Block) {
+			return fmt.Errorf("child (%s) contains child (%s) in row", n.Childs[i].Item, n.Childs[i+1].Item)
+		}
+	}
+
+	// check for dup childs in row
+	for i := 0; i < len(n.Childs)-1; i++ {
+		if n.Childs[i].Item.Block.Compare(n.Childs[i+1].Item.Block) == 0 {
+			return fmt.Errorf("child (%s) is dup in row", n.Childs[i].Item)
+		}
+	}
+
+	return nil
 }
