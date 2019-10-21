@@ -4,9 +4,11 @@ The API is now almost stable.
 
 # go-inet
 [![Build Status](https://img.shields.io/travis/gaissmai/go-inet.svg)](https://travis-ci.org/gaissmai/go-inet)
+[![GoDoc](https://godoc.org/github.com/gaissmai/go-inet?status.svg)](https://godoc.org/github.com/gaissmai/go-inet)
+[![GitHub](https://img.shields.io/github/license/gaissmai/go-inet)](https://github.com/gaissmai/go-inet/blob/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/go-inet)](https://goreportcard.com/report/github.com/gaissmai/go-inet)
 [![Coverage Status](https://coveralls.io/repos/github/gaissmai/go-inet/badge.svg)](https://coveralls.io/github/gaissmai/go-inet)
-[![GitHub](https://img.shields.io/github/license/gaissmai/go-inet)](https://github.com/gaissmai/go-inet/blob/master/LICENSE)
+
 
 A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks.
 
@@ -51,7 +53,6 @@ The tree can be visualized as:
 
 ## Documentation
 
-[![GoDoc](https://godoc.org/github.com/gaissmai/go-inet?status.svg)](https://godoc.org/github.com/gaissmai/go-inet)
 
 Full `go doc` style documentation for the project can be viewed online without
 installing this package by using the excellent GoDoc site here:
