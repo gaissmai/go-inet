@@ -225,51 +225,43 @@ func (node *Node) insertNode(input *Node) error {
 	// add as new child on this level
 	input.Parent = node
 
-	// input is greater than all others and not contained, just append
+	// input is greater than all others and not contained in child before, just append
 	if idx == l {
 		node.Childs = append(node.Childs, input)
 		return nil
 	}
 
+	// input child somewhere in the 'middle'
+
 	// buffer to build reordered childs
 	// buf = ([:idx], input, [idx:])
 	buf := make([]*Node, 0, l+1)
 
-	// copy [:idx] to buf
+	// copy til [:idx] to new childs buf
 	buf = append(buf, node.Childs[:idx]...)
 
-	// copy input to buf at [idx]
+	// append new input node
 	buf = append(buf, input)
 
-	// now handle [idx:]
-	// resort if input contains next child(s)...
+	// now handle the rest of childs [idx:]
+	// relink if new input node contains next child(s)... in row
 	j := idx
-	for {
+	for ; j < l; j++ {
 		child := node.Childs[j]
-		if input.Item.Block.Contains(child.Item.Block) {
 
+		if input.Item.Block.Contains(child.Item.Block) {
 			// recursive descent, relink next child in row
 			if err := input.insertNode(child); err != nil {
 				return err
 			}
-			if j++; j < l {
-				continue
-			}
+			continue
 		}
-
 		// childs are sorted, break after first child not being child of input
 		break
 	}
 
 	// now copy rest of childs to buf
 	buf = append(buf, node.Childs[j:]...)
-
-	// delete elems without memory leaks in underlying array, see golang wiki slice tricks
-	for k := len(buf); k < l; k++ {
-		// reset pointers in underlying array
-		node.Childs[k] = nil
-	}
-
 	node.Childs = buf
 
 	return nil
@@ -288,11 +280,17 @@ func (node *Node) remove(input Item, delBranch bool) error {
 		// save for relinking of grandchilds, delete this child at idx from node
 		match := node.Childs[idx]
 
+		// ####
 		// cut elem without memory leak, see golang wiki slice tricks
+		//
+		// idx is not at end of slice, somewhere in the 'middle'
 		if idx < l-1 {
 			copy(node.Childs[idx:], node.Childs[idx+1:])
 		}
+		// reset last elem in slice to nil, can be garbage collected, make no memory leak
 		node.Childs[l-1] = nil
+
+		// cut this last entry from slice
 		node.Childs = node.Childs[:l-1]
 
 		// if we are in remove branch mode, stop here, no relinking of grand childs
