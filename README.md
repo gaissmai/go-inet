@@ -6,6 +6,7 @@ The API is now almost stable.
 [![Build Status](https://img.shields.io/travis/gaissmai/go-inet.svg)](https://travis-ci.org/gaissmai/go-inet)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/go-inet)](https://goreportcard.com/report/github.com/gaissmai/go-inet)
 [![Coverage Status](https://coveralls.io/repos/github/gaissmai/go-inet/badge.svg)](https://coveralls.io/github/gaissmai/go-inet)
+![GitHub](https://img.shields.io/github/license/gaissmai/go-inet)
 
 A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks.
 
