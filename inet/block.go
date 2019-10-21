@@ -100,7 +100,7 @@ func blockFromString(s string) (Block, error) {
 
 	i = strings.IndexByte(s, '-')
 	if i >= 0 {
-		return newBlockFromRange(s, i)
+		return blockFromRange(s, i)
 	}
 
 	// maybe just an ip
@@ -200,7 +200,7 @@ func baseIP(any IP, mask IP) IP {
 
 // parse IP address-range
 // e.g.: 127.0.0.0-127.0..0.17 or 2001:db8::1-2001:dbb::ffff
-func newBlockFromRange(s string, i int) (Block, error) {
+func blockFromRange(s string, i int) (Block, error) {
 	// split string
 	base, last := s[:i], s[i+1:]
 
