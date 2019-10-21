@@ -44,14 +44,15 @@ var (
 // The input type may be:
 //
 //   string
-//   net.IPNet
-//   net.IP
 //   inet.IP
+//   net.IP
+//   net.IPNet
 //
 // Example for valid input strings:
 //
 //  "2001:db8:dead:/38"
 //  "10.0.0.0/8"
+//  "4.4.4.4"
 //
 //  "2001:db8::1-2001:db8::ff00:35"
 //  "192.168.2.3-192.168.7.255"
@@ -59,26 +60,18 @@ var (
 // If a begin-end range can be represented as a CIDR, ParseBlock() generates the netmask
 // and returns the range as CIDR.
 //
-// IP addresses in the form of net.IP or inet.IP as input are converted to /32 or /128 blocks
+// IP addresses as input are converted to /32 or /128 blocks
 // Returns error and Block{} on invalid input.
 func ParseBlock(i interface{}) (Block, error) {
 	switch v := i.(type) {
 	case string:
 		return blockFromString(v)
+	case IP:
+		return blockFromIP(v)
+	case net.IP:
+		return blockFromNetIP(v)
 	case net.IPNet:
 		return blockFromNetIPNet(v)
-	case IP:
-		b := Block{Base: v, Last: v}
-		b.Mask = b.getMask()
-		return b, nil
-	case net.IP:
-		ip, err := ipFromNetIP(v)
-		if err != nil {
-			return blockZero, err
-		}
-		b := Block{Base: ip, Last: ip}
-		b.Mask = b.getMask()
-		return b, nil
 	default:
 		return blockZero, errInvalidBlock
 	}
@@ -92,6 +85,47 @@ func MustBlock(i interface{}) Block {
 		panic(err)
 	}
 	return b
+}
+
+// blockFromString parses s in network CIDR or in begin-end IP address-range notation.
+func blockFromString(s string) (Block, error) {
+	if s == "" {
+		return blockZero, errInvalidBlock
+	}
+
+	i := strings.IndexByte(s, '/')
+	if i >= 0 {
+		return blockFromCIDR(s)
+	}
+
+	i = strings.IndexByte(s, '-')
+	if i >= 0 {
+		return newBlockFromRange(s, i)
+	}
+
+	// maybe just an ip
+	ip, err := ipFromString(s)
+	if err == nil {
+		return blockFromIP(ip)
+	}
+
+	return blockZero, errInvalidBlock
+}
+
+// blockFromIP converts inet.IP to inet.Block with /32 or /128 CIDR mask
+func blockFromIP(ip IP) (Block, error) {
+	b := Block{Base: ip, Last: ip}
+	b.Mask = b.getMask()
+	return b, nil
+}
+
+// blockFromNetIP converts net.IP to inet.Block with /32 or /128 CIDR mask
+func blockFromNetIP(nip net.IP) (Block, error) {
+	ip, err := ipFromNetIP(nip)
+	if err != nil {
+		return blockZero, err
+	}
+	return blockFromIP(ip)
 }
 
 // blockFromNetIPNet converts from stdlib net.IPNet to ip.Block representation.
@@ -114,28 +148,9 @@ func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
 	return a, nil
 }
 
-// blockFromString parses s in network CIDR or in begin-end IP address-range notation.
-func blockFromString(s string) (Block, error) {
-	if s == "" {
-		return blockZero, errInvalidBlock
-	}
-
-	i := strings.IndexByte(s, '/')
-	if i >= 0 {
-		return newBlockFromCIDR(s)
-	}
-
-	i = strings.IndexByte(s, '-')
-	if i >= 0 {
-		return newBlockFromRange(s, i)
-	}
-
-	return blockZero, errInvalidBlock
-}
-
 // parse IP CIDR
 // e.g.: 127.0.0.0/8 or 2001:db8::/32
-func newBlockFromCIDR(s string) (Block, error) {
+func blockFromCIDR(s string) (Block, error) {
 	_, netIPNet, err := net.ParseCIDR(s)
 	if err != nil {
 		return blockZero, err

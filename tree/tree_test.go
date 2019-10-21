@@ -166,7 +166,7 @@ func TestTreeLookupLPM(t *testing.T) {
 		tr.MustInsert(item)
 	}
 
-	look := Item{inet.MustBlock(inet.MustIP("0.0.0.0")), nil, nil}
+	look := Item{inet.MustBlock("0.0.0.0/32"), nil, nil}
 	want := inet.MustBlock("0.0.0.0/10")
 
 	got, ok := tr.Lookup(look)

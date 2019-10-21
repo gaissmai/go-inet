@@ -69,7 +69,7 @@ func ExampleTree_Lookup() {
 	tr := tree.New()
 	tr.MustInsert(is...)
 
-	q := tree.Item{Block: inet.MustBlock(inet.MustIP("5.0.122.12"))}
+	q := tree.Item{Block: inet.MustBlock("5.0.122.12/32")}
 
 	if match, ok := tr.Lookup(q); ok {
 		fmt.Printf("tree.Lookup(%v): LPM found at: %v\n", q, match)
