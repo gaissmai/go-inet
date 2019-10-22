@@ -35,9 +35,42 @@ func TestTreeInsertBulk(t *testing.T) {
 	if got != 2*n {
 		t.Errorf("Len() = %d, want %d", got, n)
 	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
 }
 
-func TestTreeInsertBulkRemoveRandom(t *testing.T) {
+func TestTreeInsertUnsorted(t *testing.T) {
+	n := 50000
+	cidrs := internal.GenBlockMixed(n)
+	ranges := internal.GenRangeMixed(n)
+
+	blocks := make([]inet.Block, 0, len(cidrs)+len(ranges))
+	blocks = append(blocks, cidrs...)
+	blocks = append(blocks, ranges...)
+	rand.Shuffle(len(blocks), func(i, j int) { blocks[i], blocks[j] = blocks[j], blocks[i] })
+
+	tr := New()
+	for i := range blocks {
+		item := Item{Block: blocks[i]}
+		err := tr.Insert(item)
+		if err != nil {
+			t.Errorf("Insert error: %s", err)
+		}
+	}
+
+	got := tr.Len()
+	if got != 2*n {
+		t.Errorf("Len() = %d, want %d", got, n)
+	}
+
+	if err := tr.Walk(nodeIsValid); err != nil {
+		t.Errorf("tree checker returned: %s", err)
+	}
+}
+
+func TestTreeInsertBulkRemoveInsertRandom(t *testing.T) {
 	n := 20000
 	cidrs := internal.GenBlockMixed(n)
 	ranges := internal.GenRangeMixed(n)
@@ -73,6 +106,23 @@ func TestTreeInsertBulkRemoveRandom(t *testing.T) {
 
 	if err := tr.Walk(nodeIsValid); err != nil {
 		t.Errorf("tree checker returned: %s", err)
+	}
+
+	w1 := new(strings.Builder)
+	tr.Fprint(w1)
+
+	for k := range set {
+		err := tr.Insert(items[k])
+		if err != nil {
+			t.Errorf("Insert error: %s", err)
+		}
+	}
+
+	w2 := new(strings.Builder)
+	tr.Fprint(w1)
+
+	if w1 != w2 {
+		t.Errorf("trees differ after randem remove/insert")
 	}
 }
 

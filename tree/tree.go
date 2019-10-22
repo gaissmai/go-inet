@@ -200,7 +200,7 @@ func (node *Node) insertItem(item Item) error {
 }
 
 // insertNode, one method for new nodes and parent-child relinking
-// recursive descent
+// recursive descent, heavy duty, key algorithm for this tree
 func (node *Node) insertNode(input *Node) error {
 
 	// childs are sorted find pos in childs on this level, binary search
@@ -232,20 +232,21 @@ func (node *Node) insertNode(input *Node) error {
 	}
 
 	// ###
-	// input child somewhere in the 'middle'
-	// buf = ([:idx], input, [idx:])
-	buf := make([]*Node, 0, l+1)
+	// input new node somewhere in the 'middle', insert in place
+	// node.Childs = ([:idx], input, [idx:])
 
-	// copy til [:idx] to new childs buf
-	buf = append(buf, node.Childs[:idx]...)
+	// childs after idx need special treatment for relinking
+	// copy the tail since we insert in place on backing array
+	// do not cut off the branch on which you sit
+	tail := make([]*Node, l-idx)
+	copy(tail, node.Childs[idx:])
 
-	// append new input node
-	buf = append(buf, input)
+	// ok, let's start: copy til [:idx] to new childs and append new input node
+	node.Childs = append(node.Childs[:idx], input)
 
 	// now handle the rest of the childs [idx:]
 	// we can't just append the rest, maybe new input child contains next childs in row
-	rest := node.Childs[idx:]
-	for j, child := range rest {
+	for j, child := range tail {
 		// relink next child in row if contained in new input node
 		if input.Item.Block.Contains(child.Item.Block) {
 			if err := input.insertNode(child); err != nil {
@@ -253,14 +254,22 @@ func (node *Node) insertNode(input *Node) error {
 			}
 			continue
 		}
-		// copy rest not contained in new input node
-		buf = append(buf, rest[j:]...)
+		// childs are sorted, stop after first child not being child of new input node
 
-		// childs are sorted, break after first child not being child of new input node
+		// just copy rest of childs, not contained in new input node
+		node.Childs = append(node.Childs, tail[j:]...)
+
+		// reset tail elements (*Node ptrs) in backing array
+		// golang slice grammatic in case of ptr elements to free memory
+		tmp := tail[:len(tail)-j]
+		for i := range tmp {
+			tmp[i] = nil
+		}
+
+		// ready
 		break
 	}
 
-	node.Childs = buf
 	return nil
 }
 
