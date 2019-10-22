@@ -126,7 +126,7 @@ func TestTreeInsertBulkRemoveInsertRandom(t *testing.T) {
 	tr.Fprint(w2)
 
 	if w1.String() != w2.String() {
-		t.Errorf("trees differ after random remove/insert\n%s\n%s\n", w1, w2)
+		t.Errorf("trees differ after random remove/insert")
 	}
 }
 
