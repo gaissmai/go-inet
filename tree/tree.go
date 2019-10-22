@@ -231,9 +231,8 @@ func (node *Node) insertNode(input *Node) error {
 		return nil
 	}
 
+	// ###
 	// input child somewhere in the 'middle'
-
-	// buffer to build reordered childs
 	// buf = ([:idx], input, [idx:])
 	buf := make([]*Node, 0, l+1)
 
@@ -243,27 +242,25 @@ func (node *Node) insertNode(input *Node) error {
 	// append new input node
 	buf = append(buf, input)
 
-	// now handle the rest of childs [idx:]
-	// relink if new input node contains next child(s)... in row
-	j := idx
-	for ; j < l; j++ {
-		child := node.Childs[j]
-
+	// now handle the rest of the childs [idx:]
+	// we can't just append the rest, maybe new input child contains next childs in row
+	rest := node.Childs[idx:]
+	for j, child := range rest {
+		// relink next child in row if contained in new input node
 		if input.Item.Block.Contains(child.Item.Block) {
-			// recursive descent, relink next child in row
 			if err := input.insertNode(child); err != nil {
 				return err
 			}
 			continue
 		}
-		// childs are sorted, break after first child not being child of input
+		// copy rest not contained in new input node
+		buf = append(buf, rest[j:]...)
+
+		// childs are sorted, break after first child not being child of new input node
 		break
 	}
 
-	// now copy rest of childs to buf
-	buf = append(buf, node.Childs[j:]...)
 	node.Childs = buf
-
 	return nil
 }
 
