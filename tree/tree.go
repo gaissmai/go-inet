@@ -259,13 +259,6 @@ func (node *Node) insertNode(input *Node) error {
 		// just copy rest of childs, not contained in new input node
 		node.Childs = append(node.Childs, tail[j:]...)
 
-		// reset tail elements (*Node ptrs) in backing array
-		// golang slice grammatic in case of ptr elements to free memory
-		tmp := tail[:len(tail)-j]
-		for i := range tmp {
-			tmp[i] = nil
-		}
-
 		// ready
 		break
 	}

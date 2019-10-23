@@ -1,0 +1,10 @@
+Perltidy version is 20170521
+
+There is no previous '?' to match a ':' on line 2
+2: memclr := backing[:len(node.Childs)]
+                     ^
+
+There is no previous '?' to match a ':' on line 3
+3: for i := range memclr {
+         ^
+6:	To save a full .LOG file rerun with -g
