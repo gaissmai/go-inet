@@ -254,10 +254,15 @@ func (node *Node) insertNode(input *Node) error {
 			}
 			continue
 		}
-		// childs are sorted, stop after first child not being child of new input node
-
-		// just copy rest of childs, not contained in new input node
+		// childs are sorted, stop relinking after first child not contained in new input node
+		// just copy rest of childs
 		node.Childs = append(node.Childs, tail[j:]...)
+
+		// slice GC gimmick, reset tail elems in base array to nil
+		memclr := node.Childs[len(node.Childs):cap(node.Childs)]
+		for i := range memclr {
+			memclr[i] = nil
+		}
 
 		// ready
 		break
@@ -286,7 +291,7 @@ func (node *Node) remove(input Item, delBranch bool) error {
 		if idx < l-1 {
 			copy(node.Childs[idx:], node.Childs[idx+1:])
 		}
-		// reset last elem in slice to nil, can be garbage collected, make no memory leak
+		// slice GC gimmick, reset last elem in slice to nil
 		node.Childs[l-1] = nil
 
 		// cut this last entry from slice
