@@ -258,14 +258,14 @@ func (node *Node) insertNode(input *Node) error {
 		// just copy rest of childs
 		node.Childs = append(node.Childs, tail[j:]...)
 
-		// slice GC gimmick, reset tail elems in base array to nil
-		memclr := node.Childs[len(node.Childs):cap(node.Childs)]
-		for i := range memclr {
-			memclr[i] = nil
-		}
-
 		// ready
 		break
+	}
+
+	// slice GC gimmick, reset tail elems in base array to nil
+	memclr := node.Childs[len(node.Childs):cap(node.Childs)]
+	for i := range memclr {
+		memclr[i] = nil
 	}
 
 	return nil
