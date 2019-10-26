@@ -20,12 +20,11 @@ var (
 // IP represents a single IPv4 or IPv6 address in a fixed array of 21 bytes.
 //
 //  IP[0]    = version information (4 or 6)
-//  IP[1:5]  = IPv4 address, if version == 4, else zero
-//  IP[5:21] = IPv6 address, if version == 6, else zero
+//  IP[1:17] = IPv4 or IPv6 address
 //
 // This IP representation is comparable and can be used as key in maps
 // and fast sorted by bytes.Compare() without conversions to/from the different IP versions.
-type IP [21]byte
+type IP [17]byte
 
 // the zero value for IP, not public
 var ipZero IP = IP{}
@@ -69,7 +68,7 @@ func ipFromString(s string) (IP, error) {
 	return ipFromNetIP(net.ParseIP(s))
 }
 
-// ipFromNetIP converts from stdlib net.IP ([]byte) to IP ([21]byte) representation.
+// ipFromNetIP converts from stdlib net.IP ([]byte) to IP ([17]byte) representation.
 func ipFromNetIP(netIP net.IP) (IP, error) {
 	if netIP == nil {
 		return ipZero, errInvalidIP
@@ -94,19 +93,18 @@ func ipFromBytes(bs []byte) (IP, error) {
 	return setBytes(bs), nil
 }
 
-// set the [21]byte from []byte input.
+// set the [17]byte from []byte input.
 func setBytes(bs []byte) IP {
 	ip := ipZero
 
 	if l := len(bs); l == 4 {
 		ip[0] = 4
-		copy(ip[1:5], bs)
 	} else if l == 16 {
 		ip[0] = 6
-		copy(ip[5:], bs)
 	} else {
 		panic(errInvalidIP)
 	}
+	copy(ip[1:], bs)
 
 	return ip
 }
@@ -117,7 +115,7 @@ func (ip IP) Bytes() []byte {
 	if v := ip[0]; v == 4 {
 		return ip[1:5]
 	} else if v == 6 {
-		return ip[5:]
+		return ip[1:]
 	}
 	panic(errInvalidIP)
 }
@@ -131,18 +129,18 @@ func (ip IP) ToNetIP() net.IP {
 func (ip IP) IsValid() bool {
 	v := ip[0]
 
+	// bytes [1:] must not meet any special condition
+	if v == 6 {
+		return true
+	}
+
 	// bytes [5:] must be 0
 	if v == 4 {
-		var mask [16]byte
+		var mask [12]byte
 		return bytes.Equal(ip[5:], mask[:])
 	}
 
-	// bytes [1:5] must be 0
-	if v == 6 {
-		var mask [4]byte
-		return bytes.Equal(ip[1:5], mask[:])
-	}
-
+	// version byte is invalid
 	return false
 }
 

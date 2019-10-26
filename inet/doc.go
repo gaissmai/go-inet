@@ -8,13 +8,12 @@ Some missing utility functions in the standard library for IP-addresses and IP-b
 
 This is a package for system programming, all fields are public for easy and fast serialization without special treatment. Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
 
-IP addresses are represented as fixed arrays of 21 bytes, this ensures natural sorting (IPv4 < IPv6).
+IP addresses are represented as fixed arrays of 17 bytes, this ensures natural sorting (IPv4 < IPv6).
 
- type IP [21]byte
+ type IP [17]byte
 
-  IP[0]    = version information (4 or 6)
-  IP[1:5]  = IPv4 address, if version == 4, else zero
-  IP[5:21] = IPv6 address, if version == 6, else zero
+  IP[0]  = version information (4 or 6)
+  IP[1:] = IPv4 address or IPv6 address
 
 Blocks are IP-networks or IP-ranges, e.g.
 

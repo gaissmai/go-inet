@@ -39,15 +39,9 @@ func TestIP_IsValid(t *testing.T) {
 	}
 
 	// make ipv4 invalid
-	ipv4[17] = 0xff
+	ipv4[10] = 0xff
 	if ipv4.IsValid() {
 		t.Errorf("ipv4.IsValid() returns true, want false")
-	}
-
-	// make ipv6 invalid
-	ipv6[3] = 0xff
-	if ipv6.IsValid() {
-		t.Errorf("ipv6.IsValid() returns true, want false")
 	}
 }
 
