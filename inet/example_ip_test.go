@@ -208,13 +208,17 @@ func ExampleIP_ToNetIP() {
 func ExampleIP_Version() {
 	for _, ip := range []inet.IP{
 		inet.MustIP("192.168.2.1"),
-		inet.MustIP("fffe:db8::"),
+		inet.MustIP("::ffff:192.168.2.1"), // IP4-mapped
+		inet.MustIP("fe80::1"),
+		inet.MustIP("2001:db8:dead::beef"),
 	} {
 		fmt.Println(ip.Version())
 	}
 
 	// Output:
 	// 4
+	// 4
+	// 6
 	// 6
 }
 
