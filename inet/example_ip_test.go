@@ -138,6 +138,7 @@ func ExampleSortIP() {
 		"2001:db8::",
 		"127.0.0.1",
 		"::1",
+		"::FFFF:0.0.0.1",
 	} {
 		buf = append(buf, inet.MustIP(s))
 	}
@@ -146,7 +147,7 @@ func ExampleSortIP() {
 	fmt.Printf("%v\n", buf)
 
 	// Output:
-	// [127.0.0.1 ::1 2001:db8::]
+	// [0.0.0.1 127.0.0.1 ::1 2001:db8::]
 }
 
 func ExampleIP_Bytes() {
