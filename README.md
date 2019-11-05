@@ -1,7 +1,3 @@
-## RELASE NOTES
-
-The API is now almost stable.
-
 # go-inet
 [![Build Status](https://img.shields.io/travis/gaissmai/go-inet.svg)](https://travis-ci.org/gaissmai/go-inet)
 [![GoDoc](https://godoc.org/github.com/gaissmai/go-inet?status.svg)](https://godoc.org/github.com/gaissmai/go-inet)
@@ -58,6 +54,7 @@ Full `go doc` style documentation for the project can be viewed online without
 installing this package by using the excellent GoDoc site here:
 http://godoc.org/github.com/gaissmai/go-inet
 
+Please study the applications in the examples directory to get familiar with the API.
 
 ## Installation
 
