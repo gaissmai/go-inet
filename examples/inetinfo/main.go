@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,6 +76,9 @@ func printBlockInfo(block inet.Block) {
 	fmt.Printf("%-10s %v\n", "Version:", block.Version())
 	if block.IsCIDR() {
 		fmt.Printf("%-10s %v\n", "Prefix:", block)
+		if block.Version() == 6 {
+			fmt.Printf("%-10s %v\n", "Hints:", cidrHints(block))
+		}
 		fmt.Printf("%-10s %v\n", "Base:", block.Base)
 		fmt.Printf("%-10s %v\n", "Last:", block.Last)
 		fmt.Printf("%-10s %v\n", "Mask:", block.Mask)
@@ -109,6 +113,7 @@ Size:      4096 addrs
 	os.Exit(1)
 }
 
+// helper
 func hostmask(netmask inet.IP) inet.IP {
 	nm := netmask.Bytes()
 	hostmask := make([]byte, len(nm))
@@ -116,4 +121,53 @@ func hostmask(netmask inet.IP) inet.IP {
 		hostmask[i] = ^nm[i]
 	}
 	return inet.MustIP(hostmask)
+}
+
+// helper for CIDR v6 representation hints:
+//
+// hint for hextet border (just expand):   => expanded-base::/bits e.g. 2001:0db8::/32
+// hint for nibble border but NOT hextet:  => expanded-base~~/bits e.g. 2001:0db8:0~~/36
+// hint for NOT on nibble border:          => expanded-base<</bits e.g. 2001:0db8:0<</33
+//
+func cidrHints(cidr inet.Block) string {
+	// get the bits from mask
+	bits, _ := net.IPMask(cidr.Mask.Bytes()).Size()
+
+	// no hints for /0 and /128
+	if bits == 0 || bits == 128 {
+		return cidr.String()
+	}
+
+	// expand the base IP
+	base := cidr.Base.Expand()
+
+	// calc nibbles and colons for bit mask
+	nibbles := int(bits / 4)
+	colons := int(bits / 16)
+
+	// is the bit mask on a nibble border
+	nibbleBorder := bits%4 == 0
+
+	// is the bit mask also on a hextet border
+	hextetBorder := bits%16 == 0
+
+	// default for nibbleBorder is '~~'
+	hint := "~~"
+
+	// mask is within a nibble, hint is '<<'
+	if !nibbleBorder {
+		nibbles++
+		hint = "<<"
+	}
+
+	// mask is at a hextet border, hint is the default '::'
+	if hextetBorder {
+		colons--
+		hint = "::"
+	}
+
+	// cut expanded base due to bit mask
+	base = base[0 : nibbles+colons]
+
+	return fmt.Sprintf("%s%s/%d", base, hint, bits)
 }
