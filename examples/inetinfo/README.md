@@ -15,6 +15,7 @@ inetinfo 2001:db8:c::/116
 
 Version:   6
 Prefix:    2001:db8:c::/116
+Hints:     2001:0db8:000c:0000:0000:0000:0000:0~~/116
 Base:      2001:db8:c::
 Last:      2001:db8:c::fff
 Mask:      ffff:ffff:ffff:ffff:ffff:ffff:ffff:f000

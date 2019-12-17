@@ -92,27 +92,6 @@ func printBlockInfo(block inet.Block) {
 	}
 }
 
-func usage() {
-	w := flag.CommandLine.Output()
-	fmt.Fprintf(w, "Usage of %s:\n\n", progname)
-	fmt.Fprintf(w, "$ %s ip_or_block\n\n", progname)
-	fmt.Fprint(w, "example:\n")
-	fmt.Fprintf(w, "$ %s %s\n", progname, "2001:db8:c::/116")
-
-	output := `
-Version:   6
-Prefix:    2001:db8:c::/116
-Base:      2001:db8:c::
-Last:      2001:db8:c::fff
-Mask:      ffff:ffff:ffff:ffff:ffff:ffff:ffff:f000
-Wildcard:  ::fff
-Bits:      12 bits
-Size:      4096 addrs
-`
-	fmt.Fprint(w, output)
-	os.Exit(1)
-}
-
 // helper
 func hostmask(netmask inet.IP) inet.IP {
 	nm := netmask.Bytes()
@@ -170,4 +149,26 @@ func cidrHints(cidr inet.Block) string {
 	base = base[0 : nibbles+colons]
 
 	return fmt.Sprintf("%s%s/%d", base, hint, bits)
+}
+
+func usage() {
+	w := flag.CommandLine.Output()
+	fmt.Fprintf(w, "Usage of %s:\n\n", progname)
+	fmt.Fprintf(w, "$ %s ip_or_block\n\n", progname)
+	fmt.Fprint(w, "example:\n")
+	fmt.Fprintf(w, "$ %s %s\n", progname, "2001:db8:c::/116")
+
+	output := `
+Version:   6
+Prefix:    2001:db8:c::/116
+Hints:     2001:0db8:000c:0000:0000:0000:0000:0~~/116
+Base:      2001:db8:c::
+Last:      2001:db8:c::fff
+Mask:      ffff:ffff:ffff:ffff:ffff:ffff:ffff:f000
+Wildcard:  ::fff
+Bits:      12 bits
+Size:      4096 addrs
+`
+	fmt.Fprint(w, output)
+	os.Exit(1)
 }
