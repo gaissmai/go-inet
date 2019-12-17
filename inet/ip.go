@@ -17,7 +17,7 @@ var (
 	errUnderflow = errors.New("underflow")
 )
 
-// IP represents a single IPv4 or IPv6 address in a fixed array of 21 bytes.
+// IP represents a single IPv4 or IPv6 address in a fixed array of 17 bytes.
 //
 //  IP[0]    = version information (4 or 6)
 //  IP[1:17] = IPv4 or IPv6 address
