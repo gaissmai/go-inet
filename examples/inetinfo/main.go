@@ -112,13 +112,17 @@ func cidrHints(cidr inet.Block) string {
 	// get the bits from mask
 	bits, _ := net.IPMask(cidr.Mask.Bytes()).Size()
 
+	// expand the base IP
+	base := cidr.Base.Expand()
+
 	// no hints for /0 and /128
-	if bits == 0 || bits == 128 {
+	if bits == 0 {
 		return cidr.String()
 	}
 
-	// expand the base IP
-	base := cidr.Base.Expand()
+	if bits == 128 {
+		return fmt.Sprintf("%s/%d", base, bits)
+	}
 
 	// calc nibbles and colons for bit mask
 	nibbles := int(bits / 4)
