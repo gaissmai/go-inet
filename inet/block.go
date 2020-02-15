@@ -151,6 +151,9 @@ func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
 // parse IP CIDR
 // e.g.: 127.0.0.0/8 or 2001:db8::/32
 func blockFromCIDR(s string) (Block, error) {
+	if strings.HasPrefix(s, "::ffff:") && strings.IndexByte(s, '.') > 6 {
+		s = s[7:]
+	}
 	_, netIPNet, err := net.ParseCIDR(s)
 	if err != nil {
 		return blockZero, err

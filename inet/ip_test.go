@@ -33,6 +33,14 @@ func TestIP_IsValid(t *testing.T) {
 		t.Errorf("ipv4.IsValid() returns false, want true")
 	}
 
+	ipv6mappedipv4 := MustIP("::ffff:127.31.3.2")
+	if !ipv6mappedipv4.IsValid() {
+		t.Errorf("ipv6mappedipv4.IsValid() returns false, want true")
+	}
+	if ipv6mappedipv4.Version() != 4 {
+		t.Errorf("ipv6mappedipv4.Version() returns %d, want 4", ipv6mappedipv4.Version())
+	}
+
 	ipv6 := MustIP("::1")
 	if !ipv6.IsValid() {
 		t.Errorf("ipv6.IsValid() returns false, want true")
