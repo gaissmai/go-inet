@@ -391,9 +391,9 @@ func (a Block) SplitCIDR(n int) []Block {
 	// algorithm:
 	// - create new mask
 	// loop
-	// - make base and last with new mask
-	// - break if new last == a.mask
-	// - increment last, use it as next base
+	// - make next base and next last with new mask
+	// - break if next last == a.last
+	// - ... or increment next last, use it as new base
 	// end
 
 	// limit cpu and memory
