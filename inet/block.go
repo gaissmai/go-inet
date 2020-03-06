@@ -50,7 +50,7 @@ var (
 //
 // Example for valid input strings:
 //
-//  "2001:db8:dead:/38"
+//  "2001:db8:dead::/38"
 //  "10.0.0.0/8"
 //  "4.4.4.4"
 //
