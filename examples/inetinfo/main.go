@@ -89,6 +89,7 @@ func printBlockInfo(block inet.Block) {
 		fmt.Printf("%-10s %v-%v\n", "Range:", block.Base, block.Last)
 		fmt.Printf("%-10s %v bits (min)\n", "Bits:", block.BitLen())
 		fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
+		fmt.Printf("%-10s %v\n", "CIDRList:", block.BlockToCIDRList())
 	}
 }
 
