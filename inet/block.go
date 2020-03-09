@@ -552,19 +552,19 @@ func (a Block) BlockToCIDRList() []Block {
 		bits = 128
 	}
 
-	// start values for loop
+	// start values
 	cursor := a.Base
 	end := a.Last
 
-	// stop condition, cursor > end
-	for cursor.Compare(end) <= 0 {
+	// break condition: last == end, see below
+	for {
 		bitlen := Block{Base: cursor, Last: end}.BitLen()
 		mask := setBytes(net.CIDRMask(bits-bitlen, bits))
 
 		// find matching bitlen/mask at cursor position
 		for bitlen > 0 {
-			s := baseIP(cursor, mask) // try start
-			l := lastIP(cursor, mask) // try last
+			s := baseIP(cursor, mask) // make start with new mask
+			l := lastIP(cursor, mask) // make last with new mask
 
 			// bitlen is ok, if s = (cursor & mask) is still equal to cursor
 			// and the new calculated last is still <= a.Last
@@ -583,7 +583,12 @@ func (a Block) BlockToCIDRList() []Block {
 
 		out = append(out, cidr)
 
-		// move the cursor one behind last
+		// stop if last == end
+		if last.Compare(end) == 0 {
+			break
+		}
+
+		// move the cursor one behind the current last
 		cursor = last.AddUint64(1)
 	}
 

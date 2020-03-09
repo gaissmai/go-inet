@@ -530,3 +530,37 @@ func TestBlockToCIDRListV6(t *testing.T) {
 		t.Errorf("%v.BlockToCIDRList(), got %v, want %v", b, got, want)
 	}
 }
+
+func TestBlockToCIDRListV4Overflow(t *testing.T) {
+	b, _ := ParseBlock("255.255.255.253-255.255.255.255")
+	got := b.BlockToCIDRList()
+
+	var want []Block
+	for _, s := range []string{
+		"255.255.255.253/32",
+		"255.255.255.254/31",
+	} {
+		want = append(want, MustBlock(s))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("%v.BlockToCIDRList(), got %v, want %v", b, got, want)
+	}
+}
+
+func TestBlockToCIDRListV6Overflow(t *testing.T) {
+	b, _ := ParseBlock("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffd-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
+	got := b.BlockToCIDRList()
+
+	var want []Block
+	for _, s := range []string{
+		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffd/128",
+		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe/127",
+	} {
+		want = append(want, MustBlock(s))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("%v.BlockToCIDRList(), got %v, want %v", b, got, want)
+	}
+}
