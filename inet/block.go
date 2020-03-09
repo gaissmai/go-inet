@@ -237,8 +237,8 @@ func blockFromRange(s string, i int) (Block, error) {
 
 // Contains reports whether Block a contains Block b. a and b may NOT coincide.
 //
-//  a   |------------|    |------------|           |------------|
-//  b |-----------------| |-----------------| |-----------------|
+//  a |-----------------| |-----------------| |-----------------|
+//  b   |------------|    |------------|           |------------|
 func (a Block) Contains(b Block) bool {
 	if a == b {
 		return false
