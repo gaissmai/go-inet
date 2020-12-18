@@ -51,7 +51,7 @@ The tree can be visualized as:
 
 
 Full `go doc` style documentation for the project can be viewed online without
-installing this package by using the excellent [GoDoc site](http://godoc.org/github.com/gaissmai/go-inet)
+installing this package by using the excellent [Pkg.go.dev site](https://pkg.go.dev/github.com/gaissmai/go-inet)
 
 Please study the applications in the [examples directory](https://github.com/gaissmai/go-inet/tree/master/examples) to get familiar with the API.
 
