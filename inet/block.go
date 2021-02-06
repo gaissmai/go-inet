@@ -1,7 +1,6 @@
 package inet
 
 import (
-	"bytes"
 	"errors"
 	"math/big"
 	"net"
@@ -36,8 +35,8 @@ var (
 	MaxCIDRSplit int = 20
 
 	// internal for overflow checks in aggregates
-	ipMaxV4 = IP{4, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	ipMaxV6 = IP{6, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	ipMaxV4 = IP([]byte{4, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	ipMaxV6 = IP([]byte{6, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
 )
 
 // ParseBlock parses and returns the input as type Block.
@@ -243,7 +242,7 @@ func (a Block) Contains(b Block) bool {
 	if a == b {
 		return false
 	}
-	return bytes.Compare(a.Base[:], b.Base[:]) <= 0 && bytes.Compare(a.Last[:], b.Last[:]) >= 0
+	return a.Base <= b.Base && a.Last >= b.Last
 }
 
 // Compare returns an integer comparing two IP Blocks.
@@ -259,25 +258,18 @@ func (a Block) Contains(b Block) bool {
 //  -1 if a.Base == b.Base and a is SuperSet of b
 //  +1 if a.Base == b.Base and a is Subset of b
 func (a Block) Compare(b Block) int {
-	if bytes.Compare(a.Base[:], b.Base[:]) < 0 {
-		return -1
+	if a.Base != b.Base {
+		return strings.Compare(string(a.Base), string(b.Base))
 	}
-	if bytes.Compare(a.Base[:], b.Base[:]) > 0 {
-		return 1
-	}
-	// base is now equal, test for superset/subset
-	if bytes.Compare(a.Last[:], b.Last[:]) > 0 {
-		return -1
-	}
-	if bytes.Compare(a.Last[:], b.Last[:]) < 0 {
-		return 1
+	if b.Last != a.Last {
+		return strings.Compare(string(b.Last), string(a.Last))
 	}
 	return 0
 }
 
 // IsCIDR returns true if the block is a true CIDR, not just a begin-end range.
 func (a Block) IsCIDR() bool {
-	return a.Mask != ipZero
+	return a.Mask != ""
 }
 
 // IsValid returns true on valid Blocks, false otherwise.
@@ -339,13 +331,13 @@ func (a Block) IsDisjunctWith(b Block) bool {
 
 	//  a       |----------|
 	//  b |---|
-	if bytes.Compare(a.Base[:], b.Last[:]) == 1 {
+	if a.Base > b.Last {
 		return true
 	}
 
 	//  a |------|
 	//  b          |---|
-	if bytes.Compare(a.Last[:], b.Base[:]) == -1 {
+	if a.Last < b.Base {
 		return true
 	}
 
@@ -530,7 +522,7 @@ func (a Block) getMask() IP {
 	if base == a.Base && last == a.Last {
 		return mask
 	}
-	return ipZero
+	return ""
 }
 
 // BlockToCIDRList returns a list of CIDRs spanning the range of a.

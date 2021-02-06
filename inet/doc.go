@@ -8,12 +8,12 @@ Some missing utility functions in the standard library for IP-addresses and IP-b
 
 This is a package for system programming, all fields are public for easy and fast serialization without special treatment. Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
 
-IP addresses are represented as fixed arrays of 17 bytes, this ensures natural sorting (IPv4 < IPv6).
+IP address bytes are stored as strings with the version 4 or 6 as first byte, this ensures natural sorting (IPv4 < IPv6).
 
- type IP [17]byte
+ type IP string
 
-  IP[0]  = version information (4 or 6)
-  IP[1:] = IPv4 address or IPv6 address
+ IP("\x04\x7f\x00\x00\x01")                                                 // 127.0.0.1
+ IP("\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01") // ::1
 
 Blocks are IP-networks or IP-ranges, e.g.
 

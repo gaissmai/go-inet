@@ -1,7 +1,6 @@
 package inet
 
 import (
-	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -9,6 +8,7 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -17,17 +17,12 @@ var (
 	errUnderflow = errors.New("underflow")
 )
 
-// IP represents a single IPv4 or IPv6 address in a fixed array of 17 bytes.
-//
-//  IP[0]    = version information (4 or 6)
-//  IP[1:17] = IPv4 or IPv6 address
+// IP represents a single IPv4 or IPv6 address as string.
+// The first byte in the string has the value 0x04 or 0x06
 //
 // This IP representation is comparable and can be used as key in maps
-// and fast sorted by bytes.Compare() without conversions to/from the different IP versions.
-type IP [17]byte
-
-// the zero value for IP, not public
-var ipZero IP = IP{}
+// and fast sorted without conversions to/from the different IP versions.
+type IP string
 
 // ParseIP parses and returns the input as type IP.
 // The input type may be:
@@ -46,7 +41,7 @@ func ParseIP(i interface{}) (IP, error) {
 	case []byte:
 		return ipFromBytes(v)
 	default:
-		return ipZero, errInvalidIP
+		return "", errInvalidIP
 	}
 }
 
@@ -68,10 +63,10 @@ func ipFromString(s string) (IP, error) {
 	return ipFromNetIP(net.ParseIP(s))
 }
 
-// ipFromNetIP converts from stdlib net.IP ([]byte) to IP ([17]byte) representation.
+// ipFromNetIP converts from stdlib net.IP ([]byte) to IP opaque string representation.
 func ipFromNetIP(netIP net.IP) (IP, error) {
 	if netIP == nil {
-		return ipZero, errInvalidIP
+		return "", errInvalidIP
 	}
 
 	if v4 := netIP.To4(); v4 != nil {
@@ -82,40 +77,34 @@ func ipFromNetIP(netIP net.IP) (IP, error) {
 		ip := setBytes(v6)
 		return ip, nil
 	}
-	return ipZero, errInvalidIP
+	return "", errInvalidIP
 }
 
 // ipFromBytes sets the IP from 4 or 16 bytes. Returns error on wrong number of bytes.
 func ipFromBytes(bs []byte) (IP, error) {
 	if l := len(bs); l != 4 && l != 16 {
-		return ipZero, errInvalidIP
+		return "", errInvalidIP
 	}
 	return setBytes(bs), nil
 }
 
-// set the [17]byte from []byte input.
+// set the string from []byte input.
 func setBytes(bs []byte) IP {
-	ip := ipZero
-
-	if l := len(bs); l == 4 {
-		ip[0] = 4
-	} else if l == 16 {
-		ip[0] = 6
-	} else {
-		panic(errInvalidIP)
+	l := len(bs)
+	if l == 4 {
+		return IP("\x04" + string(bs))
 	}
-	copy(ip[1:], bs)
-
-	return ip
+	if l == 16 {
+		return IP("\x06" + string(bs))
+	}
+	panic(errInvalidIP)
 }
 
 // Bytes returns the ip address in byte representation. Returns 4 bytes for IPv4 and 16 bytes for IPv6.
 // Panics on invalid input.
 func (ip IP) Bytes() []byte {
-	if v := ip[0]; v == 4 {
-		return ip[1:5]
-	} else if v == 6 {
-		return ip[1:]
+	if ip[0] == 4 || ip[0] == 6 {
+		return []byte(ip[1:])
 	}
 	panic(errInvalidIP)
 }
@@ -127,31 +116,25 @@ func (ip IP) ToNetIP() net.IP {
 
 // IsValid returns true on valid IPs, false otherwise.
 func (ip IP) IsValid() bool {
-	v := ip[0]
-
-	// bytes [1:] must not meet any special condition
-	if v == 6 {
-		return true
+	// wrong length?
+	l := len(ip)
+	if l != 5 && l != 17 {
+		return false
 	}
-
-	// bytes [5:] must be 0
-	if v == 4 {
-		var mask [12]byte
-		return bytes.Equal(ip[5:], mask[:])
+	// wrong version?
+	if ip[0] != 4 && ip[0] != 6 {
+		return false
 	}
-
-	// version byte is invalid
-	return false
+	return true
 }
 
 // Version returns 4 or 6 for valid IPs. Panics on invalid IP.
 func (ip IP) Version() int {
-	if v := ip[0]; v == 4 {
-		return 4
-	} else if v == 6 {
-		return 6
+	if ip[0] != 4 && ip[0] != 6 {
+		panic(errInvalidIP)
 	}
-	panic(errInvalidIP)
+
+	return int(ip[0])
 }
 
 // Compare returns an integer comparing two IP addresses lexicographically. The
@@ -159,23 +142,29 @@ func (ip IP) Version() int {
 //   0 if a == b
 //  -1 if a < b
 //  +1 if a > b
+//
+// Also the string comparison operators are possible.
+// IPv4 addresses are always less than IPv6 addresses.
 func (ip IP) Compare(ip2 IP) int {
-	return bytes.Compare(ip[:], ip2[:])
+	return strings.Compare(string(ip), string(ip2))
 }
 
 // SortIP sorts the given slice in place.
 // IPv4 addresses are sorted 'naturally' before IPv6 addresses, no prior conversion or version split necessary.
 func SortIP(ips []IP) {
-	sort.Slice(ips, func(i, j int) bool { return bytes.Compare(ips[i][:], ips[j][:]) == -1 })
+	sort.Slice(ips, func(i, j int) bool { return ips[i] < ips[j] })
 }
 
 // Expand IP address into canonical form, useful for grep, aligned output and lexical sort.
 func (ip IP) Expand() string {
-	if v := ip[0]; v == 4 {
+	if ip[0] == 4 {
 		return expandIPv4(ip.Bytes())
-	} else if v == 6 {
+	}
+
+	if ip[0] == 6 {
 		return expandIPv6(ip.Bytes())
 	}
+
 	panic(errInvalidIP)
 }
 
@@ -221,11 +210,14 @@ func expandIPv6(ip []byte) string {
 
 // Reverse IP address, needed for PTR entries in DNS zone files.
 func (ip IP) Reverse() string {
-	if v := ip[0]; v == 4 {
+	if ip[0] == 4 {
 		return reverseIPv4(ip.Bytes())
-	} else if v == 6 {
+	}
+
+	if ip[0] == 6 {
 		return reverseIPv6(ip.Bytes())
 	}
+
 	panic(errInvalidIP)
 }
 

@@ -12,7 +12,7 @@ import (
 // String implements the fmt.Stringer interface.
 // Returns "" on IP{}, panics otherwise on invalid input.
 func (ip IP) String() string {
-	if ip == ipZero {
+	if ip == "" {
 		return ""
 	}
 
@@ -34,7 +34,7 @@ func (ip IP) MarshalText() ([]byte, error) {
 func (ip *IP) UnmarshalText(text []byte) error {
 	s := string(text)
 	if len(s) == 0 { // this is no error condition
-		*ip = ipZero
+		*ip = ""
 		return nil
 	}
 
@@ -62,7 +62,7 @@ func (a Block) String() string {
 		panic(errInvalidBlock)
 	}
 
-	if a.Mask == ipZero {
+	if a.Mask == "" {
 		return fmt.Sprintf("%s-%s", a.Base, a.Last)
 	}
 

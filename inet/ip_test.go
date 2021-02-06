@@ -24,10 +24,6 @@ func TestPanic(t *testing.T) {
 }
 
 func TestIP_IsValid(t *testing.T) {
-	if ipZero.IsValid() {
-		t.Errorf("ipZero.IsValid() returns true, want false")
-	}
-
 	ipv4 := MustIP("127.0.0.1")
 	if !ipv4.IsValid() {
 		t.Errorf("ipv4.IsValid() returns false, want true")
@@ -47,28 +43,14 @@ func TestIP_IsValid(t *testing.T) {
 	}
 
 	// make ipv4 invalid
-	ipv4[10] = 0xff
+	ipv4 = IP([]byte{4, 127, 0, 0, 1, 0, 0, 0, 0xff})
 	if ipv4.IsValid() {
 		t.Errorf("ipv4.IsValid() returns true, want false")
 	}
-}
 
-func TestIP_MarshalUnmarshalIPZero(t *testing.T) {
-	text, err := ipZero.MarshalText()
-	if err != nil {
-		t.Errorf("marshal ipZero has error: %v", err)
-	}
-	if string(text) != "" {
-		t.Errorf("marshal ipZero isn't \"\"")
-	}
-
-	got := new(IP)
-	err = got.UnmarshalText(text)
-	if err != nil {
-		t.Errorf("unmarshal []byte has error: %v", err)
-	}
-
-	if *got != ipZero {
-		t.Errorf("marshal/unmarshal ipZero isn't idempotent")
+	// make ipv4 invalid
+	ipv4 = IP([]byte{5, 127, 0, 0, 1})
+	if ipv4.IsValid() {
+		t.Errorf("ipv4.IsValid() returns true, want false")
 	}
 }

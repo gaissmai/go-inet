@@ -86,11 +86,10 @@ func TestBlockIsValid(t *testing.T) {
 	}
 
 	r1.Base = r1.Last.AddUint64(1)
-	r2.Last = IP{}
+	r2.Last = IP("")
 	r3.Mask = r3.Mask.SubUint64(1)
-	r4.Mask[2] = 0xff
 
-	for _, b := range []Block{r1, r2, r3, r4} {
+	for _, b := range []Block{r1, r2, r3} {
 		if b.IsValid() {
 			t.Errorf("b.IsValid returns true, want false")
 		}
@@ -368,10 +367,10 @@ func TestSplitBlockZero(t *testing.T) {
 
 func TestSplitMaskZero(t *testing.T) {
 	var r Block
-	r.Base[0] = 4
-	r.Last[0] = 4
+	r.Base = IP([]byte{4})
+	r.Last = IP([]byte{4})
 
-	// Mask is still blockZero, we can't cplit without a mask
+	// Mask is still blockZero, we can't split without a mask
 	splits := r.SplitCIDR(1)
 
 	if splits != nil {

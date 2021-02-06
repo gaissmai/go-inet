@@ -50,8 +50,7 @@ func ExampleIP_String() {
 	for _, ip := range []inet.IP{
 		inet.MustIP("127.0.0.1"),
 		inet.MustIP("fe80::1"),
-		{},
-		// {5, 10, 0, 0, 0}, inet.String() panics on invalid input.
+		inet.IP(""),
 	} {
 		fmt.Printf("%#v\n", ip.String())
 	}
@@ -66,7 +65,7 @@ func ExampleIP_MarshalText() {
 	for _, ip := range []inet.IP{
 		inet.MustIP("127.0.0.1"),
 		inet.MustIP("fe80::1"),
-		{},
+		inet.IP(""),
 	} {
 
 		bs, err := ip.MarshalText()
@@ -239,13 +238,13 @@ func ExampleIP_UnmarshalText() {
 			fmt.Println(err)
 			continue
 		}
-		fmt.Printf("%-15q %03d\n", ip, ip)
+		fmt.Printf("%-15q %03d\n", ip, []byte(*ip))
 	}
 
 	// Output:
-	// "127.0.0.1"     &[004 127 000 000 001 000 000 000 000 000 000 000 000 000 000 000 000]
-	// "fe80::1"       &[006 254 128 000 000 000 000 000 000 000 000 000 000 000 000 000 001]
-	// ""              &[000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000]
+	// "127.0.0.1"     [004 127 000 000 001]
+	// "fe80::1"       [006 254 128 000 000 000 000 000 000 000 000 000 000 000 000 000 001]
+	// ""              []
 	// invalid IP
 
 }
