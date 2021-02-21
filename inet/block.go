@@ -1,6 +1,7 @@
 package inet
 
 import (
+	"bytes"
 	"errors"
 	"math/big"
 	"net"
@@ -259,10 +260,10 @@ func (a Block) Contains(b Block) bool {
 //  +1 if a.Base == b.Base and a is Subset of b
 func (a Block) Compare(b Block) int {
 	if a.Base != b.Base {
-		return strings.Compare(string(a.Base), string(b.Base))
+		return bytes.Compare([]byte(a.Base), []byte(b.Base))
 	}
 	if b.Last != a.Last {
-		return strings.Compare(string(b.Last), string(a.Last))
+		return bytes.Compare([]byte(b.Last), []byte(a.Last))
 	}
 	return 0
 }

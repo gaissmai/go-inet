@@ -1,6 +1,7 @@
 package inet
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -8,7 +9,6 @@ import (
 	"net"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 var (
@@ -146,7 +146,7 @@ func (ip IP) Version() int {
 // Also the string comparison operators are possible.
 // IPv4 addresses are always less than IPv6 addresses.
 func (ip IP) Compare(ip2 IP) int {
-	return strings.Compare(string(ip), string(ip2))
+	return bytes.Compare([]byte(ip), []byte(ip2))
 }
 
 // SortIP sorts the given slice in place.
