@@ -13,15 +13,21 @@ func TestString(t *testing.T) {
 		in   string
 		want string
 	}{
-		{"", ""},
+		{"0.0.0.0/0", "0.0.0.0/0"},
 		{"127.000.000.255/8", "127.0.0.0/8"},
 		{"127.000.000.250-127.000.000.255", "127.0.0.250-127.0.0.255"},
 		{"127.0.0.248-127.0.0.255", "127.0.0.248/29"},
 		{"::ffff:182.239.134.2/32", "182.239.134.2/32"},
+		{"2001:db8::/32", "2001:db8::/32"},
+		{"::-::ffff", "::/112"},
 	}
 
 	for _, tt := range tests {
-		r, _ := ParseBlock(tt.in)
+		r, err := ParseBlock(tt.in)
+		if err != nil {
+			t.Errorf("ParseBlock(%v) got error: %v", tt.in, err)
+		}
+
 		got := r.String()
 		if got != tt.want {
 			t.Errorf("Block(%q).String() != %v, got %v", tt.in, tt.want, got)
@@ -71,30 +77,6 @@ func TestParseBlockFail(t *testing.T) {
 			t.Errorf("success for ParseBlock(%s) is not expected!", in)
 		}
 	}
-}
-
-func TestBlockIsValid(t *testing.T) {
-	r1 := MustBlock("127.0.0.1/8")
-	r2 := MustBlock("127.0.0.0-127.255.255.254")
-	r3 := MustBlock("2001:db8::/127")
-	r4 := MustBlock("2001:db8::-2001:dff::")
-
-	for _, b := range []Block{r1, r2, r3, r4} {
-		if !b.IsValid() {
-			t.Errorf("b.IsValid returns false, want true")
-		}
-	}
-
-	r1.Base = r1.Last.AddUint64(1)
-	r2.Last = IP("")
-	r3.Mask = r3.Mask.SubUint64(1)
-
-	for _, b := range []Block{r1, r2, r3} {
-		if b.IsValid() {
-			t.Errorf("b.IsValid returns true, want false")
-		}
-	}
-
 }
 
 func TestBlockHasOverlapWith(t *testing.T) {
@@ -238,7 +220,7 @@ func TestBlockIsDisjunctWith(t *testing.T) {
 	}
 }
 
-func TestBlockContains(t *testing.T) {
+func TestBlockCovers(t *testing.T) {
 	tests := []struct {
 		a, b string
 		want bool
@@ -291,9 +273,9 @@ func TestBlockContains(t *testing.T) {
 		ra := MustBlock(a)
 		rb := MustBlock(b)
 
-		got := rb.Contains(ra)
+		got := rb.Covers(ra)
 		if got != want {
-			t.Errorf("(%v).Contains(%v) = %v; want %v", rb, ra, got, want)
+			t.Errorf("(%v).Covers(%v) = %v; want %v", rb, ra, got, want)
 		}
 	}
 }
@@ -367,8 +349,8 @@ func TestSplitBlockZero(t *testing.T) {
 
 func TestSplitMaskZero(t *testing.T) {
 	var r Block
-	r.Base = IP([]byte{4})
-	r.Last = IP([]byte{4})
+	r.base = IP([]byte{4})
+	r.last = IP([]byte{4})
 
 	// Mask is still blockZero, we can't split without a mask
 	splits := r.SplitCIDR(1)
@@ -399,11 +381,11 @@ func TestBlockV4V6(t *testing.T) {
 	if r2.OverlapsWith(r1) != false {
 		t.Errorf("%q.OverlapsWith(%q) == %t, want %t", r2, r1, r2.OverlapsWith(r1), false)
 	}
-	if r2.Contains(r1) != false {
-		t.Errorf("%q.Contains(%q) == %t, want %t", r2, r1, r2.Contains(r1), false)
+	if r2.Covers(r1) != false {
+		t.Errorf("%q.Covers(%q) == %t, want %t", r2, r1, r2.Covers(r1), false)
 	}
-	if r1.Contains(r2) != false {
-		t.Errorf("%q.Contains(%q) == %t, want %t", r1, r2, r1.Contains(r2), false)
+	if r1.Covers(r2) != false {
+		t.Errorf("%q.Covers(%q) == %t, want %t", r1, r2, r1.Covers(r2), false)
 	}
 	if r1.IsDisjunctWith(r2) != true {
 		t.Errorf("%q.IsDisjunctWith(%q) == %t, want %t", r1, r2, r1.IsDisjunctWith(r2), true)

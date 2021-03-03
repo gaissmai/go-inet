@@ -26,31 +26,11 @@ func ExampleParseIP() {
 
 }
 
-func ExampleIP_Compare() {
-	a := inet.MustIP("127.0.0.1")
-	b := inet.MustIP("10.10.0.1")
-	fmt.Printf("IP{%v}.Compare(IP{%v}) = %d\n", a, b, a.Compare(b))
-
-	a = inet.MustIP("0.0.0.0")
-	b = inet.MustIP("::")
-	fmt.Printf("IP{%v}.Compare(IP{%v}) = %d\n", a, b, a.Compare(b))
-
-	a = inet.MustIP("fe80::1")
-	b = inet.MustIP("fe80::1")
-	fmt.Printf("IP{%v}.Compare(IP{%v}) = %d\n", a, b, a.Compare(b))
-
-	// Output:
-	// IP{127.0.0.1}.Compare(IP{10.10.0.1}) = 1
-	// IP{0.0.0.0}.Compare(IP{::}) = -1
-	// IP{fe80::1}.Compare(IP{fe80::1}) = 0
-
-}
-
 func ExampleIP_String() {
 	for _, ip := range []inet.IP{
 		inet.MustIP("127.0.0.1"),
 		inet.MustIP("fe80::1"),
-		inet.IP(""),
+		inet.IPZero,
 	} {
 		fmt.Printf("%#v\n", ip.String())
 	}
@@ -65,7 +45,7 @@ func ExampleIP_MarshalText() {
 	for _, ip := range []inet.IP{
 		inet.MustIP("127.0.0.1"),
 		inet.MustIP("fe80::1"),
-		inet.IP(""),
+		inet.IPZero,
 	} {
 
 		bs, err := ip.MarshalText()
@@ -80,55 +60,6 @@ func ExampleIP_MarshalText() {
 	// 127.0.0.1       "127.0.0.1"     [49 50 55 46 48 46 48 46 49]
 	// fe80::1         "fe80::1"       [102 101 56 48 58 58 49]
 	//                 ""              []
-}
-
-func ExampleIP_AddUint64() {
-	for _, ip := range []inet.IP{
-		inet.MustIP("127.0.0.1"),
-		inet.MustIP("2001:db8::"),
-	} {
-		z := ip.AddUint64(1)
-		fmt.Printf("%-10v + %d = %v\n", ip, 1, z)
-	}
-
-	// Output:
-	// 127.0.0.1  + 1 = 127.0.0.2
-	// 2001:db8:: + 1 = 2001:db8::1
-
-}
-
-func ExampleIP_AddBytes() {
-	for _, tt := range []struct {
-		ip  string
-		add []byte
-	}{
-		{"0.0.0.0", []byte{255, 255, 255, 255}},
-		{"::", []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}},
-	} {
-		ip := inet.MustIP(tt.ip)
-		z := ip.AddBytes(tt.add)
-		fmt.Printf("%v + %#x = %v\n", tt.ip, tt.add, z)
-	}
-
-	// Output:
-	// 0.0.0.0 + 0xffffffff = 255.255.255.255
-	// :: + 0xffffffffffffffffffffffffffffffff = ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-
-}
-
-func ExampleIP_SubUint64() {
-	for _, ip := range []inet.IP{
-		inet.MustIP("127.0.0.0"),
-		inet.MustIP("2001:db8::"),
-	} {
-		z := ip.SubUint64(1)
-		fmt.Printf("%-10v - %#x = %v\n", ip, 1, z)
-	}
-
-	// Output:
-	// 127.0.0.0  - 0x1 = 126.255.255.255
-	// 2001:db8:: - 0x1 = 2001:db7:ffff:ffff:ffff:ffff:ffff:ffff
-
 }
 
 func ExampleSortIP() {
@@ -147,23 +78,6 @@ func ExampleSortIP() {
 
 	// Output:
 	// [0.0.0.1 127.0.0.1 ::1 2001:db8::]
-}
-
-func ExampleIP_Bytes() {
-	for _, ip := range []inet.IP{
-		inet.MustIP("192.168.2.1"),
-		inet.MustIP("::ffff:192.168.2.1"), // IP4-mapped
-		inet.MustIP("2001:db8:dead::beef"),
-	} {
-		buf := ip.Bytes()
-		fmt.Printf("%#v\n", buf)
-	}
-
-	// Output:
-	// []byte{0xc0, 0xa8, 0x2, 0x1}
-	// []byte{0xc0, 0xa8, 0x2, 0x1}
-	// []byte{0x20, 0x1, 0xd, 0xb8, 0xde, 0xad, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xbe, 0xef}
-
 }
 
 func ExampleIP_Expand() {
@@ -214,6 +128,7 @@ func ExampleIP_Version() {
 		inet.MustIP("::ffff:192.168.2.1"), // IP4-mapped
 		inet.MustIP("fe80::1"),
 		inet.MustIP("2001:db8:dead::beef"),
+		inet.IPZero,
 	} {
 		fmt.Println(ip.Version())
 	}
@@ -223,6 +138,7 @@ func ExampleIP_Version() {
 	// 4
 	// 6
 	// 6
+	// 0
 }
 
 func ExampleIP_UnmarshalText() {

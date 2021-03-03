@@ -1,9 +1,7 @@
 package inet
 
 import (
-	"bytes"
 	"errors"
-	"math/big"
 	"net"
 	"sort"
 	"strings"
@@ -23,10 +21,19 @@ var (
 // This Block representation is comparable and can be used as key in maps
 // and fast sorted without conversions to/from the different IP versions.
 type Block struct {
-	Base IP
-	Last IP
-	Mask IP // IP{} for ranges without CIDR mask
+	base IP
+	last IP
+	mask IP // IP{} for ranges without CIDR mask
 }
+
+// Base returns the blocks base IP address.
+func (a Block) Base() IP { return a.base }
+
+// Last returns the blocks last IP address.
+func (a Block) Last() IP { return a.last }
+
+// Mask returns the blocks mask as IP address. May be IPZero for begin-end ranges
+func (a Block) Mask() IP { return a.mask }
 
 // the zero-value for type Block, not public
 var blockZero Block = Block{}
@@ -114,8 +121,8 @@ func blockFromString(s string) (Block, error) {
 
 // blockFromIP converts inet.IP to inet.Block with /32 or /128 CIDR mask
 func blockFromIP(ip IP) (Block, error) {
-	b := Block{Base: ip, Last: ip}
-	b.Mask = b.getMask()
+	b := Block{base: ip, last: ip}
+	b.mask = b.getMask()
 	return b, nil
 }
 
@@ -133,17 +140,17 @@ func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
 	var err error
 	a := blockZero
 
-	a.Base, err = ipFromNetIP(ipnet.IP)
+	a.base, err = ipFromNetIP(ipnet.IP)
 	if err != nil {
 		return blockZero, errInvalidBlock
 	}
 
-	a.Mask, err = ipFromNetIP(net.IP(ipnet.Mask)) // cast needed
+	a.mask, err = ipFromNetIP(net.IP(ipnet.Mask)) // cast needed
 	if err != nil {
 		return blockZero, errInvalidBlock
 	}
 
-	a.Last = lastIP(a.Base, a.Mask)
+	a.last = lastIP(a.base, a.mask)
 
 	return a, nil
 }
@@ -178,8 +185,8 @@ func blockFromCIDR(s string) (Block, error) {
 //    0x7f_ff_ff_ff last
 //
 func lastIP(base IP, mask IP) IP {
-	b := base.Bytes()
-	m := mask.Bytes()
+	b := base.bytes()
+	m := mask.bytes()
 
 	last := make([]byte, len(b))
 	for i := 0; i < len(b); i++ {
@@ -191,8 +198,8 @@ func lastIP(base IP, mask IP) IP {
 // baseIP makes base address from address and netmask:
 //  base[i] = address[i] & netMask[i]
 func baseIP(any IP, mask IP) IP {
-	a := any.Bytes()
-	m := mask.Bytes()
+	a := any.bytes()
+	m := mask.bytes()
 
 	base := make([]byte, len(a))
 	for i := 0; i < len(a); i++ {
@@ -223,103 +230,56 @@ func blockFromRange(s string, i int) (Block, error) {
 	}
 
 	// begin > end
-	if baseIP.Compare(lastIP) == 1 {
+	if baseIP > lastIP {
 		return blockZero, errInvalidBlock
 	}
 
-	a := Block{Base: baseIP, Last: lastIP}
+	a := Block{base: baseIP, last: lastIP}
 
 	// maybe range is true CIDR, try to get also the mask
-	a.Mask = a.getMask()
+	a.mask = a.getMask()
 
 	return a, nil
 }
 
-// Contains reports whether Block a contains Block b. a and b may NOT coincide.
+// Covers reports whether Block a contains Block b. a and b may NOT coincide.
+// Covers returns true when Block a is a *true* cover of Block b, Equal must then be false.
+// If Covers is true then Less must also be true.
 //
 //  a |-----------------| |-----------------| |-----------------|
 //  b   |------------|    |------------|           |------------|
-func (a Block) Contains(b Block) bool {
+func (a Block) Covers(b Block) bool {
 	if a == b {
 		return false
 	}
-	return a.Base <= b.Base && a.Last >= b.Last
+	return a.base <= b.base && a.last >= b.last
 }
 
-// Compare returns an integer comparing two IP Blocks.
+// Less reports whether the Block a should be sorted before Block b.
+// REMEMBER: sort containers always to the left.
 //
-//   0 if a == b,
+//  a |---|
+//  b        |------|
 //
-//  -1 if a is v4 and b is v6
-//  +1 if a is v6 and b is v4
+//  a |-------|
+//  b    |------------|
 //
-//  -1 if a.Base < b.Base
-//  +1 if a.Base > b.Base
+//  a |-----------------|
+//  b    |----------|
 //
-//  -1 if a.Base == b.Base and a is SuperSet of b
-//  +1 if a.Base == b.Base and a is Subset of b
-func (a Block) Compare(b Block) int {
-	if a.Base != b.Base {
-		return bytes.Compare([]byte(a.Base), []byte(b.Base))
+//  a |-----------------|
+//  b |------------|
+func (a Block) Less(b Block) bool {
+	if a.base == b.base {
+		// a.Base == b.Base and a covers b, REMEMBER: sort containers to the left
+		return a.last > b.last
 	}
-	if b.Last != a.Last {
-		return bytes.Compare([]byte(b.Last), []byte(a.Last))
-	}
-	return 0
+	return a.base < b.base
 }
 
 // IsCIDR returns true if the block is a true CIDR, not just a begin-end range.
 func (a Block) IsCIDR() bool {
-	return a.Mask != ""
-}
-
-// IsValid returns true on valid Blocks, false otherwise.
-func (a Block) IsValid() bool {
-	if !a.Base.IsValid() || !a.Last.IsValid() {
-		return false
-	}
-
-	// version mismatch
-	if a.Base.Version() != a.Last.Version() {
-		return false
-	}
-
-	// base is greater than last
-	if a.Base.Compare(a.Last) > 0 {
-		return false
-	}
-
-	// calc mask from base-last, compare with a.Mask
-	m := a.getMask()
-
-	// Mask is just an IP, IPs are comparable
-	return m == a.Mask
-}
-
-// Version returns the IP version, 4 or 6, panics on invalid block.
-func (a Block) Version() int {
-	if !a.IsValid() {
-		panic(errInvalidBlock)
-	}
-	return a.Base.Version()
-}
-
-// BitLen returns the minimum number of bits to represent the block.
-func (a Block) BitLen() int {
-	// algorithm: use math.big.BitLen(lastIP-baseIP)
-	ip := a.Last
-	ip = ip.SubBytes(a.Base.Bytes())
-	return new(big.Int).SetBytes(ip.Bytes()).BitLen()
-}
-
-// Size returns the number of ip addresses as string.
-// Returns a string, since the amount of ip addresses can be greater than uint64.
-func (a Block) Size() string {
-	// algorithm: use math.big.String(lastIP-baseIP+1)
-	ip := a.Last
-	diff := new(big.Int).SetBytes(ip.SubBytes(a.Base.Bytes()).Bytes())
-	one := new(big.Int).SetInt64(1)
-	return diff.Add(diff, one).String()
+	return a.mask != IPZero
 }
 
 // IsDisjunctWith reports whether the Blocks a and b are disjunct
@@ -332,13 +292,13 @@ func (a Block) IsDisjunctWith(b Block) bool {
 
 	//  a       |----------|
 	//  b |---|
-	if a.Base > b.Last {
+	if a.base > b.last {
 		return true
 	}
 
 	//  a |------|
 	//  b          |---|
-	if a.Last < b.Base {
+	if a.last < b.base {
 		return true
 	}
 
@@ -362,7 +322,7 @@ func (a Block) OverlapsWith(b Block) bool {
 	if a == b {
 		return false
 	}
-	if a.Contains(b) || b.Contains(a) {
+	if a.Covers(b) || b.Covers(a) {
 		return false
 	}
 	if a.IsDisjunctWith(b) {
@@ -371,10 +331,10 @@ func (a Block) OverlapsWith(b Block) bool {
 	return true
 }
 
-// SortBlock sorts the given slice of Blocks in place, see Compare() for sort order.
+// SortBlock sorts the given slice of Blocks in place, see Less() for sort order.
 // IPv4 Blocks are sorted before IPv6 Blocks. Outer sets are sorted before their subsets!
 func SortBlock(bs []Block) {
-	sort.Slice(bs, func(i, j int) bool { return bs[i].Compare(bs[j]) == -1 })
+	sort.Slice(bs, func(i, j int) bool { return bs[i].Less(bs[j]) })
 }
 
 // SplitCIDR returns the next 2^n CIDRs, splitted from outer block.
@@ -399,7 +359,7 @@ func (a Block) SplitCIDR(n int) []Block {
 	}
 
 	// check for max mask len, bits are 32 or 128 (v4 or v6)
-	maskSize, bits := net.IPMask(a.Mask.Bytes()).Size()
+	maskSize, bits := net.IPMask(a.mask.bytes()).Size()
 	if n <= 0 || maskSize+n > bits {
 		return nil
 	}
@@ -408,22 +368,22 @@ func (a Block) SplitCIDR(n int) []Block {
 
 	cidrs := make([]Block, 0, 1<<uint(n))
 
-	base := a.Base
+	base := a.base
 	if baseIP(base, newMask) != base {
 		panic("logic error ...")
 	}
 
 	for {
 		next := blockZero
-		next.Base = baseIP(base, newMask)
-		next.Last = lastIP(next.Base, newMask)
-		next.Mask = newMask
+		next.base = baseIP(base, newMask)
+		next.last = lastIP(next.base, newMask)
+		next.mask = newMask
 		cidrs = append(cidrs, next)
 
 		// last of outer CIDR already reached?
-		if next.Last.Compare(a.Last) == -1 {
-			base = next.Last.AddUint64(1) // next base
-		} else if next.Last == a.Last {
+		if next.last < a.last {
+			base, _ = next.last.addOne() // next base
+		} else if next.last == a.last {
 			break
 		} else {
 			panic("logic error...")
@@ -437,7 +397,7 @@ func (a Block) SplitCIDR(n int) []Block {
 // Panics if inner blocks are no subset of (or not equal to) outer block.
 func (a Block) FindFreeCIDR(bs []Block) []Block {
 	for _, i := range bs {
-		if !(a.Contains(i) || i == a) {
+		if !(a.Covers(i) || i == a) {
 			panic("at least one inner block isn't contained in (or equal to) outer block")
 		}
 	}
@@ -496,7 +456,7 @@ func (a Block) isDisjunctWithAll(bs []Block) bool {
 // isSubsetOfAny is a helper method: Returns true if a is subset of any inner block
 func (a Block) isSubsetOfAny(bs []Block) bool {
 	for _, b := range bs {
-		if b.Contains(a) {
+		if b.Covers(a) {
 			return true
 		}
 	}
@@ -507,31 +467,27 @@ func (a Block) isSubsetOfAny(bs []Block) bool {
 func (a Block) getMask() IP {
 	// v4 or v6
 	bits := 32
-	if a.Base.Version() == 6 {
+	if a.base[0] == IPv6 {
 		bits = 128
 	}
 
 	// bits for hostmask
-	bitlen := a.BitLen()
+	bitlen := a.bitLen()
 
 	// netmask is inverse of hostmask, bits-bitlen
 	mask := setBytes(net.CIDRMask(bits-bitlen, bits))
 
 	// if last equals generated last with base and mask
-	base := baseIP(a.Base, mask)
-	last := lastIP(a.Base, mask)
-	if base == a.Base && last == a.Last {
+	base := baseIP(a.base, mask)
+	last := lastIP(a.base, mask)
+	if base == a.base && last == a.last {
 		return mask
 	}
-	return ""
+	return IPZero
 }
 
 // BlockToCIDRList returns a list of CIDRs spanning the range of a.
 func (a Block) BlockToCIDRList() []Block {
-	if !a.IsValid() {
-		panic(errInvalidBlock)
-	}
-
 	if a.IsCIDR() {
 		return []Block{a}
 	}
@@ -541,17 +497,17 @@ func (a Block) BlockToCIDRList() []Block {
 
 	// v4 or v6
 	bits := 32
-	if a.Base.Version() == 6 {
+	if a.base[0] == IPv6 {
 		bits = 128
 	}
 
 	// start values
-	cursor := a.Base
-	end := a.Last
+	cursor := a.base
+	end := a.last
 
 	// break condition: last == end, see below
 	for {
-		bitlen := Block{Base: cursor, Last: end}.BitLen()
+		bitlen := Block{base: cursor, last: end}.bitLen()
 		mask := setBytes(net.CIDRMask(bits-bitlen, bits))
 
 		// find matching bitlen/mask at cursor position
@@ -561,7 +517,7 @@ func (a Block) BlockToCIDRList() []Block {
 
 			// bitlen is ok, if s = (cursor & mask) is still equal to cursor
 			// and the new calculated last is still <= a.Last
-			if s.Compare(cursor) == 0 && l.Compare(end) <= 0 {
+			if s == cursor && l <= end {
 				break
 			}
 
@@ -572,17 +528,20 @@ func (a Block) BlockToCIDRList() []Block {
 
 		base := baseIP(cursor, mask)
 		last := lastIP(cursor, mask)
-		cidr := Block{Base: base, Last: last, Mask: mask}
+		cidr := Block{base: base, last: last, mask: mask}
 
 		out = append(out, cidr)
 
 		// stop if last == end
-		if last.Compare(end) == 0 {
+		if last == end {
 			break
 		}
 
 		// move the cursor one behind the current last
-		cursor = last.AddUint64(1)
+		var ok bool
+		if cursor, ok = last.addOne(); !ok {
+			panic(errOverflow)
+		}
 	}
 
 	return out
@@ -621,7 +580,7 @@ func Aggregate(bs []Block) []Block {
 
 		var cursor int
 		for j := i + 1; j < len(cidrs); j++ {
-			if cidrs[i].Contains(cidrs[j]) {
+			if cidrs[i].Covers(cidrs[j]) {
 				cursor = j
 				continue
 			}
@@ -645,14 +604,15 @@ func Aggregate(bs []Block) []Block {
 		for j := i + 1; j < len(unique); j++ {
 
 			// break on end of IP address space, else panic on overflow!
-			if pack.Last == ipMaxV4 || pack.Last == ipMaxV6 {
+			if pack.last == ipMaxV4 || pack.last == ipMaxV6 {
 				break
 			}
 
 			// test for adjacency, no gap between two cidrs
-			if pack.Last.AddUint64(1) == unique[j].Base {
+			look, _ := pack.last.addOne()
+			if look == unique[j].base {
 				// combine adjacent cidrs
-				pack.Last = unique[j].Last
+				pack.last = unique[j].last
 				cursor = j
 				continue
 			}
@@ -660,7 +620,7 @@ func Aggregate(bs []Block) []Block {
 		}
 
 		// we changed pack.Last, calculate new pack.Mask, maybe it's no CIDR, just a range now
-		pack.Mask = pack.getMask()
+		pack.mask = pack.getMask()
 		packed = append(packed, pack)
 
 		// move cursor

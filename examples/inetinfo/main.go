@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -79,14 +78,13 @@ func printBlockInfo(block inet.Block) {
 		if block.Version() == 6 {
 			fmt.Printf("%-10s %v\n", "Hints:", cidrHints(block))
 		}
-		fmt.Printf("%-10s %v\n", "Base:", block.Base)
-		fmt.Printf("%-10s %v\n", "Last:", block.Last)
-		fmt.Printf("%-10s %v\n", "Mask:", block.Mask)
-		fmt.Printf("%-10s %v\n", "Wildcard:", hostmask(block.Mask))
+		// TODO fmt.Printf("%-10s %v\n", "Base:", block.Base)
+		// TODO fmt.Printf("%-10s %v\n", "Last:", block.Last)
+		// TODO fmt.Printf("%-10s %v\n", "Mask:", block.Mask)
+		// TODO fmt.Printf("%-10s %v\n", "Wildcard:", hostmask(block.Mask))
 		fmt.Printf("%-10s %v bits\n", "Bits:", block.BitLen())
-		fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
 	} else {
-		fmt.Printf("%-10s %v-%v\n", "Range:", block.Base, block.Last)
+		//fmt.Printf("%-10s %v-%v\n", "Range:", block.Base, block.Last)
 		fmt.Printf("%-10s %v bits (min)\n", "Bits:", block.BitLen())
 		fmt.Printf("%-10s %v addrs\n", "Size:", block.Size())
 		fmt.Printf("%-10s %v\n", "CIDRList:", block.BlockToCIDRList())
@@ -95,7 +93,7 @@ func printBlockInfo(block inet.Block) {
 
 // helper
 func hostmask(netmask inet.IP) inet.IP {
-	nm := netmask.Bytes()
+	//nm := netmask.Bytes()
 	hostmask := make([]byte, len(nm))
 	for i := range nm {
 		hostmask[i] = ^nm[i]
@@ -111,10 +109,10 @@ func hostmask(netmask inet.IP) inet.IP {
 //
 func cidrHints(cidr inet.Block) string {
 	// get the bits from mask
-	bits, _ := net.IPMask(cidr.Mask.Bytes()).Size()
+	// bits, _ := net.IPMask(cidr.Mask.Bytes()).Size()
 
 	// expand the base IP
-	base := cidr.Base.Expand()
+	// TODO base := cidr.Base.Expand()
 
 	// no hints for /0 and /128
 	if bits == 0 {

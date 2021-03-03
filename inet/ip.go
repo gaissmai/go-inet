@@ -1,33 +1,28 @@
 package inet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
-	"math/big"
-	"math/bits"
 	"net"
 	"sort"
 	"strconv"
 )
 
 const (
-	IPv4   = 4
-	IPv6   = 6
+	// IPv4 version const.
+	IPv4 = 4
+	// IPv6 version const.
+	IPv6 = 6
+	// IPZero string constant.
 	IPZero = ""
 )
 
-var (
-	errInvalidIP = errors.New("invalid IP")
-	errOverflow  = errors.New("overflow")
-	errUnderflow = errors.New("underflow")
-)
+var errInvalidIP = errors.New("invalid IP")
 
 // IP represents a single IPv4 or IPv6 address as an opaque string.
-// The first byte in the string has the value 0x04 or 0x06
+// The first byte in the string determines the version.
 //
-// This IP representation is comparable and can be used as key in maps
+// This IP representation is comparable and can be used as keys in maps
 // and fast sorted without conversions to/from the different IP versions.
 type IP string
 
@@ -52,6 +47,8 @@ func ParseIP(i interface{}) (IP, error) {
 	}
 }
 
+// MustIP is a helper that calls ParseIP and returns just inet.IP or panics on errr.
+// It is intended for use in variable initializations.
 func MustIP(i interface{}) IP {
 	ip, err := ParseIP(i)
 	if err != nil {
@@ -107,52 +104,22 @@ func setBytes(bs []byte) IP {
 	panic(errInvalidIP)
 }
 
-// Bytes returns the ip address in byte representation. Returns 4 bytes for IPv4 and 16 bytes for IPv6.
-// Panics on invalid input.
-func (ip IP) Bytes() []byte {
-	if ip[0] == IPv4 || ip[0] == IPv6 {
-		return []byte(ip[1:])
-	}
-	panic(errInvalidIP)
+// bytes returns the ip address in byte representation.
+func (ip IP) bytes() []byte {
+	return []byte(ip[1:])
 }
 
 // ToNetIP converts to net.IP. Panics on invalid input.
 func (ip IP) ToNetIP() net.IP {
-	return net.IP(ip.Bytes())
+	return net.IP(ip.bytes())
 }
 
-// IsValid returns true on valid IPs, false otherwise.
-func (ip IP) IsValid() bool {
-	// wrong length?
-	l := len(ip)
-	if l != 5 && l != 17 {
-		return false
-	}
-	// wrong version?
-	if ip[0] != IPv4 && ip[0] != IPv6 {
-		return false
-	}
-	return true
-}
-
-// Version returns 4 or 6 for valid IPs. Panics on invalid IP.
+// Version returns 4 or 6. For IPzero it returns 0.
 func (ip IP) Version() int {
-	if ip[0] != IPv4 && ip[0] != IPv6 {
-		panic(errInvalidIP)
+	if ip == IPZero {
+		return 0
 	}
-
 	return int(ip[0])
-}
-
-// Compare returns an integer comparing two IP addresses lexicographically. The
-// result will be:
-//   0 if a == b
-//  -1 if a < b
-//  +1 if a > b
-//
-// IPv4 addresses are always less than IPv6 addresses.
-func (ip IP) Compare(ip2 IP) int {
-	return bytes.Compare([]byte(ip), []byte(ip2))
 }
 
 // SortIP sorts the given slice in place.
@@ -164,11 +131,11 @@ func SortIP(ips []IP) {
 // Expand IP address into canonical form, useful for grep, aligned output and lexical sort.
 func (ip IP) Expand() string {
 	if ip[0] == IPv4 {
-		return expandIPv4(ip.Bytes())
+		return expandIPv4(ip.bytes())
 	}
 
 	if ip[0] == IPv6 {
-		return expandIPv6(ip.Bytes())
+		return expandIPv6(ip.bytes())
 	}
 
 	panic(errInvalidIP)
@@ -217,11 +184,11 @@ func expandIPv6(ip []byte) string {
 // Reverse IP address, needed for PTR entries in DNS zone files.
 func (ip IP) Reverse() string {
 	if ip[0] == IPv4 {
-		return reverseIPv4(ip.Bytes())
+		return reverseIPv4(ip.bytes())
 	}
 
 	if ip[0] == IPv6 {
-		return reverseIPv6(ip.Bytes())
+		return reverseIPv6(ip.bytes())
 	}
 
 	panic(errInvalidIP)
@@ -263,153 +230,4 @@ func reverseIPv6(ip []byte) string {
 	}
 
 	return string(out)
-}
-
-// addOne increments the IP by one, returns (IPZero, false) on overflow
-func (ip IP) addOne() (ip2 IP, ok bool) {
-	buf := []byte(ip)
-
-	if buf[0] == IPv4 {
-		asUint32 := binary.BigEndian.Uint32(buf[1:])
-
-		var carry uint32
-		asUint32, carry = bits.Add32(asUint32, 1, 0)
-
-		binary.BigEndian.PutUint32(buf[1:], asUint32)
-		if carry == 1 {
-			return IPZero, false
-		}
-		return IP(string(buf)), true
-	}
-
-	if ip[0] == IPv6 {
-		hi := binary.BigEndian.Uint64(buf[1:9])
-		lo := binary.BigEndian.Uint64(buf[9:17])
-
-		var carry uint64
-		lo, carry = bits.Add64(lo, 1, 0)
-		hi, carry = bits.Add64(hi, 0, carry)
-
-		binary.BigEndian.PutUint64(buf[1:9], hi)
-		binary.BigEndian.PutUint64(buf[9:17], lo)
-
-		if carry == 1 {
-			return IPZero, false
-		}
-		return IP(string(buf)), true
-	}
-
-	panic(errInvalidIP)
-}
-
-// subOne decrements the IP by one, returns (IPZero, false) on underflow
-func (ip IP) subOne() (ip2 IP, ok bool) {
-	buf := []byte(ip)
-
-	if buf[0] == IPv4 {
-		asUint32 := binary.BigEndian.Uint32(buf[1:])
-
-		var borrow uint32
-		asUint32, borrow = bits.Sub32(asUint32, 1, 0)
-
-		binary.BigEndian.PutUint32(buf[1:], asUint32)
-		if borrow == 1 {
-			return IPZero, false
-		}
-		return IP(string(buf)), true
-	}
-
-	if ip[0] == IPv6 {
-		hi := binary.BigEndian.Uint64(buf[1:9])
-		lo := binary.BigEndian.Uint64(buf[9:17])
-
-		var borrow uint64
-		lo, borrow = bits.Sub64(lo, 1, 0)
-		hi, borrow = bits.Sub64(hi, 0, borrow)
-
-		binary.BigEndian.PutUint64(buf[1:9], hi)
-		binary.BigEndian.PutUint64(buf[9:17], lo)
-
-		if borrow == 1 {
-			return IPZero, false
-		}
-		return IP(string(buf)), true
-	}
-
-	panic(errInvalidIP)
-}
-
-// AddUint64 adds i to ip, panics on overflow.
-func (ip IP) AddUint64(i uint64) IP {
-
-	// convert i to bytes, forward to AddBytes
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf[:], i)
-
-	return ip.AddBytes(buf)
-}
-
-// AddBytes adds byte slice to ip, panics on overflow.
-func (ip IP) AddBytes(bs []byte) IP {
-	// get the IP address as []byte slice
-	ipAsBytes := ip.Bytes()
-
-	y := new(big.Int).SetBytes(bs)
-	z := new(big.Int).SetBytes(ipAsBytes)
-
-	z.Add(z, y)
-
-	// get the big.Int as []byte slice
-	zbs := z.Bytes()
-
-	// overflow?
-	if len(zbs) > len(ipAsBytes) {
-		panic(errOverflow)
-	}
-
-	// left padding with zeros
-	// 1 => []byte{0,0,0,1} for IPv4
-	// 1 => []byte{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1} for IPv6
-	leftpad := make([]byte, len(ipAsBytes))
-	copy(leftpad[len(leftpad)-len(zbs):], zbs)
-
-	return setBytes(leftpad)
-}
-
-// SubUint64 subtracts i from ip, panics on underflow.
-func (ip IP) SubUint64(i uint64) IP {
-
-	// convert to bytes, forward to SubBytes
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf[:], i)
-
-	return ip.SubBytes(buf)
-}
-
-// SubBytes subtract byte slice from ip, panics on underflow.
-func (ip IP) SubBytes(bs []byte) IP {
-	// get the IP address as []byte slice
-	ipAsBytes := ip.Bytes()
-
-	y := new(big.Int).SetBytes(bs)
-	z := new(big.Int).SetBytes(ipAsBytes)
-
-	z.Sub(z, y)
-
-	// underflow?
-	bigZero := new(big.Int)
-	if z.Cmp(bigZero) == -1 {
-		panic(errUnderflow)
-	}
-
-	// get the big.Int as []byte slice
-	zIPAsBytes := z.Bytes()
-
-	// left padding with zeros
-	// 1 => []byte{0,0,0,1} for IPv4
-	// 1 => []byte{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1} for IPv6
-	leftpad := make([]byte, len(ipAsBytes))
-	copy(leftpad[len(leftpad)-len(zIPAsBytes):], zIPAsBytes)
-
-	return setBytes(leftpad)
 }

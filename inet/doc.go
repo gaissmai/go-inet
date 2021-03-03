@@ -6,9 +6,7 @@ without prior conversion from/to IPv4/IPv6.
 
 Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
 
-This is a package for system programming, all fields are public for easy and fast serialization without special treatment. Anyway, you should not direct modify the fields and bytes, unless you know what you are doing.
-
-IP address bytes are stored as strings with the version 4 or 6 as first byte, this ensures natural sorting (IPv4 < IPv6).
+IP address bytes are stored as strings with the version tag as first byte, this ensures natural sorting (IPv4 < IPv6).
 
  type IP string
 
@@ -25,9 +23,9 @@ Blocks are IP-networks or IP-ranges, e.g.
 A Block is represented as a struct of three IP addresses:
 
  type Block struct {
-  Base IP
-  Last IP
-  Mask IP  // may be zero for begin-end ranges
+  base IP
+  last IP
+  mask IP  // may be zero for begin-end ranges
  }
 
 */

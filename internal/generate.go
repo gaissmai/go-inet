@@ -135,7 +135,7 @@ func GenRangeV4(n int) []inet.Block {
 		binary.BigEndian.PutUint32(buf2, r.Uint32())
 		ip1, _ := inet.ParseIP(buf1)
 		ip2, _ := inet.ParseIP(buf2)
-		if ip1.Compare(ip2) == 1 {
+		if ip1 > ip2 {
 			ip1, ip2 = ip2, ip1
 		}
 
@@ -169,7 +169,7 @@ func GenRangeV6(n int) []inet.Block {
 		ip1, _ := inet.ParseIP(buf1)
 		ip2, _ := inet.ParseIP(buf2)
 
-		if ip1.Compare(ip2) == 1 {
+		if ip1 > ip2 {
 			ip1, ip2 = ip2, ip1
 		}
 

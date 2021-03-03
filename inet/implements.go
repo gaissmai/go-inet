@@ -16,10 +16,6 @@ func (ip IP) String() string {
 		return ""
 	}
 
-	if !ip.IsValid() {
-		panic(errInvalidIP)
-	}
-
 	return ip.ToNetIP().String()
 }
 
@@ -58,17 +54,13 @@ func (a Block) String() string {
 		return ""
 	}
 
-	if !a.IsValid() {
-		panic(errInvalidBlock)
+	if a.mask == IPZero {
+		return fmt.Sprintf("%s-%s", a.base, a.last)
 	}
 
-	if a.Mask == "" {
-		return fmt.Sprintf("%s-%s", a.Base, a.Last)
-	}
-
-	mb := a.Mask.Bytes()
+	mb := a.mask.bytes()
 	ones, _ := net.IPMask(mb).Size()
-	return fmt.Sprintf("%s/%d", a.Base, ones)
+	return fmt.Sprintf("%s/%d", a.base, ones)
 }
 
 // MarshalText implements the encoding.TextMarshaler interface.

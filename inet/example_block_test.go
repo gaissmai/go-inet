@@ -100,22 +100,6 @@ func ExampleBlock_SplitCIDR_v4() {
 
 }
 
-func ExampleBlock_Version() {
-	for _, s := range []string{
-		"10.0.0.1/8",
-		"fe80::/10",
-		"::-::1",
-	} {
-		a, _ := inet.ParseBlock(s)
-		fmt.Println(a.Version())
-	}
-
-	// Output:
-	// 4
-	// 6
-	// 6
-}
-
 func ExampleBlock_MarshalText() {
 	for _, s := range []string{
 		"127.0.0.0/8",
@@ -157,50 +141,6 @@ func ExampleBlock_UnmarshalText() {
 	// "10.0.0.0-10.1.0.0"
 	// "fe80::/128"
 	// ""
-
-}
-
-func ExampleBlock_Compare() {
-	a := inet.MustBlock("127.0.0.0/8")
-	b := inet.MustBlock("127.0.0.0/8")
-	fmt.Printf("Block{%v}.Compare(Block{%v}) = %d\n", a, b, a.Compare(b))
-
-	a = inet.MustBlock("0.0.0.0/0")
-	b = inet.MustBlock("::/0")
-	fmt.Printf("Block{%v}.Compare(Block{%v}) = %d\n", a, b, a.Compare(b))
-
-	a = inet.MustBlock("127.128.0.0/9")
-	b = inet.MustBlock("127.0.0.0/8")
-	fmt.Printf("Block{%v}.Compare(Block{%v}) = %d\n", a, b, a.Compare(b))
-
-	a = inet.MustBlock("fe80::/10")
-	b = inet.MustBlock("fe80::/12")
-	fmt.Printf("Block{%v}.Compare(Block{%v}) = %d\n", a, b, a.Compare(b))
-
-	// Output:
-	// Block{127.0.0.0/8}.Compare(Block{127.0.0.0/8}) = 0
-	// Block{0.0.0.0/0}.Compare(Block{::/0}) = -1
-	// Block{127.128.0.0/9}.Compare(Block{127.0.0.0/8}) = 1
-	// Block{fe80::/10}.Compare(Block{fe80::/12}) = -1
-
-}
-
-func ExampleBlock_Size() {
-	for _, s := range []string{
-		"10.0.0.0-10.0.0.43",
-		"10.0.0.0/20",
-		"2001:db8::1-2001:db8::ffec",
-		"fe80::/96",
-	} {
-		a := inet.MustBlock(s)
-		fmt.Printf("%-30v size: %s\n", a, a.Size())
-	}
-
-	// Output:
-	// 10.0.0.0-10.0.0.43             size: 44
-	// 10.0.0.0/20                    size: 4096
-	// 2001:db8::1-2001:db8::ffec     size: 65516
-	// fe80::/96                      size: 4294967296
 
 }
 
