@@ -6,9 +6,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"math/big"
+	"math/bits"
 	"net"
 	"sort"
 	"strconv"
+)
+
+const (
+	IPv4   = 4
+	IPv6   = 6
+	IPZero = ""
 )
 
 var (
@@ -17,7 +24,7 @@ var (
 	errUnderflow = errors.New("underflow")
 )
 
-// IP represents a single IPv4 or IPv6 address as string.
+// IP represents a single IPv4 or IPv6 address as an opaque string.
 // The first byte in the string has the value 0x04 or 0x06
 //
 // This IP representation is comparable and can be used as key in maps
@@ -31,7 +38,7 @@ type IP string
 //   []byte
 //
 // The hard part is done by net.ParseIP().
-// Returns IP{} and error on invalid input.
+// Returns ipZero and error on invalid input.
 func ParseIP(i interface{}) (IP, error) {
 	switch v := i.(type) {
 	case string:
@@ -41,12 +48,10 @@ func ParseIP(i interface{}) (IP, error) {
 	case []byte:
 		return ipFromBytes(v)
 	default:
-		return "", errInvalidIP
+		return IPZero, errInvalidIP
 	}
 }
 
-// MustIP is a helper that calls ParseIP and returns just inet.IP or panics on errr.
-// It is intended for use in variable initializations.
 func MustIP(i interface{}) IP {
 	ip, err := ParseIP(i)
 	if err != nil {
@@ -66,7 +71,7 @@ func ipFromString(s string) (IP, error) {
 // ipFromNetIP converts from stdlib net.IP ([]byte) to IP opaque string representation.
 func ipFromNetIP(netIP net.IP) (IP, error) {
 	if netIP == nil {
-		return "", errInvalidIP
+		return IPZero, errInvalidIP
 	}
 
 	if v4 := netIP.To4(); v4 != nil {
@@ -77,13 +82,13 @@ func ipFromNetIP(netIP net.IP) (IP, error) {
 		ip := setBytes(v6)
 		return ip, nil
 	}
-	return "", errInvalidIP
+	return IPZero, errInvalidIP
 }
 
 // ipFromBytes sets the IP from 4 or 16 bytes. Returns error on wrong number of bytes.
 func ipFromBytes(bs []byte) (IP, error) {
 	if l := len(bs); l != 4 && l != 16 {
-		return "", errInvalidIP
+		return IPZero, errInvalidIP
 	}
 	return setBytes(bs), nil
 }
@@ -92,10 +97,12 @@ func ipFromBytes(bs []byte) (IP, error) {
 func setBytes(bs []byte) IP {
 	l := len(bs)
 	if l == 4 {
-		return IP("\x04" + string(bs))
+		ip := append([]byte{IPv4}, bs...)
+		return IP(string(ip))
 	}
 	if l == 16 {
-		return IP("\x06" + string(bs))
+		ip := append([]byte{IPv6}, bs...)
+		return IP(string(ip))
 	}
 	panic(errInvalidIP)
 }
@@ -103,7 +110,7 @@ func setBytes(bs []byte) IP {
 // Bytes returns the ip address in byte representation. Returns 4 bytes for IPv4 and 16 bytes for IPv6.
 // Panics on invalid input.
 func (ip IP) Bytes() []byte {
-	if ip[0] == 4 || ip[0] == 6 {
+	if ip[0] == IPv4 || ip[0] == IPv6 {
 		return []byte(ip[1:])
 	}
 	panic(errInvalidIP)
@@ -122,7 +129,7 @@ func (ip IP) IsValid() bool {
 		return false
 	}
 	// wrong version?
-	if ip[0] != 4 && ip[0] != 6 {
+	if ip[0] != IPv4 && ip[0] != IPv6 {
 		return false
 	}
 	return true
@@ -130,7 +137,7 @@ func (ip IP) IsValid() bool {
 
 // Version returns 4 or 6 for valid IPs. Panics on invalid IP.
 func (ip IP) Version() int {
-	if ip[0] != 4 && ip[0] != 6 {
+	if ip[0] != IPv4 && ip[0] != IPv6 {
 		panic(errInvalidIP)
 	}
 
@@ -143,7 +150,6 @@ func (ip IP) Version() int {
 //  -1 if a < b
 //  +1 if a > b
 //
-// Also the string comparison operators are possible.
 // IPv4 addresses are always less than IPv6 addresses.
 func (ip IP) Compare(ip2 IP) int {
 	return bytes.Compare([]byte(ip), []byte(ip2))
@@ -157,11 +163,11 @@ func SortIP(ips []IP) {
 
 // Expand IP address into canonical form, useful for grep, aligned output and lexical sort.
 func (ip IP) Expand() string {
-	if ip[0] == 4 {
+	if ip[0] == IPv4 {
 		return expandIPv4(ip.Bytes())
 	}
 
-	if ip[0] == 6 {
+	if ip[0] == IPv6 {
 		return expandIPv6(ip.Bytes())
 	}
 
@@ -210,11 +216,11 @@ func expandIPv6(ip []byte) string {
 
 // Reverse IP address, needed for PTR entries in DNS zone files.
 func (ip IP) Reverse() string {
-	if ip[0] == 4 {
+	if ip[0] == IPv4 {
 		return reverseIPv4(ip.Bytes())
 	}
 
-	if ip[0] == 6 {
+	if ip[0] == IPv6 {
 		return reverseIPv6(ip.Bytes())
 	}
 
@@ -257,6 +263,80 @@ func reverseIPv6(ip []byte) string {
 	}
 
 	return string(out)
+}
+
+// addOne increments the IP by one, returns (IPZero, false) on overflow
+func (ip IP) addOne() (ip2 IP, ok bool) {
+	buf := []byte(ip)
+
+	if buf[0] == IPv4 {
+		asUint32 := binary.BigEndian.Uint32(buf[1:])
+
+		var carry uint32
+		asUint32, carry = bits.Add32(asUint32, 1, 0)
+
+		binary.BigEndian.PutUint32(buf[1:], asUint32)
+		if carry == 1 {
+			return IPZero, false
+		}
+		return IP(string(buf)), true
+	}
+
+	if ip[0] == IPv6 {
+		hi := binary.BigEndian.Uint64(buf[1:9])
+		lo := binary.BigEndian.Uint64(buf[9:17])
+
+		var carry uint64
+		lo, carry = bits.Add64(lo, 1, 0)
+		hi, carry = bits.Add64(hi, 0, carry)
+
+		binary.BigEndian.PutUint64(buf[1:9], hi)
+		binary.BigEndian.PutUint64(buf[9:17], lo)
+
+		if carry == 1 {
+			return IPZero, false
+		}
+		return IP(string(buf)), true
+	}
+
+	panic(errInvalidIP)
+}
+
+// subOne decrements the IP by one, returns (IPZero, false) on underflow
+func (ip IP) subOne() (ip2 IP, ok bool) {
+	buf := []byte(ip)
+
+	if buf[0] == IPv4 {
+		asUint32 := binary.BigEndian.Uint32(buf[1:])
+
+		var borrow uint32
+		asUint32, borrow = bits.Sub32(asUint32, 1, 0)
+
+		binary.BigEndian.PutUint32(buf[1:], asUint32)
+		if borrow == 1 {
+			return IPZero, false
+		}
+		return IP(string(buf)), true
+	}
+
+	if ip[0] == IPv6 {
+		hi := binary.BigEndian.Uint64(buf[1:9])
+		lo := binary.BigEndian.Uint64(buf[9:17])
+
+		var borrow uint64
+		lo, borrow = bits.Sub64(lo, 1, 0)
+		hi, borrow = bits.Sub64(hi, 0, borrow)
+
+		binary.BigEndian.PutUint64(buf[1:9], hi)
+		binary.BigEndian.PutUint64(buf[9:17], lo)
+
+		if borrow == 1 {
+			return IPZero, false
+		}
+		return IP(string(buf)), true
+	}
+
+	panic(errInvalidIP)
 }
 
 // AddUint64 adds i to ip, panics on overflow.

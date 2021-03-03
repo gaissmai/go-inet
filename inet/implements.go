@@ -10,9 +10,9 @@ import (
 // ########################################################
 
 // String implements the fmt.Stringer interface.
-// Returns "" on IP{}, panics otherwise on invalid input.
+// Returns "" on IPZero, panics otherwise on invalid input.
 func (ip IP) String() string {
-	if ip == "" {
+	if ip == IPZero {
 		return ""
 	}
 
@@ -34,7 +34,7 @@ func (ip IP) MarshalText() ([]byte, error) {
 func (ip *IP) UnmarshalText(text []byte) error {
 	s := string(text)
 	if len(s) == 0 { // this is no error condition
-		*ip = ""
+		*ip = IPZero
 		return nil
 	}
 
