@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"net"
-	"sort"
 	"strconv"
 )
 
@@ -13,62 +12,48 @@ const (
 	IPv4 = 4
 	// IPv6 version const.
 	IPv6 = 6
-	// IPZero string constant.
-	IPZero = ""
 )
 
 var errInvalidIP = errors.New("invalid IP")
 
-// IP represents a single IPv4 or IPv6 address as an opaque string.
-// The first byte in the string determines the version.
+// IP represents a single IPv4 or IPv6 address.
+//
+// All IPv6-mapped IPv4 addresses are unmapped to IPv4.
+// That is, only the IPv4 part is stored, without the IPv6 wrapper.
 //
 // This IP representation is comparable and can be used as keys in maps
 // and fast sorted without conversions to/from the different IP versions.
-type IP string
+type IP struct{ octets string }
 
-// ParseIP parses and returns the input as type IP.
-// The input type may be:
-//   string
-//   net.IP
-//   []byte
-//
-// The hard part is done by net.ParseIP().
-// Returns ipZero and error on invalid input.
-func ParseIP(i interface{}) (IP, error) {
-	switch v := i.(type) {
-	case string:
-		return ipFromString(v)
-	case net.IP:
-		return ipFromNetIP(v)
-	case []byte:
-		return ipFromBytes(v)
-	default:
-		return IPZero, errInvalidIP
-	}
-}
+// the zero-value for type IP, not public, see IsZero
+var ipZero IP = IP{octets: "\x00"}
 
 // MustIP is a helper that calls ParseIP and returns just inet.IP or panics on errr.
 // It is intended for use in variable initializations.
-func MustIP(i interface{}) IP {
-	ip, err := ParseIP(i)
+func MustIP(s string) IP {
+	ip, err := ParseIP(s)
 	if err != nil {
 		panic(err)
 	}
 	return ip
 }
 
-// ipFromString parses s as an IP address, returning the result. The string s can be
-// in dotted decimal ("192.0.2.1") or IPv6 ("2001:db8::42") form. If s is not a
-// valid textual representation of an IP address, ipFromString returns IP{} and error.
-// The real work is done by net.ParseIP() and converted to type IP.
-func ipFromString(s string) (IP, error) {
-	return ipFromNetIP(net.ParseIP(s))
+// ParseIP parses s as an IP address, returning the result.
+// The string s can be in IPv4 dotted decimal ("192.0.2.1"), IPv6
+// ("2001:db8::68"), or IPv4-mapped IPv6 ("::ffff:192.0.2.1") form.
+//
+// All the hard part is done by net.ParseIP().
+// Returns the zero value and error on invalid input.
+func ParseIP(s string) (IP, error) {
+	return FromStdIP(net.ParseIP(s))
 }
 
-// ipFromNetIP converts from stdlib net.IP ([]byte) to IP opaque string representation.
-func ipFromNetIP(netIP net.IP) (IP, error) {
+// FromStdIP returns an IP from the standard library's IP type.
+//
+// If std is invalid, ok is false.
+func FromStdIP(netIP net.IP) (IP, error) {
 	if netIP == nil {
-		return IPZero, errInvalidIP
+		return ipZero, errInvalidIP
 	}
 
 	if v4 := netIP.To4(); v4 != nil {
@@ -79,34 +64,26 @@ func ipFromNetIP(netIP net.IP) (IP, error) {
 		ip := setBytes(v6)
 		return ip, nil
 	}
-	return IPZero, errInvalidIP
-}
-
-// ipFromBytes sets the IP from 4 or 16 bytes. Returns error on wrong number of bytes.
-func ipFromBytes(bs []byte) (IP, error) {
-	if l := len(bs); l != 4 && l != 16 {
-		return IPZero, errInvalidIP
-	}
-	return setBytes(bs), nil
+	panic(errInvalidIP)
 }
 
 // set the string from []byte input.
 func setBytes(bs []byte) IP {
 	l := len(bs)
 	if l == 4 {
-		ip := append([]byte{IPv4}, bs...)
-		return IP(string(ip))
+		octets := append([]byte{IPv4}, bs...)
+		return IP{string(octets)}
 	}
 	if l == 16 {
-		ip := append([]byte{IPv6}, bs...)
-		return IP(string(ip))
+		octets := append([]byte{IPv6}, bs...)
+		return IP{string(octets)}
 	}
 	panic(errInvalidIP)
 }
 
 // bytes returns the ip address in byte representation.
 func (ip IP) bytes() []byte {
-	return []byte(ip[1:])
+	return []byte(ip.octets[1:])
 }
 
 // ToNetIP converts to net.IP. Panics on invalid input.
@@ -114,30 +91,51 @@ func (ip IP) ToNetIP() net.IP {
 	return net.IP(ip.bytes())
 }
 
-// Version returns 4 or 6. For IPzero it returns 0.
-func (ip IP) Version() int {
-	if ip == IPZero {
-		return 0
-	}
-	return int(ip[0])
+// IsZero reports whether ip is the zero value of the IP type.
+// The zero value is not a valid IP address of any type.
+//
+// Note that "0.0.0.0" and "::" are not the zero value.
+func (ip IP) IsZero() bool {
+	return ip.octets[0] == 0
 }
 
-// SortIP sorts the given slice in place.
-// IPv4 addresses are sorted 'naturally' before IPv6 addresses, no prior conversion or version split necessary.
-func SortIP(ips []IP) {
-	sort.Slice(ips, func(i, j int) bool { return ips[i] < ips[j] })
+// String returns the string form of the IP address ip.
+// It returns one of 3 forms:
+//
+//   - "invalid IP", if ip is the zero value
+//   - IPv4 dotted decimal ("127.0.0.1")
+//   - IPv6 ("2001:db8::1")
+func (ip IP) String() string {
+	if ip == ipZero {
+		return "invalid IP"
+	}
+	return ip.ToNetIP().String()
+}
+
+// Less reports whether the ip should sort before ip2.
+// IPv4 addresses sorts always before IPv6 addresses.
+func (ip IP) Less(ip2 IP) bool {
+	return ip.octets < ip2.octets
+}
+
+// Is4 reports whether ip is an IPv4 address.
+func (ip IP) Is4() bool {
+	return ip.octets[0] == IPv4
+}
+
+// Is6 reports whether ip is an IPv6 address.
+func (ip IP) Is6() bool {
+	return ip.octets[0] == IPv6
 }
 
 // Expand IP address into canonical form, useful for grep, aligned output and lexical sort.
 func (ip IP) Expand() string {
-	if ip[0] == IPv4 {
+	if ip.octets[0] == IPv4 {
 		return expandIPv4(ip.bytes())
 	}
-
-	if ip[0] == IPv6 {
+	if ip.octets[0] == IPv6 {
 		return expandIPv6(ip.bytes())
 	}
-
 	panic(errInvalidIP)
 }
 
@@ -183,14 +181,12 @@ func expandIPv6(ip []byte) string {
 
 // Reverse IP address, needed for PTR entries in DNS zone files.
 func (ip IP) Reverse() string {
-	if ip[0] == IPv4 {
+	if ip.octets[0] == IPv4 {
 		return reverseIPv4(ip.bytes())
 	}
-
-	if ip[0] == IPv6 {
+	if ip.octets[0] == IPv6 {
 		return reverseIPv6(ip.bytes())
 	}
-
 	panic(errInvalidIP)
 }
 

@@ -2,138 +2,151 @@ package inet
 
 import (
 	"encoding/binary"
-	"errors"
 	"math/bits"
 )
 
-var (
-	errOverflow  = errors.New("overflow")
-	errUnderflow = errors.New("underflow")
-)
-
-// for calculations represent the IP address to a number
-// use one struct for both versions
-type asUint struct {
-	version  int
-	bitsv4   uint32 // IPv4
-	bitsv6lo uint64 // IPv6 lower part
-	bitsv6hi uint64 // IPv6 higher part
+// For bit calculations convert the IP address to 32 Bits or 2x64 Bits.
+type ipAsBits struct {
+	version  uint8  // IP version
+	v4Bits   uint32 // IPv4
+	v6loBits uint64 // IPv6 lower part
+	v6hiBits uint64 // IPv6 higher part
 }
 
-func (ip IP) toUint() asUint {
-	if ip[0] == IPv4 {
-		return asUint{version: IPv4, bitsv4: binary.BigEndian.Uint32([]byte(ip[1:]))}
+// IP address octets are BigEndian encoded, uint32 or uint128 (2x uint64, sic)
+// cut off the first octet as version tag
+func (ip IP) toBits() ipAsBits {
+	out := ipAsBits{version: ip.octets[0]}
+
+	if out.version == IPv4 {
+		out.v4Bits = binary.BigEndian.Uint32([]byte(ip.octets[1:]))
+		return out
 	}
-	if ip[0] == IPv6 {
-		return asUint{
-			version:  IPv6,
-			bitsv6hi: binary.BigEndian.Uint64([]byte(ip[1:9])),
-			bitsv6lo: binary.BigEndian.Uint64([]byte(ip[9:17])),
-		}
-	}
-	panic(errInvalidIP)
+
+	out.v6hiBits = binary.BigEndian.Uint64([]byte(ip.octets[1:9]))
+	out.v6loBits = binary.BigEndian.Uint64([]byte(ip.octets[9:17]))
+	return out
 }
 
 // addOne increments the IP by one, returns (IPZero, false) on overflow
-func (ip IP) addOne() (ip2 IP, ok bool) {
-	out := make([]byte, len(ip))
-	x := ip.toUint()
+func (ip IP) addOne() (IP, bool) {
+	x := ip.toBits()
 
 	if x.version == IPv4 {
-
-		var carry uint32
-		a := x.bitsv4
-		a, carry = bits.Add32(a, 1, 0)
-
-		if carry == 1 {
-			return IPZero, false
-		}
-
-		out[0] = IPv4
-		binary.BigEndian.PutUint32(out[1:], a)
-
-		return IP(string(out)), true
+		return addOne32(x)
 	}
 
 	if x.version == IPv6 {
+		return addOne128(x)
+	}
+	panic(errInvalidIP)
+}
 
-		var carry uint64
-		lo := x.bitsv6lo
-		hi := x.bitsv6hi
+func addOne32(x ipAsBits) (IP, bool) {
+	out := make([]byte, 4+1)
+	var carry uint32
+	a := x.v4Bits
+	a, carry = bits.Add32(a, 1, 0)
 
-		lo, carry = bits.Add64(lo, 1, 0)
-		hi, carry = bits.Add64(hi, 0, carry)
-
-		if carry == 1 {
-			return IPZero, false
-		}
-
-		out[0] = IPv6
-		binary.BigEndian.PutUint64(out[1:9], hi)
-		binary.BigEndian.PutUint64(out[9:17], lo)
-
-		return IP(string(out)), true
+	if carry == 1 {
+		return ipZero, false
 	}
 
-	panic(errInvalidIP)
+	out[0] = IPv4
+	binary.BigEndian.PutUint32(out[1:], a)
+
+	return IP{string(out)}, true
+}
+
+func addOne128(x ipAsBits) (IP, bool) {
+	out := make([]byte, 16+1)
+	var carry uint64
+	lo := x.v6loBits
+	hi := x.v6hiBits
+
+	lo, carry = bits.Add64(lo, 1, 0)
+	hi, carry = bits.Add64(hi, 0, carry)
+
+	if carry == 1 {
+		return ipZero, false
+	}
+
+	out[0] = IPv6
+	binary.BigEndian.PutUint64(out[1:9], hi)
+	binary.BigEndian.PutUint64(out[9:17], lo)
+
+	return IP{string(out)}, true
 }
 
 // subOne decrements the IP by one, returns (IPZero, false) on underflow
-func (ip IP) subOne() (ip2 IP, ok bool) {
-	out := make([]byte, len(ip))
-	x := ip.toUint()
+func (ip IP) subOne() (IP, bool) {
+	x := ip.toBits()
 
 	if x.version == IPv4 {
-		var borrow uint32
-		a := x.bitsv4
-		a, borrow = bits.Sub32(a, 1, 0)
-
-		if borrow == 1 {
-			return IPZero, false
-		}
-
-		out[0] = IPv4
-		binary.BigEndian.PutUint32(out[1:], a)
-
-		return IP(string(out)), true
+		return subOne32(x)
 	}
 
 	if x.version == IPv6 {
-		var borrow uint64
-		lo := x.bitsv6lo
-		hi := x.bitsv6hi
-
-		lo, borrow = bits.Sub64(lo, 1, 0)
-		hi, borrow = bits.Sub64(hi, 0, borrow)
-
-		if borrow == 1 {
-			return IPZero, false
-		}
-
-		out[0] = IPv6
-		binary.BigEndian.PutUint64(out[1:9], hi)
-		binary.BigEndian.PutUint64(out[9:17], lo)
-
-		return IP(string(out)), true
+		return subOne128(x)
 	}
-
 	panic(errInvalidIP)
 }
 
-// bitLen returns the minimum number of bits to represent the block.
-func (a Block) bitLen() int {
-	b := a.base.toUint()
-	l := a.last.toUint()
+func subOne32(x ipAsBits) (IP, bool) {
+	out := make([]byte, 4+1)
+
+	var borrow uint32
+	a := x.v4Bits
+	a, borrow = bits.Sub32(a, 1, 0)
+
+	if borrow == 1 {
+		return ipZero, false
+	}
+
+	out[0] = IPv4
+	binary.BigEndian.PutUint32(out[1:], a)
+
+	return IP{string(out)}, true
+}
+
+func subOne128(x ipAsBits) (IP, bool) {
+	out := make([]byte, 16+1)
+	var borrow uint64
+	lo := x.v6loBits
+	hi := x.v6hiBits
+
+	lo, borrow = bits.Sub64(lo, 1, 0)
+	hi, borrow = bits.Sub64(hi, 0, borrow)
+
+	if borrow == 1 {
+		return ipZero, false
+	}
+
+	out[0] = IPv6
+	binary.BigEndian.PutUint64(out[1:9], hi)
+	binary.BigEndian.PutUint64(out[9:17], lo)
+
+	return IP{string(out)}, true
+}
+
+// bitLen returns the common bits as maskLen and the trailing bits as hostLen.
+func (a Block) bitLen() (maskLen, hostLen int) {
+	base := a.base.toBits()
+	last := a.last.toBits()
 
 	// v4
-	if b.version == IPv4 {
-		return 32 - bits.LeadingZeros32(b.bitsv4^l.bitsv4)
+	if base.version == IPv4 {
+		// common bits = leadingZeros(a XOR b)
+		maskLen = bits.LeadingZeros32(base.v4Bits ^ last.v4Bits)
+		hostLen = 32 - maskLen
+		return
 	}
 
 	// v6
-	n := bits.LeadingZeros64(b.bitsv6hi ^ l.bitsv6hi)
-	if n == 64 {
-		n += bits.LeadingZeros64(b.bitsv6lo ^ l.bitsv6lo)
+	maskLen = bits.LeadingZeros64(base.v6hiBits ^ last.v6hiBits)
+	if maskLen == 64 {
+		maskLen += bits.LeadingZeros64(base.v6loBits ^ last.v6loBits)
 	}
-	return 128 - n
+	hostLen = 128 - maskLen
+	return
 }

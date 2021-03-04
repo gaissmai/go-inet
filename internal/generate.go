@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
+	"net"
 
 	"github.com/gaissmai/go-inet/inet"
 )
@@ -22,7 +23,7 @@ func GenV4(n int) []inet.IP {
 	for len(set) < n {
 		buf := make([]byte, 4)
 		binary.BigEndian.PutUint32(buf, r.Uint32())
-		ip, _ := inet.ParseIP(buf)
+		ip, _ := inet.FromStdIP(net.IP(buf))
 		set[ip] = true
 	}
 
@@ -43,7 +44,7 @@ func GenV6(n int) []inet.IP {
 		buf := make([]byte, 16)
 		binary.BigEndian.PutUint64(buf[:8], r.Uint64())
 		binary.BigEndian.PutUint64(buf[8:], r.Uint64())
-		ip, _ := inet.ParseIP(buf)
+		ip, _ := inet.FromStdIP(net.IP(buf))
 		set[ip] = true
 	}
 
@@ -72,7 +73,7 @@ func GenBlockV4(n int) []inet.Block {
 	for len(set) < n {
 		buf := make([]byte, 4)
 		binary.BigEndian.PutUint32(buf, r.Uint32())
-		ip, _ := inet.ParseIP(buf)
+		ip, _ := inet.FromStdIP(net.IP(buf))
 
 		ones := r.Intn(24) + 8
 		b, _ := inet.ParseBlock(fmt.Sprintf("%s/%d", ip, ones))
@@ -97,7 +98,7 @@ func GenBlockV6(n int) []inet.Block {
 		buf := make([]byte, 16)
 		binary.BigEndian.PutUint64(buf[:8], r.Uint64())
 		binary.BigEndian.PutUint64(buf[8:], r.Uint64())
-		ip, _ := inet.ParseIP(buf)
+		ip, _ := inet.FromStdIP(net.IP(buf))
 
 		ones := r.Intn(112) + 16
 		b, _ := inet.ParseBlock(fmt.Sprintf("%s/%d", ip, ones))
@@ -133,9 +134,9 @@ func GenRangeV4(n int) []inet.Block {
 		buf2 := make([]byte, 4)
 		binary.BigEndian.PutUint32(buf1, r.Uint32())
 		binary.BigEndian.PutUint32(buf2, r.Uint32())
-		ip1, _ := inet.ParseIP(buf1)
-		ip2, _ := inet.ParseIP(buf2)
-		if ip1 > ip2 {
+		ip1, _ := inet.FromStdIP(net.IP(buf1))
+		ip2, _ := inet.FromStdIP(net.IP(buf2))
+		if ip2.Less(ip1) {
 			ip1, ip2 = ip2, ip1
 		}
 
@@ -166,10 +167,10 @@ func GenRangeV6(n int) []inet.Block {
 		binary.BigEndian.PutUint64(buf2[:8], r.Uint64())
 		binary.BigEndian.PutUint64(buf2[8:], r.Uint64())
 
-		ip1, _ := inet.ParseIP(buf1)
-		ip2, _ := inet.ParseIP(buf2)
+		ip1, _ := inet.FromStdIP(net.IP(buf1))
+		ip2, _ := inet.FromStdIP(net.IP(buf2))
 
-		if ip1 > ip2 {
+		if ip2.Less(ip1) {
 			ip1, ip2 = ip2, ip1
 		}
 

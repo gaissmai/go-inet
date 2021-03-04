@@ -3,6 +3,7 @@ package inet_test
 import (
 	"fmt"
 	"net"
+	"sort"
 
 	"github.com/gaissmai/go-inet/inet"
 )
@@ -41,7 +42,7 @@ func ExampleSortBlock() {
 		buf = append(buf, inet.MustBlock(s))
 	}
 
-	inet.SortBlock(buf)
+	sort.Slice(buf, func(i, j int) bool { return buf[i].Less(buf[j]) })
 	fmt.Printf("%v\n", buf)
 
 	// Output:
@@ -97,50 +98,6 @@ func ExampleBlock_SplitCIDR_v4() {
 
 	// Output:
 	// 127.0.0.0/8 [127.0.0.0/10 127.64.0.0/10 127.128.0.0/10 127.192.0.0/10]
-
-}
-
-func ExampleBlock_MarshalText() {
-	for _, s := range []string{
-		"127.0.0.0/8",
-		"fe80::/10",
-		"10.0.0.0-10.1.0.0",
-		"",
-	} {
-		a, _ := inet.ParseBlock(s)
-		bs, _ := a.MarshalText()
-		fmt.Printf("%-20v %-20q %v\n", string(bs), string(bs), bs)
-	}
-
-	// Output:
-	// 127.0.0.0/8          "127.0.0.0/8"        [49 50 55 46 48 46 48 46 48 47 56]
-	// fe80::/10            "fe80::/10"          [102 101 56 48 58 58 47 49 48]
-	// 10.0.0.0-10.1.0.0    "10.0.0.0-10.1.0.0"  [49 48 46 48 46 48 46 48 45 49 48 46 49 46 48 46 48]
-	//                      ""                   []
-
-}
-
-func ExampleBlock_UnmarshalText() {
-	var a = new(inet.Block)
-	for _, s := range []string{
-		"127.0.000.255/8",         // base gets truncated by CIDR mask, see output
-		"10.000.000.000-10.1.0.0", // leading zeros are normalized, see output
-		"fe80::",                  // IP, covert to /128 block
-		"",                        // empty input string aka []byte(nil) returns zero-value Block{} on UnmarshalText()
-	} {
-		err := a.UnmarshalText([]byte(s))
-		if err != nil {
-			fmt.Println("ERROR:", err)
-			continue
-		}
-		fmt.Printf("%q\n", a)
-	}
-
-	// Output:
-	// "127.0.0.0/8"
-	// "10.0.0.0-10.1.0.0"
-	// "fe80::/128"
-	// ""
 
 }
 

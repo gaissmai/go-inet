@@ -3,9 +3,9 @@ package inet_test
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"testing"
 
-	"github.com/gaissmai/go-inet/inet"
 	"github.com/gaissmai/go-inet/internal"
 )
 
@@ -18,7 +18,7 @@ func BenchmarkSortIP(b *testing.B) {
 
 		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				inet.SortIP(ips)
+				sort.Slice(ips, func(i, j int) bool { return ips[i].Less(ips[j]) })
 			}
 		})
 
@@ -34,7 +34,7 @@ func BenchmarkSortBlock(b *testing.B) {
 
 		b.Run(fmt.Sprintf("%7d", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				inet.SortBlock(rs)
+				sort.Slice(rs, func(i, j int) bool { return rs[i].Less(rs[j]) })
 			}
 		})
 

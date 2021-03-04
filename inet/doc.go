@@ -6,12 +6,8 @@ without prior conversion from/to IPv4/IPv6.
 
 Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
 
-IP address bytes are stored as strings with the version tag as first byte, this ensures natural sorting (IPv4 < IPv6).
-
- type IP string
-
- IP("\x04\x7f\x00\x00\x01")                                                 // 127.0.0.1
- IP("\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01") // ::1
+IP address bytes are stored as opaque strings with the version tag as first octet,
+this ensures natural string sorting (IPv4 < IPv6).
 
 Blocks are IP-networks or IP-ranges, e.g.
 
@@ -20,12 +16,12 @@ Blocks are IP-networks or IP-ranges, e.g.
  10.0.0.3-10.0.17.134        // range
  2001:db8::1-2001:db8::f6    // range
 
-A Block is represented as a struct of three IP addresses:
+A Block is represented as a struct of three IP addresses, base, last and maybe mask.
 
  type Block struct {
   base IP
   last IP
-  mask IP  // may be zero for begin-end ranges
+  mask IP  // may be zero for begin-end ranges not a CIDR
  }
 
 */

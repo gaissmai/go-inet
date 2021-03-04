@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"net"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -326,7 +327,7 @@ func TestSortBlock(t *testing.T) {
 	copy(mixedBuf, sortedBuf)
 	rand.Shuffle(len(mixedBuf), func(i, j int) { mixedBuf[i], mixedBuf[j] = mixedBuf[j], mixedBuf[i] })
 
-	SortBlock(mixedBuf)
+	sort.Slice(mixedBuf, func(i, j int) bool { return mixedBuf[i].Less(mixedBuf[j]) })
 
 	if !reflect.DeepEqual(mixedBuf, sortedBuf) {
 		mixed := make([]string, 0, len(mixedBuf))
@@ -349,24 +350,14 @@ func TestSplitBlockZero(t *testing.T) {
 
 func TestSplitMaskZero(t *testing.T) {
 	var r Block
-	r.base = IP([]byte{4})
-	r.last = IP([]byte{4})
+	r.base = IP{}
+	r.last = IP{}
 
 	// Mask is still blockZero, we can't split without a mask
 	splits := r.SplitCIDR(1)
 
 	if splits != nil {
 		t.Errorf("error in splitting a non CIDR range, got: %v, want nil)", splits)
-	}
-}
-
-func TestBlockMarshalText(t *testing.T) {
-	// test failure modes
-
-	b := Block{}
-	bs, _ := b.MarshalText()
-	if len(bs) != 0 {
-		t.Errorf("MarshalText for zero-value must return an empty []byte, got %#v", bs)
 	}
 }
 
