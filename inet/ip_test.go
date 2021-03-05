@@ -5,11 +5,19 @@ import (
 	"testing"
 )
 
-func TestMustIP(t *testing.T) {
-	MustIP("127.0.0.1")
-	MustIP("0.0.0.0")
-	MustIP("fffe::1")
-	FromStdIP(net.IP([]byte{1, 2, 3, 4}))
+func mustIP(i interface{}) IP {
+	ip, err := ParseIP(i)
+	if err != nil {
+		panic(err)
+	}
+	return ip
+}
+
+func TestParseIP(t *testing.T) {
+	mustIP("127.0.0.1")
+	mustIP("0.0.0.0")
+	mustIP("fffe::1")
+	mustIP(net.IP([]byte{1, 2, 3, 4}))
 }
 
 func TestPanic_1(t *testing.T) {
@@ -20,7 +28,7 @@ func TestPanic_1(t *testing.T) {
 	}()
 
 	// should panic
-	MustIP("1.2.3.4.5")
+	mustIP("1.2.3.4.5")
 }
 
 func TestIP_addOne(t *testing.T) {
@@ -29,14 +37,14 @@ func TestIP_addOne(t *testing.T) {
 		want IP
 		ok   bool
 	}{
-		{MustIP("0.0.0.0"), MustIP("0.0.0.1"), true},
-		{MustIP("127.0.0.1"), MustIP("127.0.0.2"), true},
-		{MustIP("255.255.255.255"), ipZero, false},
+		{mustIP("0.0.0.0"), mustIP("0.0.0.1"), true},
+		{mustIP("127.0.0.1"), mustIP("127.0.0.2"), true},
+		{mustIP("255.255.255.255"), ipZero, false},
 		//
-		{MustIP("::"), MustIP("::1"), true},
-		{MustIP("::1"), MustIP("::2"), true},
-		{MustIP("::ffff:ffff:ffff:ffff"), MustIP("0:0:0:1::"), true},
-		{MustIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), ipZero, false},
+		{mustIP("::"), mustIP("::1"), true},
+		{mustIP("::1"), mustIP("::2"), true},
+		{mustIP("::ffff:ffff:ffff:ffff"), mustIP("0:0:0:1::"), true},
+		{mustIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), ipZero, false},
 	}
 
 	for _, tt := range ips {
@@ -53,13 +61,13 @@ func TestIP_subOne(t *testing.T) {
 		want IP
 		ok   bool
 	}{
-		{MustIP("0.0.0.0"), ipZero, false},
-		{MustIP("0.0.0.1"), MustIP("0.0.0.0"), true},
-		{MustIP("127.0.0.1"), MustIP("127.0.0.0"), true},
+		{mustIP("0.0.0.0"), ipZero, false},
+		{mustIP("0.0.0.1"), mustIP("0.0.0.0"), true},
+		{mustIP("127.0.0.1"), mustIP("127.0.0.0"), true},
 		//
-		{MustIP("::"), ipZero, false},
-		{MustIP("::1"), MustIP("::"), true},
-		{MustIP("0:0:0:1::"), MustIP("::ffff:ffff:ffff:ffff"), true},
+		{mustIP("::"), ipZero, false},
+		{mustIP("::1"), mustIP("::"), true},
+		{mustIP("0:0:0:1::"), mustIP("::ffff:ffff:ffff:ffff"), true},
 	}
 
 	for _, tt := range ips {

@@ -5,148 +5,271 @@ import (
 	"math/bits"
 )
 
-// For bit calculations convert the IP address to 32 Bits or 2x64 Bits.
-type ipAsBits struct {
-	version  uint8  // IP version
-	v4Bits   uint32 // IPv4
-	v6loBits uint64 // IPv6 lower part
-	v6hiBits uint64 // IPv6 higher part
+// simulate uint128(ipv6) and uint32(ipv4)
+type address struct {
+	hi uint64
+	lo uint64
 }
 
-// IP address octets are BigEndian encoded, uint32 or uint128 (2x uint64, sic)
-// cut off the first octet as version tag
-func (ip IP) toBits() ipAsBits {
-	out := ipAsBits{version: ip.octets[0]}
+// bitwise NOT: ^u
+func not(u address) address {
+	return address{^u.hi, ^u.lo}
+}
 
-	if out.version == IPv4 {
-		out.v4Bits = binary.BigEndian.Uint32([]byte(ip.octets[1:]))
-		return out
+// bitwise OR: u|m
+func or(u address, m address) address {
+	return address{u.hi | m.hi, u.lo | m.lo}
+}
+
+// bitwise XOR: u^m
+func xor(u address, m address) address {
+	return address{u.hi ^ m.hi, u.lo ^ m.lo}
+}
+
+// bitwise AND: u&m
+func and(u address, m address) address {
+	return address{u.hi & m.hi, u.lo & m.lo}
+}
+
+// cmp
+func cmp(u address, m address) int {
+	if u == m {
+		return 0
 	}
+	if u.hi == m.hi {
+		if u.lo < m.lo {
+			return -1
+		} else {
+			return 1
+		}
+	}
+	if u.hi < m.hi {
+		return -1
+	} else {
+		return 1
+	}
+}
 
-	out.v6hiBits = binary.BigEndian.Uint64([]byte(ip.octets[1:9]))
-	out.v6loBits = binary.BigEndian.Uint64([]byte(ip.octets[9:17]))
-	return out
+// bitwise operators work on 128 bits,
+// IP address operators must divide between ipv4 and ipv6
+func (ip IP) stripTov4() IP {
+	ip.hi = 0
+	ip.lo = uint64(uint32(ip.lo))
+	return ip
+}
+
+// not is the bitwise inverse of address
+func (ip IP) not() IP {
+	ip.address = not(ip.address)
+	if ip.version == ipv4 {
+		ip = ip.stripTov4()
+	}
+	return ip
+}
+
+// or is the bitwise or: ip.address | mask.address
+func (ip IP) or(mask IP) IP {
+	ip.address = or(ip.address, mask.address)
+	if ip.version == ipv4 {
+		ip = ip.stripTov4()
+	}
+	return ip
+}
+
+// xor is the bitwise xor: ip.address ^ mask.address
+func (ip IP) xor(mask IP) IP {
+	ip.address = xor(ip.address, mask.address)
+	if ip.version == ipv4 {
+		ip = ip.stripTov4()
+	}
+	return ip
+}
+
+// and is the bitwise and: ip.address & mask.address
+func (ip IP) and(mask IP) IP {
+	ip.address = and(ip.address, mask.address)
+	if ip.version == ipv4 {
+		ip = ip.stripTov4()
+	}
+	return ip
+}
+
+// cmp
+func (ip IP) cmp(ip2 IP) int {
+	if ip.version < ip2.version {
+		return -1
+	}
+	if ip.version > ip2.version {
+		return 1
+	}
+	return cmp(ip.address, ip2.address)
+}
+
+// addOne32 increments the ipv4 address by one, returns ok=false on overflow
+func addOne32(u address) (m address, ok bool) {
+	lo, carry := bits.Add32(uint32(u.lo), 1, 0)
+	m.lo = uint64(lo)
+	if carry == 0 {
+		ok = true
+	}
+	return
+}
+
+// addOne128 increments the ipv6 address by one, returns ok=false on overflow
+func addOne128(u address) (m address, ok bool) {
+	var carry uint64
+	m.lo, carry = bits.Add64(u.lo, 1, 0)
+	m.hi, carry = bits.Add64(u.hi, 0, carry)
+	if carry == 0 {
+		ok = true
+	}
+	return
+}
+
+// subOne32 decrements the ipv4 address by one, returns ok=false on overflow
+func subOne32(u address) (m address, ok bool) {
+	lo, borrow := bits.Sub32(uint32(u.lo), 1, 0)
+	m.lo = uint64(lo)
+	if borrow == 0 {
+		ok = true
+	}
+	return
+}
+
+// subOne128 decrements the ipv6 address by one, returns ok=false on overflow
+func subOne128(u address) (m address, ok bool) {
+	var borrow uint64
+	m.lo, borrow = bits.Sub64(u.lo, 1, 0)
+	m.hi, borrow = bits.Sub64(u.hi, 0, borrow)
+	if borrow == 0 {
+		ok = true
+	}
+	return
 }
 
 // addOne increments the IP by one, returns (IPZero, false) on overflow
-func (ip IP) addOne() (IP, bool) {
-	x := ip.toBits()
-
-	if x.version == IPv4 {
-		return addOne32(x)
+func (ip IP) addOne() (ip2 IP, ok bool) {
+	if ip.IsZero() {
+		panic("addOne() called on zero value")
 	}
+	ip2 = ip
 
-	if x.version == IPv6 {
-		return addOne128(x)
+	if ip.version == ipv4 {
+		ip2.address, ok = addOne32(ip.address)
+	} else {
+		ip2.address, ok = addOne128(ip.address)
 	}
-	panic(errInvalidIP)
-}
-
-func addOne32(x ipAsBits) (IP, bool) {
-	out := make([]byte, 4+1)
-	var carry uint32
-	a := x.v4Bits
-	a, carry = bits.Add32(a, 1, 0)
-
-	if carry == 1 {
+	if !ok {
 		return ipZero, false
 	}
-
-	out[0] = IPv4
-	binary.BigEndian.PutUint32(out[1:], a)
-
-	return IP{string(out)}, true
-}
-
-func addOne128(x ipAsBits) (IP, bool) {
-	out := make([]byte, 16+1)
-	var carry uint64
-	lo := x.v6loBits
-	hi := x.v6hiBits
-
-	lo, carry = bits.Add64(lo, 1, 0)
-	hi, carry = bits.Add64(hi, 0, carry)
-
-	if carry == 1 {
-		return ipZero, false
-	}
-
-	out[0] = IPv6
-	binary.BigEndian.PutUint64(out[1:9], hi)
-	binary.BigEndian.PutUint64(out[9:17], lo)
-
-	return IP{string(out)}, true
+	return ip2, true
 }
 
 // subOne decrements the IP by one, returns (IPZero, false) on underflow
-func (ip IP) subOne() (IP, bool) {
-	x := ip.toBits()
-
-	if x.version == IPv4 {
-		return subOne32(x)
+func (ip IP) subOne() (ip2 IP, ok bool) {
+	if ip.IsZero() {
+		panic("addOne() called on zero value")
 	}
+	ip2 = ip
 
-	if x.version == IPv6 {
-		return subOne128(x)
+	if ip.version == ipv4 {
+		ip2.address, ok = subOne32(ip.address)
+	} else {
+		ip2.address, ok = subOne128(ip.address)
 	}
-	panic(errInvalidIP)
-}
-
-func subOne32(x ipAsBits) (IP, bool) {
-	out := make([]byte, 4+1)
-
-	var borrow uint32
-	a := x.v4Bits
-	a, borrow = bits.Sub32(a, 1, 0)
-
-	if borrow == 1 {
+	if !ok {
 		return ipZero, false
 	}
-
-	out[0] = IPv4
-	binary.BigEndian.PutUint32(out[1:], a)
-
-	return IP{string(out)}, true
+	return ip2, true
 }
 
-func subOne128(x ipAsBits) (IP, bool) {
-	out := make([]byte, 16+1)
-	var borrow uint64
-	lo := x.v6loBits
-	hi := x.v6hiBits
-
-	lo, borrow = bits.Sub64(lo, 1, 0)
-	hi, borrow = bits.Sub64(hi, 0, borrow)
-
-	if borrow == 1 {
-		return ipZero, false
+// fromBytes makes the IP{} from network ordered byte slice
+func fromBytes(bs []byte) (IP, error) {
+	l := len(bs)
+	if l == 4 {
+		ip := IP{
+			ipv4,
+			address{0, uint64(binary.BigEndian.Uint32(bs[:]))},
+		}
+		return ip, nil
 	}
 
-	out[0] = IPv6
-	binary.BigEndian.PutUint64(out[1:9], hi)
-	binary.BigEndian.PutUint64(out[9:17], lo)
+	if l == 16 {
+		ip := IP{
+			ipv6,
+			address{binary.BigEndian.Uint64(bs[:8]), binary.BigEndian.Uint64(bs[8:])},
+		}
+		return ip, nil
+	}
 
-	return IP{string(out)}, true
+	return ipZero, errInvalidIP
 }
 
-// bitLen returns the common bits as maskLen and the trailing bits as hostLen.
-func (a Block) bitLen() (maskLen, hostLen int) {
-	base := a.base.toBits()
-	last := a.last.toBits()
-
-	// v4
-	if base.version == IPv4 {
-		// common bits = leadingZeros(a XOR b)
-		maskLen = bits.LeadingZeros32(base.v4Bits ^ last.v4Bits)
-		hostLen = 32 - maskLen
-		return
+// toBytes returns the ip address in network ordered byte representation.
+func (ip IP) toBytes() []byte {
+	if ip.version == ipv4 {
+		bs := make([]byte, 4)
+		binary.BigEndian.PutUint32(bs[:], uint32(ip.lo))
+		return bs
 	}
 
-	// v6
-	maskLen = bits.LeadingZeros64(base.v6hiBits ^ last.v6hiBits)
-	if maskLen == 64 {
-		maskLen += bits.LeadingZeros64(base.v6loBits ^ last.v6loBits)
+	bs := make([]byte, 16)
+	binary.BigEndian.PutUint64(bs[:8], ip.hi)
+	binary.BigEndian.PutUint64(bs[8:], ip.lo)
+	return bs
+}
+
+// mkBaseIP makes base address from address and netmask.
+//
+// base = address & netMask
+func mkBaseIP(any IP, mask IP) IP {
+	out := any.and(mask)
+	return out
+}
+
+// mkLastIP makes last IP address from base IP address and netmask.
+//
+// last = base | hostmask
+func mkLastIP(base IP, mask IP) IP {
+	out := base.or(mask.not())
+	return out
+}
+
+// prefixLen64
+func prefixLen64(u, v uint64) uint8 {
+	return uint8(bits.LeadingZeros64(u ^ v))
+}
+
+// prefixLen128
+func prefixLen128(u, v address) (n uint8) {
+	if n = prefixLen64(u.hi, v.hi); n == 64 {
+		n += prefixLen64(u.lo, v.lo)
 	}
-	hostLen = 128 - maskLen
 	return
+}
+
+// commonPrefixLen returns the common prefix len of base and last IP in block.
+func (b Block) commonPrefixLen() uint8 {
+	return prefixLen128(b.base.address, b.last.address)
+}
+
+// commonPrefixMask returns the common prefix bitmask of base and last IP in block.
+func (b Block) commonPrefixMask() (mask IP, ok bool) {
+	mask.version = b.base.version
+
+	n := b.commonPrefixLen()
+	if n > 64 {
+		mask.address = address{^uint64(0), ^uint64(0) << (128 - n)}
+	} else {
+		mask.address = address{^uint64(0) << (64 - n), 0}
+	}
+	if mask.version == ipv4 {
+		mask = mask.stripTov4()
+	}
+
+	// base & netmask = base AND base | hostmask = last
+	if b.base.and(mask) == b.base && b.base.or(mask.not()) == b.last {
+		return mask, true
+	}
+	return ipZero, false
 }

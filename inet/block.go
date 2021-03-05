@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"sort"
 	"strings"
 )
 
@@ -26,7 +25,6 @@ var (
 type Block struct {
 	base IP
 	last IP
-	mask IP // IP{} for ranges without CIDR mask
 }
 
 // the zero-value for type Block, not public
@@ -38,37 +36,22 @@ func (a Block) Base() IP { return a.base }
 // Last returns the blocks last IP address.
 func (a Block) Last() IP { return a.last }
 
-// Mask returns the blocks mask as IP address. May be IPZero for begin-end ranges
-func (a Block) Mask() IP { return a.mask }
-
-var (
-	// MaxCIDRSplit limits the input parameter for SplitCIDR() to 20 (max 2^20 CIDRs) for security.
-	MaxCIDRSplit int = 20
-
-	// internal for overflow checks in aggregates
-	ipMaxV4 = IP{string([]byte{4, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})}
-	ipMaxV6 = IP{string([]byte{6, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})}
-)
-
 // ParseBlock parses and returns the input as type Block.
 // The input type may be:
 //
 //   string
-//   inet.IP
+//   IP
 //   net.IP
 //   net.IPNet
 //
 // Example for valid input strings:
 //
+//  "192.168.2.3-192.168.7.255"
+//  "2001:db8::1-2001:db8::ff00:35"
+//
 //  "2001:db8:dead::/38"
 //  "10.0.0.0/8"
 //  "4.4.4.4"
-//
-//  "2001:db8::1-2001:db8::ff00:35"
-//  "192.168.2.3-192.168.7.255"
-//
-// If a begin-end range can be represented as a CIDR, ParseBlock() generates the netmask
-// and returns the range as CIDR.
 //
 // IP addresses as input are converted to /32 or /128 blocks
 // Returns error and Block{} on invalid input.
@@ -85,16 +68,6 @@ func ParseBlock(i interface{}) (Block, error) {
 	default:
 		return blockZero, errInvalidBlock
 	}
-}
-
-// MustBlock is a helper that calls ParseBlock and returns just inet.Block or panics on error.
-// It is intended for use in variable initializations.
-func MustBlock(i interface{}) Block {
-	b, err := ParseBlock(i)
-	if err != nil {
-		panic(err)
-	}
-	return b
 }
 
 // blockFromString parses s in network CIDR or in begin-end IP address-range notation.
@@ -122,16 +95,15 @@ func blockFromString(s string) (Block, error) {
 	return blockZero, errInvalidBlock
 }
 
-// blockFromIP converts inet.IP to inet.Block with /32 or /128 CIDR mask
+// blockFromIP converts inet.IP to inet.Block with ip as base and last.
 func blockFromIP(ip IP) (Block, error) {
 	b := Block{base: ip, last: ip}
-	b.mask = b.getMask()
 	return b, nil
 }
 
 // blockFromNetIP converts net.IP to inet.Block with /32 or /128 CIDR mask
-func blockFromNetIP(nip net.IP) (Block, error) {
-	ip, err := FromStdIP(nip)
+func blockFromNetIP(stdIP net.IP) (Block, error) {
+	ip, err := fromStdIP(stdIP)
 	if err != nil {
 		return blockZero, err
 	}
@@ -139,21 +111,22 @@ func blockFromNetIP(nip net.IP) (Block, error) {
 }
 
 // blockFromNetIPNet converts from stdlib net.IPNet to ip.Block representation.
-func blockFromNetIPNet(ipnet net.IPNet) (Block, error) {
+func blockFromNetIPNet(stdNet net.IPNet) (Block, error) {
 	var err error
 	a := blockZero
 
-	a.base, err = FromStdIP(ipnet.IP)
+	a.base, err = fromStdIP(stdNet.IP)
 	if err != nil {
 		return blockZero, errInvalidBlock
 	}
 
-	a.mask, err = FromStdIP(net.IP(ipnet.Mask)) // cast needed
+	mask, err := fromStdIP(net.IP(stdNet.Mask)) // cast needed
 	if err != nil {
 		return blockZero, errInvalidBlock
 	}
 
-	a.last = lastIP(a.base, a.mask)
+	// last = base | hostmask = base | ^netmask
+	a.last = mkLastIP(a.base, mask)
 
 	return a, nil
 }
@@ -170,45 +143,6 @@ func blockFromCIDR(s string) (Block, error) {
 	}
 
 	return blockFromNetIPNet(*netIPNet)
-}
-
-// lastIP makes last IP address from base IP address and netmask.
-//
-// last = base | hostMask
-//
-// Example:
-//   ^netMask(255.0.0.0) = hostMask(0.255.255.255)
-//
-//   ^0xff_00_00_00  = 0x00_ff_ff_ff
-//  -----------------------------------------------
-//
-//    0x7f_00_00_00 base
-//  | 0x00_ff_ff_ff hostMask
-//  ----------------------
-//    0x7f_ff_ff_ff last
-//
-func lastIP(base IP, mask IP) IP {
-	b := base.bytes()
-	m := mask.bytes()
-
-	last := make([]byte, len(b))
-	for i := 0; i < len(b); i++ {
-		last[i] = b[i] | ^m[i]
-	}
-	return setBytes(last)
-}
-
-// baseIP makes base address from address and netmask:
-//  base[i] = address[i] & netMask[i]
-func baseIP(any IP, mask IP) IP {
-	a := any.bytes()
-	m := mask.bytes()
-
-	base := make([]byte, len(a))
-	for i := 0; i < len(a); i++ {
-		base[i] = a[i] & m[i]
-	}
-	return setBytes(base)
 }
 
 // parse IP address-range
@@ -228,32 +162,57 @@ func blockFromRange(s string, i int) (Block, error) {
 	}
 
 	// begin-end have version mismatch
-	if baseIP.octets[0] != lastIP.octets[0] {
+	if baseIP.version != lastIP.version {
 		return blockZero, errInvalidBlock
 	}
 
 	// begin > end
-	if baseIP.octets > lastIP.octets {
+	if !baseIP.Less(lastIP) {
 		return blockZero, errInvalidBlock
 	}
 
-	a := Block{base: baseIP, last: lastIP}
+	return Block{base: baseIP, last: lastIP}, nil
+}
 
-	// maybe range is true CIDR, try to get also the mask
-	a.mask = a.getMask()
+// IsZero reports whether block is the zero value of the Block type.
+// The zero value is not a valid Block of any type.
+func (b Block) IsZero() bool {
+	return b.base.version == 0
+}
 
-	return a, nil
+// Is4 reports whether block spans an IPv4 addresses.
+func (b Block) Is4() bool {
+	return b.base.version == ipv4
+}
+
+// Is4 reports whether block spans an IPv4 addresses.
+func (b Block) Is6() bool {
+	return b.base.version == ipv6
+}
+
+// IsCIDR returns true if the block has a common prefix netmask.
+func (b Block) IsCIDR() bool {
+	_, ok := b.commonPrefixMask()
+	if !ok {
+		return false
+	}
+	return true
 }
 
 // String implements the fmt.Stringer interface.
 func (a Block) String() string {
-	if a.mask == ipZero {
+	if a.IsZero() {
+		return "invalid Block"
+	}
+	if !a.IsCIDR() {
 		return fmt.Sprintf("%s-%s", a.base, a.last)
 	}
 
-	mb := a.mask.bytes()
-	ones, _ := net.IPMask(mb).Size()
-	return fmt.Sprintf("%s/%d", a.base, ones)
+	n := a.commonPrefixLen()
+	if a.base.version == ipv4 {
+		n = n - 96
+	}
+	return fmt.Sprintf("%s/%d", a.base, n)
 }
 
 // Covers reports whether Block a contains Block b. a and b may NOT coincide.
@@ -263,10 +222,16 @@ func (a Block) String() string {
 //  a |-----------------| |-----------------| |-----------------|
 //  b   |------------|    |------------|           |------------|
 func (a Block) Covers(b Block) bool {
+	if a.base.version != b.base.version {
+		return false
+	}
 	if a == b {
 		return false
 	}
-	return a.base.octets <= b.base.octets && a.last.octets >= b.last.octets
+	if cmp(a.base.address, b.base.address) <= 0 && cmp(a.last.address, b.last.address) >= 0 {
+		return true
+	}
+	return false
 }
 
 // Less reports whether the Block a should be sorted before Block b.
@@ -284,17 +249,21 @@ func (a Block) Covers(b Block) bool {
 //  a |-----------------|
 //  b |------------|
 func (a Block) Less(b Block) bool {
+	if a.base.Less(b.base) {
+		return true
+	}
+
 	if a.base == b.base {
 		// a.Base == b.Base and a covers b, REMEMBER: sort containers to the left
-		return a.last.octets > b.last.octets
+		if cmp(a.last.address, b.last.address) == 1 {
+			return true
+		}
 	}
-	return a.base.octets < b.base.octets
+
+	return false
 }
 
-// IsCIDR returns true if the block is a true CIDR, not just a begin-end range.
-func (a Block) IsCIDR() bool {
-	return a.mask != ipZero
-}
+/*
 
 // IsDisjunctWith reports whether the Blocks a and b are disjunct
 //  a       |----------|
@@ -479,7 +448,7 @@ func (a Block) isSubsetOfAny(bs []Block) bool {
 func (a Block) getMask() (mask IP) {
 	// v4 or v6
 	bits := 32
-	if a.base.octets[0] == IPv6 {
+	if a.base.octets[0] == ipv6 {
 		bits = 128
 	}
 
@@ -508,7 +477,7 @@ func (a Block) BlockToCIDRList() []Block {
 
 	// v4 or v6
 	bits := 32
-	if a.base.octets[0] == IPv6 {
+	if a.base.octets[0] == ipv6 {
 		bits = 128
 	}
 
@@ -649,3 +618,5 @@ func Aggregate(bs []Block) []Block {
 
 	return out
 }
+
+*/

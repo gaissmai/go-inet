@@ -2,6 +2,7 @@ package inet_test
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/gaissmai/go-inet/inet"
 )
@@ -24,13 +25,11 @@ func ExampleParseIP() {
 }
 
 func ExampleIP_Expand() {
-	for _, ip := range []inet.IP{
-		inet.MustIP("192.168.2.1"),
-		inet.MustIP("fffe:db8::"),
-	} {
+	ip1, _ := inet.ParseIP("192.168.2.1")
+	ip2, _ := inet.ParseIP("fffe:db8::")
 
-		fmt.Printf("%q\n", ip.Expand())
-	}
+	fmt.Printf("%q\n", ip1.Expand())
+	fmt.Printf("%q\n", ip2.Expand())
 
 	// Output:
 	// "192.168.002.001"
@@ -38,13 +37,11 @@ func ExampleIP_Expand() {
 }
 
 func ExampleIP_Reverse() {
-	for _, ip := range []inet.IP{
-		inet.MustIP("192.168.2.1"),
-		inet.MustIP("fffe:db8::"),
-	} {
+	ip1, _ := inet.ParseIP("192.168.2.1")
+	ip2, _ := inet.ParseIP("fffe:db8::")
 
-		fmt.Printf("%q\n", ip.Reverse())
-	}
+	fmt.Printf("%q\n", ip1.Reverse())
+	fmt.Printf("%q\n", ip2.Reverse())
 
 	// Output:
 	// "1.2.168.192"
@@ -52,15 +49,44 @@ func ExampleIP_Reverse() {
 }
 
 func ExampleIP_ToNetIP() {
-	for _, ip := range []inet.IP{
-		inet.MustIP("192.168.2.1"),
-		inet.MustIP("fffe:db8::"),
-		// {5}, Panics on invalid input.
-	} {
-		fmt.Printf("%#v\n", ip.ToNetIP())
-	}
+	ip1, _ := inet.ParseIP("192.168.2.1")
+	ip2, _ := inet.ParseIP("fffe:db8::")
+	fmt.Printf("%#v\n", ip1.ToStdIP())
+	fmt.Printf("%#v\n", ip2.ToStdIP())
 
 	// Output:
 	// net.IP{0xc0, 0xa8, 0x2, 0x1}
 	// net.IP{0xff, 0xfe, 0xd, 0xb8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+}
+
+func ExampleIP_Less() {
+	s := []string{
+		"0.0.0.1",
+		"fe80::1",
+		"0.0.0.0",
+		"127.0.0.1",
+		"::",
+		"::1",
+		"255.255.255.255",
+	}
+	var ips []inet.IP
+	for _, v := range s {
+		ip, _ := inet.ParseIP(v)
+		ips = append(ips, ip)
+	}
+
+	sort.Slice(ips, func(i, j int) bool { return ips[i].Less(ips[j]) })
+	for _, ip := range ips {
+		fmt.Println(ip)
+	}
+
+	// Output:
+	// 0.0.0.0
+	// 0.0.0.1
+	// 127.0.0.1
+	// 255.255.255.255
+	// ::
+	// ::1
+	// fe80::1
+
 }

@@ -9,6 +9,14 @@ import (
 	"testing"
 )
 
+func mustBlock(i interface{}) Block {
+	b, err := ParseBlock(i)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 func TestString(t *testing.T) {
 	tests := []struct {
 		in   string
@@ -80,6 +88,126 @@ func TestParseBlockFail(t *testing.T) {
 	}
 }
 
+func TestSortBlock(t *testing.T) {
+
+	sorted := []string{
+		"0.0.0.0/0",
+		"10.0.0.0/9",
+		"10.0.0.0/11",
+		"10.32.0.0/11",
+		"10.64.0.0/11",
+		"10.96.0.0/11",
+		"10.96.0.0/13",
+		"10.96.0.2-10.96.1.17",
+		"10.104.0.0/13",
+		"10.112.0.0/13",
+		"10.120.0.0/13",
+		"10.128.0.0/9",
+		"134.60.0.0/16",
+		"193.197.62.192/29",
+		"193.197.64.0/22",
+		"193.197.228.0/22",
+		"::/0",
+		"::-::ffff",
+		"2001:7c0:900::/48",
+		"2001:7c0:900::/49",
+		"2001:7c0:900::/52",
+		"2001:7c0:900::/53",
+		"2001:7c0:900:800::/56",
+		"2001:7c0:900:800::/64",
+		"2001:7c0:900:1000::/52",
+		"2001:7c0:900:1000::/53",
+		"2001:7c0:900:1800::/53",
+		"2001:7c0:900:8000::/49",
+		"2001:7c0:900:8000::/56",
+		"2001:7c0:900:8100::/56",
+		"2001:7c0:2330::/44",
+	}
+
+	var sortedBuf []Block
+	for _, s := range sorted {
+		sortedBuf = append(sortedBuf, mustBlock(s))
+	}
+
+	// clone and shuffle
+	mixedBuf := make([]Block, len(sortedBuf))
+	copy(mixedBuf, sortedBuf)
+	rand.Shuffle(len(mixedBuf), func(i, j int) { mixedBuf[i], mixedBuf[j] = mixedBuf[j], mixedBuf[i] })
+
+	sort.Slice(mixedBuf, func(i, j int) bool { return mixedBuf[i].Less(mixedBuf[j]) })
+
+	if !reflect.DeepEqual(mixedBuf, sortedBuf) {
+		mixed := make([]string, 0, len(mixedBuf))
+		for _, ipr := range mixedBuf {
+			mixed = append(mixed, ipr.String())
+		}
+
+		t.Errorf("===> input:\n%v\n===> got:\n%v", strings.Join(sorted, "\n"), strings.Join(mixed, "\n"))
+	}
+}
+
+func TestBlockCovers(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want bool
+	}{
+		{
+			a:    "::/0",
+			b:    "0.0.0.0/0",
+			want: false,
+		},
+		{
+			a:    "0.0.0.0/0",
+			b:    "0.0.0.0/0",
+			want: false,
+		},
+		{
+			a:    "::/0",
+			b:    "::/0",
+			want: false,
+		},
+		{
+			a:    "10.0.0.0/8",
+			b:    "0.0.0.0/0",
+			want: true,
+		},
+		{
+			a:    "0.0.0.0/0",
+			b:    "10.0.0.0/8",
+			want: false,
+		},
+		{
+			a:    "fe80::/12",
+			b:    "::/0",
+			want: true,
+		},
+		{
+			a:    "::/0",
+			b:    "fe80::/12",
+			want: false,
+		},
+		{
+			a:    "fe81::/16",
+			b:    "fe80::/16",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		a, b, want := tt.a, tt.b, tt.want
+
+		ra := mustBlock(a)
+		rb := mustBlock(b)
+
+		got := rb.Covers(ra)
+		if got != want {
+			t.Errorf("(%v).Covers(%v) = %v; want %v", rb, ra, got, want)
+		}
+	}
+}
+
+/*
+
 func TestBlockHasOverlapWith(t *testing.T) {
 
 	tests := []struct {
@@ -141,8 +269,8 @@ func TestBlockHasOverlapWith(t *testing.T) {
 	for _, tt := range tests {
 		a, b, want := tt.a, tt.b, tt.want
 
-		ra := MustBlock(a)
-		rb := MustBlock(b)
+		ra := mustBlock(a)
+		rb := mustBlock(b)
 
 		got := ra.OverlapsWith(rb)
 		if got != want {
@@ -211,131 +339,13 @@ func TestBlockIsDisjunctWith(t *testing.T) {
 	for _, tt := range tests {
 		a, b, want := tt.a, tt.b, tt.want
 
-		ra := MustBlock(a)
-		rb := MustBlock(b)
+		ra := mustBlock(a)
+		rb := mustBlock(b)
 
 		got := ra.IsDisjunctWith(rb)
 		if got != want {
 			t.Errorf("(%v).IsDisjunctWith(%v) = %v; want %v", ra, rb, got, want)
 		}
-	}
-}
-
-func TestBlockCovers(t *testing.T) {
-	tests := []struct {
-		a, b string
-		want bool
-	}{
-		{
-			a:    "::/0",
-			b:    "0.0.0.0/0",
-			want: false,
-		},
-		{
-			a:    "0.0.0.0/0",
-			b:    "0.0.0.0/0",
-			want: false,
-		},
-		{
-			a:    "::/0",
-			b:    "::/0",
-			want: false,
-		},
-		{
-			a:    "10.0.0.0/8",
-			b:    "0.0.0.0/0",
-			want: true,
-		},
-		{
-			a:    "0.0.0.0/0",
-			b:    "10.0.0.0/8",
-			want: false,
-		},
-		{
-			a:    "fe80::/12",
-			b:    "::/0",
-			want: true,
-		},
-		{
-			a:    "::/0",
-			b:    "fe80::/12",
-			want: false,
-		},
-		{
-			a:    "fe81::/16",
-			b:    "fe80::/16",
-			want: false,
-		},
-	}
-
-	for _, tt := range tests {
-		a, b, want := tt.a, tt.b, tt.want
-
-		ra := MustBlock(a)
-		rb := MustBlock(b)
-
-		got := rb.Covers(ra)
-		if got != want {
-			t.Errorf("(%v).Covers(%v) = %v; want %v", rb, ra, got, want)
-		}
-	}
-}
-
-func TestSortBlock(t *testing.T) {
-
-	sorted := []string{
-		"0.0.0.0/0",
-		"10.0.0.0/9",
-		"10.0.0.0/11",
-		"10.32.0.0/11",
-		"10.64.0.0/11",
-		"10.96.0.0/11",
-		"10.96.0.0/13",
-		"10.96.0.2-10.96.1.17",
-		"10.104.0.0/13",
-		"10.112.0.0/13",
-		"10.120.0.0/13",
-		"10.128.0.0/9",
-		"134.60.0.0/16",
-		"193.197.62.192/29",
-		"193.197.64.0/22",
-		"193.197.228.0/22",
-		"::/0",
-		"::-::ffff",
-		"2001:7c0:900::/48",
-		"2001:7c0:900::/49",
-		"2001:7c0:900::/52",
-		"2001:7c0:900::/53",
-		"2001:7c0:900:800::/56",
-		"2001:7c0:900:800::/64",
-		"2001:7c0:900:1000::/52",
-		"2001:7c0:900:1000::/53",
-		"2001:7c0:900:1800::/53",
-		"2001:7c0:900:8000::/49",
-		"2001:7c0:900:8000::/56",
-		"2001:7c0:900:8100::/56",
-		"2001:7c0:2330::/44",
-	}
-
-	var sortedBuf []Block
-	for _, s := range sorted {
-		sortedBuf = append(sortedBuf, MustBlock(s))
-	}
-
-	// clone and shuffle
-	mixedBuf := make([]Block, len(sortedBuf))
-	copy(mixedBuf, sortedBuf)
-	rand.Shuffle(len(mixedBuf), func(i, j int) { mixedBuf[i], mixedBuf[j] = mixedBuf[j], mixedBuf[i] })
-
-	sort.Slice(mixedBuf, func(i, j int) bool { return mixedBuf[i].Less(mixedBuf[j]) })
-
-	if !reflect.DeepEqual(mixedBuf, sortedBuf) {
-		mixed := make([]string, 0, len(mixedBuf))
-		for _, ipr := range mixedBuf {
-			mixed = append(mixed, ipr.String())
-		}
-
-		t.Errorf("===> input:\n%v\n===> got:\n%v", strings.Join(sorted, "\n"), strings.Join(mixed, "\n"))
 	}
 }
 
@@ -363,8 +373,8 @@ func TestSplitMaskZero(t *testing.T) {
 
 // test the separation of the IPv4 and IPv6 address space
 func TestBlockV4V6(t *testing.T) {
-	r1 := MustBlock("0.0.0.0/0")
-	r2 := MustBlock("::/0")
+	r1 := mustBlock("0.0.0.0/0")
+	r2 := mustBlock("::/0")
 
 	if r1.OverlapsWith(r2) != false {
 		t.Errorf("%q.OverlapsWith(%q) == %t, want %t", r1, r2, r1.OverlapsWith(r2), false)
@@ -387,7 +397,7 @@ func TestBlockV4V6(t *testing.T) {
 }
 
 func TestFindFreeCIDRBlockNil(t *testing.T) {
-	r := MustBlock("::/0")
+	r := mustBlock("::/0")
 	rs := r.FindFreeCIDR(nil)
 
 	if rs[0] != r {
@@ -396,7 +406,7 @@ func TestFindFreeCIDRBlockNil(t *testing.T) {
 }
 
 func TestFindFreeCIDRBlockSelf(t *testing.T) {
-	r := MustBlock("::/0")
+	r := mustBlock("::/0")
 	rs := r.FindFreeCIDR([]Block{r})
 	if rs != nil {
 		t.Errorf("FindFreeCIDR for inner == self, got %#v, want nil", rs)
@@ -429,7 +439,7 @@ func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
 		"fec0::/10",
 		"ff00::/8",
 	} {
-		inner = append(inner, MustBlock(s))
+		inner = append(inner, mustBlock(s))
 	}
 
 	var want []Block
@@ -437,7 +447,7 @@ func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
 		"6000::/3",
 		"fc00::/7",
 	} {
-		want = append(want, MustBlock(s))
+		want = append(want, mustBlock(s))
 	}
 
 	rs := b.FindFreeCIDR(inner)
@@ -463,7 +473,7 @@ func TestBlockToCIDRListV4(t *testing.T) {
 		"10.0.0.232/30",
 		"10.0.0.236/32",
 	} {
-		want = append(want, MustBlock(s))
+		want = append(want, mustBlock(s))
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -495,7 +505,7 @@ func TestBlockToCIDRListV6(t *testing.T) {
 		"2001:db9::1230/126",
 		"2001:db9::1234/128",
 	} {
-		want = append(want, MustBlock(s))
+		want = append(want, mustBlock(s))
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -512,7 +522,7 @@ func TestBlockToCIDRListV4Overflow(t *testing.T) {
 		"255.255.255.253/32",
 		"255.255.255.254/31",
 	} {
-		want = append(want, MustBlock(s))
+		want = append(want, mustBlock(s))
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -529,10 +539,12 @@ func TestBlockToCIDRListV6Overflow(t *testing.T) {
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffd/128",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe/127",
 	} {
-		want = append(want, MustBlock(s))
+		want = append(want, mustBlock(s))
 	}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("%v.BlockToCIDRList(), got %v, want %v", b, got, want)
 	}
 }
+
+*/
