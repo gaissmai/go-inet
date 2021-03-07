@@ -206,76 +206,127 @@ func TestBlockCovers(t *testing.T) {
 	}
 }
 
-/*
+func TestBlockMerge(t *testing.T) {
+	bs := []Block{
+		mustBlock("0.0.0.0/0"),
+		mustBlock("10.0.0.15/32"),
+		mustBlock("10.0.0.16/28"),
+		mustBlock("10.0.0.32/27"),
+		mustBlock("10.0.0.64/26"),
+		mustBlock("10.0.0.128/26"),
+		mustBlock("10.0.0.192/27"),
+		mustBlock("134.60.0.0/16"),
+		mustBlock("193.197.62.192/29"),
+		mustBlock("193.197.64.0/22"),
+		mustBlock("193.197.228.0/22"),
+		mustBlock("::/0"),
+		mustBlock("::-::ffff"),
+		mustBlock("2001:7c0:900::/48"),
+		mustBlock("2001:7c0:900::/49"),
+		mustBlock("2001:7c0:900::/52"),
+		mustBlock("2001:7c0:900::/53"),
+		mustBlock("2001:7c0:900:800::/56"),
+		mustBlock("2001:7c0:900:800::/64"),
+	}
+	got := Merge(bs)
 
-func TestBlockHasOverlapWith(t *testing.T) {
-
-	tests := []struct {
-		a, b string
-		want bool
-	}{
-		{
-			a:    "::/0", // v4 v6 mismatch
-			b:    "0.0.0.0/0",
-			want: false,
-		},
-		{
-			a:    "127.0.0.0/8",
-			b:    "10.0.0.0/8",
-			want: false,
-		},
-		{
-			a:    "10.0.0.0/8",
-			b:    "127.0.0.0/8",
-			want: false,
-		},
-		{
-			a:    "127.0.0.0-127.0.0.255",
-			b:    "127.0.0.128-128.0.0.100",
-			want: true,
-		},
-		{
-			a:    "127.0.0.128-128.0.0.100",
-			b:    "127.0.0.0-127.0.0.255",
-			want: true,
-		},
-		{
-			a:    "10.0.0.0/30",
-			b:    "10.0.0.3-10.0.0.14",
-			want: true,
-		},
-		{
-			a:    "10.0.0.0-10.0.0.3",
-			b:    "10.0.0.3-10.0.0.14",
-			want: true,
-		},
-		{
-			a:    "::/0",
-			b:    "::/0",
-			want: false,
-		},
-		{
-			a:    "::/0",
-			b:    "::/60",
-			want: false,
-		},
-		{
-			a:    "4.4.4.4/32",
-			b:    "4.4.4.4/32",
-			want: false,
-		},
+	want := []Block{
+		mustBlock("0.0.0.0/0"),
+		mustBlock("::/0"),
 	}
 
-	for _, tt := range tests {
-		a, b, want := tt.a, tt.b, tt.want
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Merge():\ngot:  %v\nwant: %v", got, want)
+	}
+}
 
-		ra := mustBlock(a)
-		rb := mustBlock(b)
+func TestBlockToCIDRs(t *testing.T) {
+	b, _ := ParseBlock("10.0.0.15-10.0.0.236")
+	got := b.CIDRs()
 
-		got := ra.OverlapsWith(rb)
-		if got != want {
-			t.Errorf("(%v).HasOverlapWith(%v) = %v; want %v", ra, rb, got, want)
-		}
+	var want []Block
+	for _, s := range []string{
+		"10.0.0.15/32",
+		"10.0.0.16/28",
+		"10.0.0.32/27",
+		"10.0.0.64/26",
+		"10.0.0.128/26",
+		"10.0.0.192/27",
+		"10.0.0.224/29",
+		"10.0.0.232/30",
+		"10.0.0.236/32",
+	} {
+		want = append(want, mustBlock(s))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("%v.ToCIDRs(), got %v, want %v", b, got, want)
+	}
+}
+
+func TestBlockToCIDRsV6(t *testing.T) {
+	b, _ := ParseBlock("2001:db9::1-2001:db9::1234")
+	got := b.CIDRs()
+
+	var want []Block
+	for _, s := range []string{
+		"2001:db9::1/128",
+		"2001:db9::2/127",
+		"2001:db9::4/126",
+		"2001:db9::8/125",
+		"2001:db9::10/124",
+		"2001:db9::20/123",
+		"2001:db9::40/122",
+		"2001:db9::80/121",
+		"2001:db9::100/120",
+		"2001:db9::200/119",
+		"2001:db9::400/118",
+		"2001:db9::800/117",
+		"2001:db9::1000/119",
+		"2001:db9::1200/123",
+		"2001:db9::1220/124",
+		"2001:db9::1230/126",
+		"2001:db9::1234/128",
+	} {
+		want = append(want, mustBlock(s))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("%v.ToCIDRs(), got %v, want %v", b, got, want)
+	}
+}
+
+func TestBlockToCIDRsV4(t *testing.T) {
+	b, _ := ParseBlock("255.255.255.253-255.255.255.255")
+	got := b.CIDRs()
+
+	var want []Block
+	for _, s := range []string{
+		"255.255.255.253/32",
+		"255.255.255.254/31",
+	} {
+		want = append(want, mustBlock(s))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("%v.ToCIDRs(), got %v, want %v", b, got, want)
+	}
+}
+
+func TestBlockToCIDRsV6cornerCase(t *testing.T) {
+	b, _ := ParseBlock("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffd-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
+	got := b.CIDRs()
+
+	var want []Block
+	for _, s := range []string{
+		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffd/128",
+		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe/127",
+	} {
+		want = append(want, mustBlock(s))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("%v.AsCIDRs(), got %v, want %v", b, got, want)
 	}
 }
 
@@ -342,32 +393,81 @@ func TestBlockIsDisjunctWith(t *testing.T) {
 		ra := mustBlock(a)
 		rb := mustBlock(b)
 
-		got := ra.IsDisjunctWith(rb)
+		got := ra.isDisjunct(rb)
 		if got != want {
 			t.Errorf("(%v).IsDisjunctWith(%v) = %v; want %v", ra, rb, got, want)
 		}
 	}
 }
 
-func TestSplitBlockZero(t *testing.T) {
-	b := Block{}
-	splits := b.SplitCIDR(1)
+func TestBlockHasOverlapWith(t *testing.T) {
 
-	if splits != nil {
-		t.Errorf("error in splitting blockZero, got: %v, want nil)", splits)
+	tests := []struct {
+		a, b string
+		want bool
+	}{
+		{
+			a:    "::/0", // v4 v6 mismatch
+			b:    "0.0.0.0/0",
+			want: false,
+		},
+		{
+			a:    "127.0.0.0/8",
+			b:    "10.0.0.0/8",
+			want: false,
+		},
+		{
+			a:    "10.0.0.0/8",
+			b:    "127.0.0.0/8",
+			want: false,
+		},
+		{
+			a:    "127.0.0.0-127.0.0.255",
+			b:    "127.0.0.128-128.0.0.100",
+			want: true,
+		},
+		{
+			a:    "127.0.0.128-128.0.0.100",
+			b:    "127.0.0.0-127.0.0.255",
+			want: true,
+		},
+		{
+			a:    "10.0.0.0/30",
+			b:    "10.0.0.3-10.0.0.14",
+			want: true,
+		},
+		{
+			a:    "10.0.0.0-10.0.0.3",
+			b:    "10.0.0.3-10.0.0.14",
+			want: true,
+		},
+		{
+			a:    "::/0",
+			b:    "::/0",
+			want: false,
+		},
+		{
+			a:    "::/0",
+			b:    "::/60",
+			want: false,
+		},
+		{
+			a:    "4.4.4.4/32",
+			b:    "4.4.4.4/32",
+			want: false,
+		},
 	}
-}
 
-func TestSplitMaskZero(t *testing.T) {
-	var r Block
-	r.base = IP{}
-	r.last = IP{}
+	for _, tt := range tests {
+		a, b, want := tt.a, tt.b, tt.want
 
-	// Mask is still blockZero, we can't split without a mask
-	splits := r.SplitCIDR(1)
+		ra := mustBlock(a)
+		rb := mustBlock(b)
 
-	if splits != nil {
-		t.Errorf("error in splitting a non CIDR range, got: %v, want nil)", splits)
+		got := ra.overlaps(rb)
+		if got != want {
+			t.Errorf("(%v).HasOverlapWith(%v) = %v; want %v", ra, rb, got, want)
+		}
 	}
 }
 
@@ -376,11 +476,11 @@ func TestBlockV4V6(t *testing.T) {
 	r1 := mustBlock("0.0.0.0/0")
 	r2 := mustBlock("::/0")
 
-	if r1.OverlapsWith(r2) != false {
-		t.Errorf("%q.OverlapsWith(%q) == %t, want %t", r1, r2, r1.OverlapsWith(r2), false)
+	if r1.overlaps(r2) != false {
+		t.Errorf("%q.OverlapsWith(%q) == %t, want %t", r1, r2, r1.overlaps(r2), false)
 	}
-	if r2.OverlapsWith(r1) != false {
-		t.Errorf("%q.OverlapsWith(%q) == %t, want %t", r2, r1, r2.OverlapsWith(r1), false)
+	if r2.overlaps(r1) != false {
+		t.Errorf("%q.OverlapsWith(%q) == %t, want %t", r2, r1, r2.overlaps(r1), false)
 	}
 	if r2.Covers(r1) != false {
 		t.Errorf("%q.Covers(%q) == %t, want %t", r2, r1, r2.Covers(r1), false)
@@ -388,32 +488,32 @@ func TestBlockV4V6(t *testing.T) {
 	if r1.Covers(r2) != false {
 		t.Errorf("%q.Covers(%q) == %t, want %t", r1, r2, r1.Covers(r2), false)
 	}
-	if r1.IsDisjunctWith(r2) != true {
-		t.Errorf("%q.IsDisjunctWith(%q) == %t, want %t", r1, r2, r1.IsDisjunctWith(r2), true)
+	if r1.isDisjunct(r2) != true {
+		t.Errorf("%q.IsDisjunctWith(%q) == %t, want %t", r1, r2, r1.isDisjunct(r2), true)
 	}
-	if r2.IsDisjunctWith(r1) != true {
-		t.Errorf("%q.IsDisjunctWith(%q) == %t, want %t", r2, r1, r2.IsDisjunctWith(r1), true)
+	if r2.isDisjunct(r1) != true {
+		t.Errorf("%q.IsDisjunctWith(%q) == %t, want %t", r2, r1, r2.isDisjunct(r1), true)
 	}
 }
 
-func TestFindFreeCIDRBlockNil(t *testing.T) {
+func TestFindRemoveNil(t *testing.T) {
 	r := mustBlock("::/0")
-	rs := r.FindFreeCIDR(nil)
+	rs := r.Diff(nil)
 
 	if rs[0] != r {
-		t.Errorf("FindFreeCIDR for inner == nil, got %v, want %v", rs, []Block{r})
+		t.Errorf("Remove(nil), got %v, want %v", rs, []Block{r})
 	}
 }
 
-func TestFindFreeCIDRBlockSelf(t *testing.T) {
+func TestFindRemoveSelf(t *testing.T) {
 	r := mustBlock("::/0")
-	rs := r.FindFreeCIDR([]Block{r})
+	rs := r.Diff([]Block{r})
 	if rs != nil {
-		t.Errorf("FindFreeCIDR for inner == self, got %#v, want nil", rs)
+		t.Errorf("Remove(self), got %#v, want nil", rs)
 	}
 }
 
-func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
+func TestFindRemoveIANAv6(t *testing.T) {
 	b, _ := ParseBlock("::/0")
 
 	var inner []Block
@@ -450,101 +550,9 @@ func TestFindFreeCIDRBlockIANAv6(t *testing.T) {
 		want = append(want, mustBlock(s))
 	}
 
-	rs := b.FindFreeCIDR(inner)
+	rs := b.Diff(inner)
 
 	if !reflect.DeepEqual(rs, want) {
-		t.Errorf("FindFreeCIDR for IANAv6 blocks, got %v, want %v", rs, want)
+		t.Errorf("Remove for IANAv6 blocks, got %v, want %v", rs, want)
 	}
 }
-
-func TestBlockToCIDRListV4(t *testing.T) {
-	b, _ := ParseBlock("10.0.0.15-10.0.0.236")
-	got := b.BlockToCIDRList()
-
-	var want []Block
-	for _, s := range []string{
-		"10.0.0.15/32",
-		"10.0.0.16/28",
-		"10.0.0.32/27",
-		"10.0.0.64/26",
-		"10.0.0.128/26",
-		"10.0.0.192/27",
-		"10.0.0.224/29",
-		"10.0.0.232/30",
-		"10.0.0.236/32",
-	} {
-		want = append(want, mustBlock(s))
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("%v.BlockToCIDRList(), got %v, want %v", b, got, want)
-	}
-}
-
-func TestBlockToCIDRListV6(t *testing.T) {
-	b, _ := ParseBlock("2001:db9::1-2001:db9::1234")
-	got := b.BlockToCIDRList()
-
-	var want []Block
-	for _, s := range []string{
-		"2001:db9::1/128",
-		"2001:db9::2/127",
-		"2001:db9::4/126",
-		"2001:db9::8/125",
-		"2001:db9::10/124",
-		"2001:db9::20/123",
-		"2001:db9::40/122",
-		"2001:db9::80/121",
-		"2001:db9::100/120",
-		"2001:db9::200/119",
-		"2001:db9::400/118",
-		"2001:db9::800/117",
-		"2001:db9::1000/119",
-		"2001:db9::1200/123",
-		"2001:db9::1220/124",
-		"2001:db9::1230/126",
-		"2001:db9::1234/128",
-	} {
-		want = append(want, mustBlock(s))
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("%v.BlockToCIDRList(), got %v, want %v", b, got, want)
-	}
-}
-
-func TestBlockToCIDRListV4Overflow(t *testing.T) {
-	b, _ := ParseBlock("255.255.255.253-255.255.255.255")
-	got := b.BlockToCIDRList()
-
-	var want []Block
-	for _, s := range []string{
-		"255.255.255.253/32",
-		"255.255.255.254/31",
-	} {
-		want = append(want, mustBlock(s))
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("%v.BlockToCIDRList(), got %v, want %v", b, got, want)
-	}
-}
-
-func TestBlockToCIDRListV6Overflow(t *testing.T) {
-	b, _ := ParseBlock("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffd-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
-	got := b.BlockToCIDRList()
-
-	var want []Block
-	for _, s := range []string{
-		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffd/128",
-		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe/127",
-	} {
-		want = append(want, mustBlock(s))
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("%v.BlockToCIDRList(), got %v, want %v", b, got, want)
-	}
-}
-
-*/

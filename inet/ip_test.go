@@ -48,8 +48,8 @@ func TestIP_addOne(t *testing.T) {
 	}
 
 	for _, tt := range ips {
-		if got, ok := tt.in.addOne(); got != tt.want || ok != tt.ok {
-			t.Errorf("(%v).addOne = %v, %v; want: %v, %v", tt.in, got, ok, tt.want, tt.ok)
+		if got := tt.in.addOne(); got != tt.want {
+			t.Errorf("(%v).addOne = %v; want: %v", tt.in, got, tt.want)
 		}
 	}
 
@@ -71,8 +71,8 @@ func TestIP_subOne(t *testing.T) {
 	}
 
 	for _, tt := range ips {
-		if got, ok := tt.in.subOne(); got != tt.want || ok != tt.ok {
-			t.Errorf("(%v).subOne = %v, %v; want: %v, %v", tt.in, got, ok, tt.want, tt.ok)
+		if got := tt.in.subOne(); got != tt.want {
+			t.Errorf("(%v).subOne = %v; want: %v", tt.in, got, tt.want)
 		}
 	}
 }

@@ -48,7 +48,7 @@ func ExampleIP_Reverse() {
 	// "0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.e.f.f.f"
 }
 
-func ExampleIP_ToNetIP() {
+func ExampleIP_ToStdIP() {
 	ip1, _ := inet.ParseIP("192.168.2.1")
 	ip2, _ := inet.ParseIP("fffe:db8::")
 	fmt.Printf("%#v\n", ip1.ToStdIP())

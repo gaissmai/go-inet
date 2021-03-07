@@ -8,28 +8,24 @@ import (
 )
 
 const (
-	ipv4 = 4
-	ipv6 = 6
+	v4 = 4
+	v6 = 6
 )
+
+// IP represents a single IPv4 or IPv6 address.
+type IP struct {
+	version uint8
+	uint128 // hi, lo uint64
+}
+
+// the zero-value of type IP
+var ipZero IP
 
 var errInvalidIP = errors.New("invalid IP")
 
-// IP represents a single IPv4 or IPv6 address.
-//
-// All IPv6-mapped IPv4 addresses are unmapped to IPv4.
-// That is, only the IPv4 part is stored, without the IPv6 wrapper.
-//
-// This IP representation is comparable and can be used as keys in maps
-// and fast sorted without conversions to/from the different IP versions.
-type IP struct {
-	version uint8
-	address // hi, lo uint64
-}
-
-// the zero-value for type IP, not public, see IsZero
-var ipZero = IP{}
-
 // ParseIP parses and returns the input as type IP.
+// Returns the zero value for IP and error on invalid input.
+//
 // The input type may be:
 //   string
 //   net.IP
@@ -38,7 +34,6 @@ var ipZero = IP{}
 // ("2001:db8::affe"), or IPv4-mapped IPv6 ("::ffff:172.16.0.1").
 //
 // The hard part is done by net.ParseIP().
-// Returns the zero value for IP and error on invalid input.
 func ParseIP(i interface{}) (IP, error) {
 	switch v := i.(type) {
 	case net.IP:
@@ -69,38 +64,42 @@ func fromStdIP(std net.IP) (IP, error) {
 
 // ToStdIP converts to net.IP. Panics on invalid input.
 func (ip IP) ToStdIP() net.IP {
-	if ip.IsZero() {
+	if ip == ipZero {
 		panic("ToStdIP() called on zero value")
 	}
 	return net.IP(ip.toBytes())
 }
 
-// IsZero reports whether ip is the zero value of the IP type.
+// IsValid reports whether ip is a valid address and not the zero value of the IP type.
 // The zero value is not a valid IP address of any type.
 //
 // Note that "0.0.0.0" and "::" are not the zero value.
-func (ip IP) IsZero() bool {
-	return ip.version == 0
+func (ip IP) IsValid() bool {
+	return ip != ipZero
 }
 
 // Is4 reports whether ip is an IPv4 address.
+//
+// There is no Is4in6. IPv4-mapped IPv6 addresses are stripped down to IPv4 otherwise the sort order would be undefined.
 func (ip IP) Is4() bool {
-	return ip.version == ipv4
+	return ip.version == v4
 }
 
 // Is6 reports whether ip is an IPv6 address.
+//
+// There is no Is4in6. IPv4-mapped IPv6 addresses are stripped down to IPv4 otherwise the sort order would be undefined.
 func (ip IP) Is6() bool {
-	return ip.version == ipv6
+	return ip.version == v6
 }
 
 // String returns the string form of the IP address.
 // It returns one of 3 forms:
 //
-//   - "invalid IP", if ip is the zero value
+//   - "invalid IP", if IsValid is false
 //   - IPv4 dotted decimal ("127.0.0.1")
 //   - IPv6 ("2001:db8::1")
 func (ip IP) String() string {
-	if ip.IsZero() {
+	if ip == ipZero {
 		return "invalid IP"
 	}
 	return ip.ToStdIP().String()
@@ -120,10 +119,10 @@ func (ip IP) Less(ip2 IP) bool {
 
 // Expand IP address into canonical form, useful for grep, aligned output and lexical sort.
 func (ip IP) Expand() string {
-	if ip.version == ipv4 {
+	if ip.version == v4 {
 		return expandIPv4(ip.toBytes())
 	}
-	if ip.version == ipv6 {
+	if ip.version == v6 {
 		return expandIPv6(ip.toBytes())
 	}
 	return "invalid IP"
@@ -171,10 +170,10 @@ func expandIPv6(ip []byte) string {
 
 // Reverse IP address, needed for PTR entries in DNS zone files.
 func (ip IP) Reverse() string {
-	if ip.version == ipv4 {
+	if ip.version == v4 {
 		return reverseIPv4(ip.toBytes())
 	}
-	if ip.version == ipv6 {
+	if ip.version == v6 {
 		return reverseIPv6(ip.toBytes())
 	}
 	return "invalid IP"
