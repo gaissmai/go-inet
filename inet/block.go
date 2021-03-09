@@ -34,10 +34,10 @@ var (
 var blockZero Block
 
 // Base returns the blocks base IP address.
-func (a Block) Base() IP { return a.base }
+func (b Block) Base() IP { return b.base }
 
 // Last returns the blocks last IP address.
-func (a Block) Last() IP { return a.last }
+func (b Block) Last() IP { return b.last }
 
 // ParseBlock parses and returns the input as type Block.
 // The input type may be:
@@ -184,12 +184,12 @@ func (b Block) IsValid() bool {
 	return b.base.IsValid() && b.last.IsValid()
 }
 
-// Is4 reports whether block spans an IPv4 addresses.
+// Is4 reports whether block is IPv4.
 func (b Block) Is4() bool {
 	return b.base.version == v4
 }
 
-// Is4 reports whether block spans an IPv4 addresses.
+// Is6 reports whether block is IPv6.
 func (b Block) Is6() bool {
 	return b.base.version == v6
 }
@@ -225,14 +225,14 @@ func (b Block) String() string {
 //
 //  a |-----------------| |-----------------| |-----------------|
 //  b   |------------|    |------------|           |------------|
-func (a Block) Covers(b Block) bool {
-	if a.base.version != b.base.version {
+func (b Block) Covers(c Block) bool {
+	if b.base.version != c.base.version {
 		return false
 	}
-	if a == b {
+	if b == c {
 		return false
 	}
-	if a.base.uint128.cmp(b.base.uint128) <= 0 && a.last.uint128.cmp(b.last.uint128) >= 0 {
+	if b.base.uint128.cmp(c.base.uint128) <= 0 && b.last.uint128.cmp(c.last.uint128) >= 0 {
 		return true
 	}
 	return false
@@ -240,27 +240,27 @@ func (a Block) Covers(b Block) bool {
 
 // Less reports whether the a should be sorted before b.
 // REMEMBER: sort supersets always to the left of their subsets!
-// If a.Covers(b) is true then a.Less(b) must also be true.
+// If b.Covers(c) is true then b.Less(c) must also be true.
 //
-//  a |---|
-//  b       |------|
+//  b |---|
+//  c       |------|
 //
-//  a |-------|
-//  b    |------------|
+//  b |-------|
+//  c    |------------|
 //
-//  a |-----------------|
-//  b    |----------|
+//  b |-----------------|
+//  c    |----------|
 //
-//  a |-----------------|
-//  b |------------|
-func (a Block) Less(b Block) bool {
-	if a.base.Less(b.base) {
+//  b |-----------------|
+//  c |------------|
+func (b Block) Less(c Block) bool {
+	if b.base.Less(c.base) {
 		return true
 	}
 
-	if a.base == b.base { // ... and a covers b,
+	if b.base == c.base { // ... and a covers b,
 		//	REMEMBER: sort containers to the left
-		return a.last.uint128.cmp(b.last.uint128) == 1
+		return b.last.uint128.cmp(c.last.uint128) == 1
 	}
 
 	return false
@@ -318,7 +318,7 @@ func (a IP) toCIDRsRec(buf []Block, b IP) []Block {
 
 	// get next mask (+1 Bit)
 	n := a.commonPrefixLen(b)
-	m := mask_uint128[n+1]
+	m := maskUint128[n+1]
 
 	// split range with new mask s, s+1
 	u := a.mkLastIP(m)
@@ -380,23 +380,23 @@ func (b Block) Diff(bs []Block) []Block {
 	return out
 }
 
-// isDisjunct reports whether the Blocks a and b are disjunct
-//  a       |----------|
-//  b |---|
+// isDisjunct reports whether the Blocks b and c are disjunct
+//  b       |----------|
+//  c |---|
 //
-//  a |------|
-//  b          |---|
-func (a Block) isDisjunct(b Block) bool {
+//  b |------|
+//  c          |---|
+func (b Block) isDisjunct(c Block) bool {
 
 	//  a       |----------|
 	//  b |---|
-	if b.last.Less(a.base) {
+	if c.last.Less(b.base) {
 		return true
 	}
 
 	//  a |------|
 	//  b          |---|
-	if a.last.Less(b.base) {
+	if b.last.Less(c.base) {
 		return true
 	}
 
@@ -405,25 +405,25 @@ func (a Block) isDisjunct(b Block) bool {
 
 // overlaps reports whether the Blocks overlaps.
 //
-//  a    |-------|
-//  b |------|
-//
-//  a |------|
 //  b    |-------|
+//  c |------|
 //
-//  a |----|
-//  b      |---------|
+//  b |------|
+//  c    |-------|
 //
-//  a      |---------|
 //  b |----|
-func (a Block) overlaps(b Block) bool {
-	if a == b {
+//  c      |---------|
+//
+//  b      |---------|
+//  c |----|
+func (b Block) overlaps(c Block) bool {
+	if b == c {
 		return false
 	}
-	if a.Covers(b) || b.Covers(a) {
+	if b.Covers(c) || c.Covers(b) {
 		return false
 	}
-	if a.isDisjunct(b) {
+	if b.isDisjunct(c) {
 		return false
 	}
 	return true

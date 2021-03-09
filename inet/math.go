@@ -42,15 +42,13 @@ func (u uint128) cmp(m uint128) int {
 	if u.hi == m.hi {
 		if u.lo < m.lo {
 			return -1
-		} else {
-			return 1
 		}
+		return 1
 	}
 	if u.hi < m.hi {
 		return -1
-	} else {
-		return 1
 	}
+	return 1
 }
 
 // strip high 96 bits
@@ -140,16 +138,16 @@ func (ip IP) commonPrefixLen(ip2 IP) uint8 {
 }
 
 // isCIDR returns true if the IP pair forms a CIDR.
-func (a IP) isCIDR(b IP) bool {
+func (ip IP) isCIDR(ip2 IP) bool {
 
 	// count common prefix bits ... and
 	// get mask from pre calculated lookup table
-	mask := mask_uint128[a.commonPrefixLen(b)]
+	mask := maskUint128[ip.commonPrefixLen(ip2)]
 
 	// check if mask applied to base and last results
 	// in all zeros and all ones
-	allZeroBase := a.xor(a.and(mask)) == uint128{}
-	allOnesLast := b.or(mask) == uint128{^uint64(0), ^uint64(0)}
+	allZeroBase := ip.xor(ip.and(mask)) == uint128{}
+	allOnesLast := ip2.or(mask) == uint128{^uint64(0), ^uint64(0)}
 
 	return allZeroBase && allOnesLast
 }

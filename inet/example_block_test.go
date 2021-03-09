@@ -5,7 +5,7 @@ import (
 	"net"
 	"sort"
 
-	"github.com/gaissmai/go-inet/inet"
+	"github.com/gaissmai/go-inet/v2/inet"
 )
 
 func ExampleParseBlock() {
