@@ -71,6 +71,18 @@ func ExampleMerge() {
 
 }
 
+func ExampleBlock_CIDRs() {
+	b, _ := inet.ParseBlock("10.0.0.6-10.0.0.99")
+	fmt.Printf("%v\n", b.CIDRs())
+
+	b, _ = inet.ParseBlock("2001:db8::affe-2001:db8::ffff")
+	fmt.Printf("%v\n", b.CIDRs())
+
+	// Output:
+	// [10.0.0.6/31 10.0.0.8/29 10.0.0.16/28 10.0.0.32/27 10.0.0.64/27 10.0.0.96/30]
+	// [2001:db8::affe/127 2001:db8::b000/116 2001:db8::c000/114]
+}
+
 func ExampleBlock_Diff_v4() {
 	outer, _ := inet.ParseBlock("192.168.2.0/24")
 
