@@ -8,6 +8,14 @@ import (
 	"github.com/gaissmai/go-inet/v2/inet"
 )
 
+func mustParseBlock(s string) inet.Block {
+	b, err := inet.ParseBlock(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 func ExampleParseBlock() {
 	for _, anyOf := range []interface{}{
 		"fe80::1-fe80::2",         // block from string
@@ -85,42 +93,26 @@ func ExampleBlock_CIDRs() {
 
 func ExampleBlock_Diff_v4() {
 	outer, _ := inet.ParseBlock("192.168.2.0/24")
-
-	inner := make([]inet.Block, 0)
-	for _, s := range []string{
-		"192.168.2.0/26",
-		"192.168.2.240-192.168.2.249",
-	} {
-		b, _ := inet.ParseBlock(s)
-		inner = append(inner, b)
+	inner := []inet.Block{
+		mustParseBlock("192.168.2.0/26"),
+		mustParseBlock("192.168.2.240-192.168.2.249"),
 	}
 
-	var got []inet.Block
-	for _, b := range outer.Diff(inner) {
-		got = append(got, b.CIDRs()...)
-	}
-	fmt.Printf("%v - %v\ndiff: %v\n", outer, inner, got)
+	fmt.Printf("%v - %v\ndiff: %v\n", outer, inner, outer.Diff(inner))
 
 	// Output:
 	// 192.168.2.0/24 - [192.168.2.0/26 192.168.2.240-192.168.2.249]
-	// diff: [192.168.2.64/26 192.168.2.128/26 192.168.2.192/27 192.168.2.224/28 192.168.2.250/31 192.168.2.252/30]
-
+	// diff: [192.168.2.64-192.168.2.239 192.168.2.250-192.168.2.255]
 }
 
 func ExampleBlock_Diff_v6() {
 
 	outer, _ := inet.ParseBlock("2001:db8:de00::/40")
-	b, _ := inet.ParseBlock("2001:db8:dea0::/44")
-	inner := []inet.Block{b}
+	inner, _ := inet.ParseBlock("2001:db8:dea0::/44")
 
-	var got []inet.Block
-	for _, b := range outer.Diff(inner) {
-		got = append(got, b.CIDRs()...)
-	}
-	fmt.Printf("%v - %v\ndiff: %v\n", outer, inner, got)
+	fmt.Printf("%v - %v\ndiff: %v\n", outer, inner, outer.Diff([]inet.Block{inner}))
 
 	// Output:
-	// 2001:db8:de00::/40 - [2001:db8:dea0::/44]
-	// diff: [2001:db8:de00::/41 2001:db8:de80::/43 2001:db8:deb0::/44 2001:db8:dec0::/42]
-
+	// 2001:db8:de00::/40 - 2001:db8:dea0::/44
+	// diff: [2001:db8:de00::-2001:db8:de9f:ffff:ffff:ffff:ffff:ffff 2001:db8:deb0::-2001:db8:deff:ffff:ffff:ffff:ffff:ffff]
 }
