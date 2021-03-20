@@ -75,6 +75,10 @@ func TestTreeNil(t *testing.T) {
 		t.Errorf("tree.Len() = %v, want 0", l)
 	}
 
+	if i := tree.Lookup(nil); i != nil {
+		t.Errorf("tree.Lookup(nil) = %v, want nil", i)
+	}
+
 	for _, tt := range []struct {
 		f    func(Interface) Interface
 		item Interface
@@ -101,6 +105,24 @@ func TestTreeInsertDup(t *testing.T) {
 	_, err := NewTree([]Interface{ival{42, 4242}, ival{42, 4242}})
 	if err == nil {
 		t.Errorf("expected error, got nil")
+	}
+}
+
+func TestTreeLookup(t *testing.T) {
+
+	is := []Interface{
+		ival{1, 100},
+		ival{45, 60},
+	}
+
+	tree, err := NewTree(is)
+	if err != nil {
+		t.Error(err)
+	}
+
+	item := ival{47, 62}
+	if got := tree.Lookup(item); !got.Equal(ival{1, 100}) {
+		t.Errorf("Lookup(%v) = %v, want %v", item, got, ival{1, 100})
 	}
 }
 

@@ -100,7 +100,7 @@ func (ip IP) Is6() bool {
 //   "2001:db8::1"
 func (ip IP) String() string {
 	if ip == ipZero {
-		return "invalid IP"
+		return errInvalidIP.Error()
 	}
 	return ip.ToStdIP().String()
 }
@@ -125,7 +125,7 @@ func (ip IP) Expand() string {
 	if ip.version == v6 {
 		return expandIPv6(ip.toBytes())
 	}
-	return "invalid IP"
+	return errInvalidIP.Error()
 }
 
 //  127.0.0.1 -> 127.000.000.001
@@ -176,7 +176,7 @@ func (ip IP) Reverse() string {
 	if ip.version == v6 {
 		return reverseIPv6(ip.toBytes())
 	}
-	return "invalid IP"
+	return errInvalidIP.Error()
 }
 
 // []byte{127,0,0,1}} -> "1.0.0.127"

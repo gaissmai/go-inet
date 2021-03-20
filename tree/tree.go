@@ -1,14 +1,3 @@
-/*
-Package tree is a minimal interval tree implementation.
-
-All interval types implementing the tree.Interface can use this library for fast lookups
-and a stringified tree representation.
-
-Application example:
-The author uses it mainly for fast O(log n) lookups in IP ranges
-where patricia-tries with O(1) are not feasible.
-The tree representation allows a clear overview of the IP address block nestings.
-*/
 package tree
 
 import (
@@ -100,7 +89,7 @@ func (t *Tree) buildIndexTree(p, c int) {
 		return
 	}
 
-	// not covered by any child, just append at this levelthe child index
+	// not covered by any child, just append at this level the child index
 	t.tree[p] = append(t.tree[p], c)
 	return
 }
@@ -110,23 +99,35 @@ func (t *Tree) buildIndexTree(p, c int) {
 //
 // Example: Can be used in IP-ranges or IP-CIDRs to find the so called longest-prefix-match.
 func (t Tree) Lookup(item Interface) Interface {
-	if item == nil {
+	if t.items == nil || item == nil {
 		return nil
 	}
+	// rec-descent
+	return t.lookup(root, item)
+}
 
-	// find pos in t.items slice
-	i := sort.Search(len(t.items), func(i int) bool { return item.Less(t.items[i]) })
+func (t Tree) lookup(p int, item Interface) Interface {
+	// dereference
+	cs := t.tree[p]
 
-	if i == 0 {
-		return nil
-	}
+	// find pos in slice on this level
+	i := sort.Search(len(cs), func(i int) bool { return item.Less(t.items[cs[i]]) })
 
 	// child before idx may be equal or covers item
-	i--
-	if t.items[i].Equal(item) || t.items[i].Covers(item) {
-		return t.items[i]
+	if i > 0 {
+		i--
+		if t.items[cs[i]].Equal(item) {
+			return t.items[cs[i]]
+		}
+		if t.items[cs[i]].Covers(item) {
+			return t.lookup(cs[i], item)
+		}
 	}
 
+	// return parent at this level
+	if p != root {
+		return t.items[p]
+	}
 	return nil
 }
 

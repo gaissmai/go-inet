@@ -57,17 +57,6 @@ func (ip IP) strip96() IP {
 	return ip
 }
 
-// cmp
-func (ip IP) cmp(ip2 IP) int {
-	if ip.version < ip2.version {
-		return -1
-	}
-	if ip.version > ip2.version {
-		return 1
-	}
-	return ip.uint128.cmp(ip2.uint128)
-}
-
 // fromBytes makes the IP{} from network ordered byte slice
 func fromBytes(bs []byte) (IP, error) {
 	l := len(bs)

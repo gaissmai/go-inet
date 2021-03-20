@@ -18,7 +18,7 @@ import (
 // This Block representation is comparable and can be used as key in maps
 // and fast sorted without conversions to/from the different IP versions.
 //
-// Each Block object only stores two IP addresses, the base and last address of the range ot network.
+// Each Block object only stores two IP addresses, the base and last address of the range or network.
 type Block struct {
 	base IP
 	last IP
@@ -33,10 +33,10 @@ var (
 // the zero-value of type Block
 var blockZero Block
 
-// Base returns the blocks base IP address.
+// Base returns the base IP address of the block.
 func (b Block) Base() IP { return b.base }
 
-// Last returns the blocks last IP address.
+// Last returns the last IP address of the block.
 func (b Block) Last() IP { return b.last }
 
 // ParseBlock parses and returns the input as type Block.
@@ -207,7 +207,7 @@ func (b Block) IsCIDR() bool {
 //   "2001:db8::/32"         if b.IsCIDR is true
 func (b Block) String() string {
 	if b == blockZero {
-		return "invalid Block"
+		return errInvalidBlock.Error()
 	}
 	if !b.IsCIDR() {
 		return fmt.Sprintf("%s-%s", b.base, b.last)
@@ -254,11 +254,12 @@ func (b Block) Covers(c Block) bool {
 //  b |-----------------|
 //  c |------------|
 func (b Block) Less(c Block) bool {
+	// Less() also checks the versions
 	if b.base.Less(c.base) {
 		return true
 	}
 
-	if b.base == c.base { // ... and a covers b,
+	if b.base == c.base { // ... and a covers b
 		//	REMEMBER: sort containers to the left
 		return b.last.uint128.cmp(c.last.uint128) == 1
 	}
