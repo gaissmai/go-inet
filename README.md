@@ -9,6 +9,9 @@
 
 A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks.
 
+Version v2 uses the math based on `type uint128 struct {hi uint64, lo uint64}`, no longer bytes fiddling in network byte order.
+The API is reduced to the bare minimum, the tree representation is abstracted with an Interface.
+
 ## go-inet/inet
 
 Package inet represents IP-addresses and IP-Blocks as comparable types.
@@ -53,8 +56,6 @@ The tree can be visualized as:
 
 Full `go doc` style documentation for the project can be viewed online without
 installing this package by using the excellent [Pkg.go.dev site](https://pkg.go.dev/github.com/gaissmai/go-inet/v2)
-
-Please study the applications in the [examples directory](https://github.com/gaissmai/go-inet/v2/tree/master/examples) to get familiar with the API.
 
 ## Installation
 
