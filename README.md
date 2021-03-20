@@ -52,14 +52,14 @@ The tree can be visualized as:
 
 
 Full `go doc` style documentation for the project can be viewed online without
-installing this package by using the excellent [Pkg.go.dev site](https://pkg.go.dev/github.com/gaissmai/go-inet)
+installing this package by using the excellent [Pkg.go.dev site](https://pkg.go.dev/github.com/gaissmai/go-inet/v2)
 
-Please study the applications in the [examples directory](https://github.com/gaissmai/go-inet/tree/master/examples) to get familiar with the API.
+Please study the applications in the [examples directory](https://github.com/gaissmai/go-inet/v2/tree/master/examples) to get familiar with the API.
 
 ## Installation
 
 ```bash
-$ go get -u github.com/gaissmai/go-inet/...
+$ go get -u github.com/gaissmai/go-inet/v2/...
 ```
 You can also view the documentation locally once the package is installed with
 the `godoc` tool by running
@@ -68,7 +68,7 @@ the `godoc` tool by running
 $ godoc -http=:6060
 ```
 and pointing your browser to
-http://localhost:6060/pkg/github.com/gaissmai/go-inet
+http://localhost:6060/pkg/github.com/gaissmai/go-inet/v2
 
 ## License
 
