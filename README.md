@@ -16,12 +16,17 @@ The API is reduced to the bare minimum, the tree representation is abstracted wi
 
 Package inet represents IP-addresses and IP-Blocks as comparable types.
 
-The IP addresses and blocks from this package can be used as keys in maps, freely copied and fast sorted
-without prior conversion from/to IPv4/IPv6.
-
 Some missing utility functions in the standard library for IP-addresses and IP-blocks are provided.
 
-Blocks are IP-networks or IP-ranges, e.g.
+This IP representation is comparable and can be sorted very quickly without prior conversions to/from the different IP versions.
+
+The library is mainly intended for fast ACL-lookups and for IP address management (IPAM) in global scope
+and not for host related systems programming.
+
+So, no IP address zone indices are supported and IPv4-mapped IPv6 addresses are stripped down to plain IPv4 addresses.
+The information of the prior mapping is discarded.
+
+Blocks are IP-networks or arbitrary IP-ranges, e.g.
 
     192.168.0.1/24              // CIDR
     ::1/128                     // CIDR
@@ -30,8 +35,10 @@ Blocks are IP-networks or IP-ranges, e.g.
 
 ## go-inet/tree
 
-Tree is an implementation of a CIDR or Block tree for fast IP lookup with longest-prefix-match.
-It is *NOT* a standard patricia-trie, this isn't possible for general blocks not represented as CIDRs.
+Package tree is a minimal interval tree implementation.
+
+All interval types implementing the tree.Interface can use this library for fast lookups
+and a stringified tree representation.
 
 The tree can be visualized as:
 
