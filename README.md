@@ -5,6 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/go-inet)](https://goreportcard.com/report/github.com/gaissmai/go-inet)
 [![Coverage Status](https://coveralls.io/repos/github/gaissmai/go-inet/badge.svg)](https://coveralls.io/github/gaissmai/go-inet)
 
+## ATTENTION: v2 is coming ...
 
 A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks.
 
