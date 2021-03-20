@@ -6,9 +6,12 @@ import (
 	"testing"
 )
 
+// simple test interval
 type ival struct {
 	lo, hi int
 }
+
+// implementing tree.Interface
 
 // Equal
 func (a ival) Equal(i Interface) bool {
@@ -72,19 +75,18 @@ func TestTreeNil(t *testing.T) {
 		t.Errorf("tree.Len() = %v, want 0", l)
 	}
 
-	// func(Interface) (Interface, bool)
 	for _, tt := range []struct {
 		f    func(Interface) Interface
 		item Interface
 		name string
 	}{
-		{tree.Superset, nil, "tree.Contains"},
+		{tree.Superset, nil, "tree.Superset"},
 		{tree.Lookup, nil, "tree.Lookup"},
 		//
-		{tree.Superset, ival{}, "tree.Contains"},
+		{tree.Superset, ival{}, "tree.Superset"},
 		{tree.Lookup, ival{}, "tree.Lookup"},
 		//
-		{tree.Superset, ival{1, 2}, "tree.Contains"},
+		{tree.Superset, ival{1, 2}, "tree.Superset"},
 		{tree.Lookup, ival{1, 2}, "tree.Lookup"},
 	} {
 		if m := tt.f(tt.item); m != nil {
@@ -98,7 +100,7 @@ func TestTreeInsertDup(t *testing.T) {
 
 	_, err := NewTree([]Interface{ival{42, 4242}, ival{42, 4242}})
 	if err == nil {
-		t.Errorf("expected dups, got nil")
+		t.Errorf("expected error, got nil")
 	}
 }
 
@@ -117,7 +119,7 @@ func TestTreeRandom(t *testing.T) {
 			t.Errorf("Lookup(%v), got %v", item, m)
 		}
 		if m := tree.Superset(item); m == nil {
-			t.Errorf("Contains(%v), got %v", item, m)
+			t.Errorf("Superset(%v), got %v", item, m)
 		}
 	}
 }
@@ -138,8 +140,3 @@ func TestTreeRandom(t *testing.T) {
 //          ├─ 7...59
 //          └─ 8...74
 //             └─ 8...58
-
-var sVals = []Interface{
-	ival{0, 15}, ival{0, 6}, ival{1, 245}, ival{1, 87}, ival{1, 18}, ival{2, 89}, ival{4, 211}, ival{5, 140},
-	ival{5, 66}, ival{7, 247}, ival{7, 206}, ival{7, 88}, ival{7, 59}, ival{8, 74}, ival{8, 58},
-}

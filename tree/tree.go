@@ -1,5 +1,13 @@
 /*
-Package tree ... TODO
+Package tree is a minimal interval tree implementation.
+
+All interval types implementing the tree.Interface can use this library for fast lookups
+and a stringified tree representation.
+
+Application example:
+The author uses it mainly for fast O(log n) lookups in IP ranges
+where patricia-tries with O(1) are not feasible.
+The tree representation allows a clear overview of the IP address block nestings.
 */
 package tree
 
@@ -35,8 +43,8 @@ type Tree struct {
 	// the sorted items, immutable, stored as slice, not as tree
 	items []Interface
 
-	// top-down parent->child tree, 1:n
-	topDown map[int][]int
+	// top-down parentIdx -> []childIdx tree
+	tree map[int][]int
 }
 
 // Len returns the number of items in tree.
@@ -53,19 +61,17 @@ func NewTree(items []Interface) (Tree, error) {
 	}
 
 	t.items = make([]Interface, len(items))
-	t.topDown = make(map[int][]int)
+	t.tree = make(map[int][]int)
 
 	// copy/clone and sort input, decouple from caller
 	copy(t.items, items)
 	sort.Slice(t.items, func(i, j int) bool { return t.items[i].Less(t.items[j]) })
 
 	// items are sorted, build the index tree, O(n), bail out on duplicates
-	var last Interface
 	for i := range t.items {
-		if t.items[i] == last {
-			return Tree{}, fmt.Errorf("duplicate item: %v", last)
+		if i > 0 && t.items[i-1].Equal(t.items[i]) {
+			return Tree{}, fmt.Errorf("duplicate item: %v", t.items[i])
 		}
-		last = t.items[i]
 		t.buildIndexTree(root, i)
 	}
 	return t, nil
@@ -76,13 +82,13 @@ func NewTree(items []Interface) (Tree, error) {
 func (t *Tree) buildIndexTree(p, c int) {
 
 	// if child index slice is empty, just append the childs index
-	if t.topDown[p] == nil {
-		t.topDown[p] = append(t.topDown[p], c)
+	if t.tree[p] == nil {
+		t.tree[p] = append(t.tree[p], c)
 		return
 	}
 
 	// everything is sorted, just compare with last child index
-	cs := t.topDown[p] // dereference
+	cs := t.tree[p] // dereference
 
 	// get last child index of this parent
 	cLast := cs[len(cs)-1]
@@ -95,7 +101,7 @@ func (t *Tree) buildIndexTree(p, c int) {
 	}
 
 	// not covered by any child, just append at this levelthe child index
-	t.topDown[p] = append(t.topDown[p], c)
+	t.tree[p] = append(t.tree[p], c)
 	return
 }
 
@@ -108,7 +114,7 @@ func (t Tree) Lookup(item Interface) Interface {
 		return nil
 	}
 
-	// find pos in items in sorted t.items slice
+	// find pos in t.items slice
 	i := sort.Search(len(t.items), func(i int) bool { return item.Less(t.items[i]) })
 
 	if i == 0 {
@@ -134,7 +140,7 @@ func (t Tree) Superset(item Interface) Interface {
 	}
 
 	// find first item with O(n) in root level
-	for _, v := range t.topDown[root] {
+	for _, v := range t.tree[root] {
 		if t.items[v].Equal(item) || t.items[v].Covers(item) {
 			return t.items[v]
 		}
@@ -156,7 +162,7 @@ func (t Tree) String() string {
 
 // walkAndStringify rec-descent, top-down
 func (t Tree) walkAndStringify(p int, buf *strings.Builder, pad string) *strings.Builder {
-	cs := t.topDown[p]
+	cs := t.tree[p]
 	l := len(cs)
 
 	// stop condition, no more childs
