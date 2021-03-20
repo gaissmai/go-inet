@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gaissmai/go-inet/v2/inet"
-	"github.com/gaissmai/go-ivaltree/interval"
+	"github.com/gaissmai/go-inet/v2/tree"
 )
 
 type IPItem struct {
@@ -25,7 +25,7 @@ func NewIPItem(b string, ss ...string) IPItem {
 // implement the Item interface for inet.Block
 // ###########################################
 
-func (b IPItem) Less(i interval.Interface) bool {
+func (b IPItem) Less(i tree.Interface) bool {
 	if b.Block == i.(IPItem).Block {
 		return b.text < i.(IPItem).text
 	}
@@ -33,11 +33,11 @@ func (b IPItem) Less(i interval.Interface) bool {
 	return b.Block.Less(i.(IPItem).Block)
 }
 
-func (b IPItem) Equal(i interval.Interface) bool {
+func (b IPItem) Equal(i tree.Interface) bool {
 	return b == i.(IPItem)
 }
 
-func (b IPItem) Covers(i interval.Interface) bool {
+func (b IPItem) Covers(i tree.Interface) bool {
 	return b.Block.Covers(i.(IPItem).Block)
 }
 
@@ -52,7 +52,7 @@ func (b IPItem) String() string {
 
 func TestIntervalTreeInsert(t *testing.T) {
 
-	is := []interval.Interface{
+	is := []tree.Interface{
 		NewIPItem("2001:db8::/32"),
 		NewIPItem("127.0.0.1"),
 		NewIPItem("::/0"),
@@ -60,7 +60,7 @@ func TestIntervalTreeInsert(t *testing.T) {
 		NewIPItem("0.0.0.0/0"),
 	}
 
-	tr, _ := interval.NewTree(is)
+	tr, _ := tree.NewTree(is)
 
 	got := tr.String()
 	want := `▼
@@ -71,42 +71,13 @@ func TestIntervalTreeInsert(t *testing.T) {
    └─ 2001:db8::/32
 `
 
-	if got != want {
-		t.Errorf("got:\n%v\nwant:\n%v", got, want)
-	}
-}
-
-func TestIntervalTreeInsertDup(t *testing.T) {
-	it := []interval.Interface{
-		NewIPItem("2001:db8::/32"),
-		NewIPItem("127.0.0.1"),
-		NewIPItem("::/0"),
-		NewIPItem("::1"),
-		NewIPItem("::1"),
-		NewIPItem("0.0.0.0/0"),
-	}
-
-	// insert dup
-	tr, dups := interval.NewTree(it)
-	if dups == nil {
-		t.Errorf("dup Insert(), want dups, got <nil>")
-	}
-
-	got := tr.String()
-	want := `▼
-├─ 0.0.0.0/0
-│  └─ 127.0.0.1/32
-└─ ::/0
-   ├─ ::1/128
-   └─ 2001:db8::/32
-`
 	if got != want {
 		t.Errorf("got:\n%v\nwant:\n%v", got, want)
 	}
 }
 
 func TestIntervalTreeLookup(t *testing.T) {
-	it := []interval.Interface{
+	it := []tree.Interface{
 		NewIPItem("0.0.0.0/0"),
 		NewIPItem("127.0.0.0/8"),
 		NewIPItem("192.168.0.0/16"),
@@ -115,7 +86,7 @@ func TestIntervalTreeLookup(t *testing.T) {
 		NewIPItem("2001:db8::/32"),
 	}
 
-	tr, _ := interval.NewTree(it)
+	tr, _ := tree.NewTree(it)
 
 	tests := []struct {
 		in   IPItem
@@ -143,7 +114,7 @@ func TestIntervalTreeLookup(t *testing.T) {
 }
 
 func TestIntervalTreeContains(t *testing.T) {
-	it := []interval.Interface{
+	it := []tree.Interface{
 		NewIPItem("0.0.0.0/4"),
 		NewIPItem("127.0.0.0/8"),
 		NewIPItem("192.168.0.0/16"),
@@ -155,7 +126,7 @@ func TestIntervalTreeContains(t *testing.T) {
 		NewIPItem("2001:db8::/32"),
 	}
 
-	tr, _ := interval.NewTree(it)
+	tr, _ := tree.NewTree(it)
 
 	valid := []struct {
 		in   IPItem
@@ -172,7 +143,7 @@ func TestIntervalTreeContains(t *testing.T) {
 	}
 
 	for _, tt := range valid {
-		got := tr.Contains(tt.in)
+		got := tr.Superset(tt.in)
 		if got != tt.want {
 			t.Errorf("Contains(%v) = %v; want %v", tt.in, got, tt.want)
 		}
@@ -191,25 +162,25 @@ func TestIntervalTreeContains(t *testing.T) {
 	}
 
 	for _, tt := range invalid {
-		got := tr.Contains(tt.in)
+		got := tr.Superset(tt.in)
 		if got != nil {
 			t.Errorf("Contains(%v) =  %v; want: %v", tt.in, got, nil)
 		}
 	}
 
-	if got := tr.Contains(nil); got != nil {
+	if got := tr.Superset(nil); got != nil {
 		t.Errorf("Contains(nil) = %v; want %v", got, nil)
 	}
 }
 
 func TestIntervalTreeLookupMissing(t *testing.T) {
-	it := []interval.Interface{
+	it := []tree.Interface{
 		NewIPItem("2001:db8::/32"),
 		NewIPItem("::/0"),
 		NewIPItem("::1"),
 	}
 
-	tr, _ := interval.NewTree(it)
+	tr, _ := tree.NewTree(it)
 
 	not := NewIPItem("1.2.3.4/5")
 	if got := tr.Lookup(not); got != nil {
@@ -218,7 +189,7 @@ func TestIntervalTreeLookupMissing(t *testing.T) {
 }
 
 func TestIntervalTreeInsertOne(t *testing.T) {
-	tr, _ := interval.NewTree([]interval.Interface{NewIPItem("0.0.0.0/0", "AllIPv4")})
+	tr, _ := tree.NewTree([]tree.Interface{NewIPItem("0.0.0.0/0", "AllIPv4")})
 
 	got := tr.String()
 

@@ -56,7 +56,7 @@ func (b Block) Last() IP { return b.last }
 //  "10.0.0.0/8"
 //  "4.4.4.4"
 //
-// IP addresses as input are converted to /32 or /128 blocks
+// IP addresses as input are converted to /32 or /128 blocks.
 // Returns error and Block{} on invalid input.
 //
 // The hard part is done by net.ParseIP() and net.ParseCIDR().
@@ -202,9 +202,9 @@ func (b Block) IsCIDR() bool {
 // String returns the string form of the Block.
 // It returns one of 3 forms:
 //
-//   - "invalid Block", if IsValid is false
-//   - as range: "127.0.0.1-127.0.0.19", if block is no CIDR
-//   - as CIDR:  "2001:db8::/32"
+//   "invalid Block"         if b.IsValid() is false
+//   "127.0.0.1-127.0.0.19"  if b.IsCIDR is false
+//   "2001:db8::/32"         if b.IsCIDR is true
 func (b Block) String() string {
 	if b == blockZero {
 		return "invalid Block"
@@ -238,7 +238,7 @@ func (b Block) Covers(c Block) bool {
 	return false
 }
 
-// Less reports whether the a should be sorted before b.
+// Less reports whether the block a should be sorted before b.
 // REMEMBER: sort supersets always to the left of their subsets!
 // If b.Covers(c) is true then b.Less(c) must also be true.
 //

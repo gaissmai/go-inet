@@ -95,9 +95,9 @@ func (ip IP) Is6() bool {
 // String returns the string form of the IP address.
 // It returns one of 3 forms:
 //
-//   - "invalid IP", if IsValid is false
-//   - IPv4 dotted decimal ("127.0.0.1")
-//   - IPv6 ("2001:db8::1")
+//   "invalid IP"  if ip.IsValid() is false
+//   "127.0.0.1"
+//   "2001:db8::1"
 func (ip IP) String() string {
 	if ip == ipZero {
 		return "invalid IP"

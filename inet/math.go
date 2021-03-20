@@ -196,8 +196,8 @@ func subOne128(u uint128) (m uint128, ok bool) {
 
 // addOne increments the IP by one, returns IPZero on overflow.
 func (ip IP) addOne() IP {
-	if ip == ipZero {
-		return ip
+	if !ip.IsValid() {
+		return ipZero
 	}
 
 	var ok bool
@@ -214,8 +214,8 @@ func (ip IP) addOne() IP {
 
 // subOne decrements the IP by one, returns IPZero on underflow.
 func (ip IP) subOne() IP {
-	if ip == ipZero {
-		return ip
+	if !ip.IsValid() {
+		return ipZero
 	}
 
 	var ok bool
