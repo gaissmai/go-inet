@@ -75,9 +75,9 @@ func TestFromStdlib(t *testing.T) {
 		in  net.IPNet
 		err error
 	}{
-		{net.IPNet{net.ParseIP("2001:db8::"), net.IPMask(net.ParseIP("fffe::"))}, nil},
-		{net.IPNet{net.ParseIP("1.2.3.400.500"), net.IPMask(net.ParseIP("255.0.0.0"))}, errInvalidBlock},
-		{net.IPNet{net.ParseIP("2001:db8::"), net.IPMask(net.ParseIP("Giraffe::"))}, errInvalidBlock},
+		{in: net.IPNet{IP: net.ParseIP("2001:db8::"), Mask: net.IPMask(net.ParseIP("fffe::"))}, err: nil},
+		{in: net.IPNet{IP: net.ParseIP("1.2.3.400.500"), Mask: net.IPMask(net.ParseIP("255.0.0.0"))}, err: errInvalidBlock},
+		{in: net.IPNet{IP: net.ParseIP("2001:db8::"), Mask: net.IPMask(net.ParseIP("Giraffe::"))}, err: errInvalidBlock},
 	} {
 		_, err := FromStdIPNet(tt.in)
 		if err != tt.err {
