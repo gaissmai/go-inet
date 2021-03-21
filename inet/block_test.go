@@ -241,6 +241,7 @@ func TestBlockMerge(t *testing.T) {
 		mustBlock("10.0.0.128/26"),
 		mustBlock("10.0.0.192/27"),
 		mustBlock("134.60.0.0/16"),
+		mustBlock("134.60.0.255/24"),
 		mustBlock("193.197.62.192/29"),
 		mustBlock("193.197.64.0/22"),
 		mustBlock("193.197.228.0/22"),
@@ -263,6 +264,21 @@ func TestBlockMerge(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Merge():\ngot:  %v\nwant: %v", got, want)
 	}
+
+	// corner cases
+	bs = []Block{} // nil slice
+	if got := Merge(bs); got != nil {
+		t.Errorf("Merge() nil slice should return nil, got %v\n", got)
+	}
+
+	bs = []Block{mustBlock("0.0.0.0/8")}
+	want = []Block{mustBlock("0.0.0.0/8")}
+	got = Merge(bs)
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Merge():\ngot:  %v\nwant: %v", got, want)
+	}
+
 }
 
 func TestBlockToCIDRs(t *testing.T) {
@@ -286,6 +302,12 @@ func TestBlockToCIDRs(t *testing.T) {
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("%v.ToCIDRs(), got %v, want %v", b, got, want)
+	}
+
+	// corner case
+	b = Block{}
+	if b.CIDRs() != nil {
+		t.Error("ToCIDRs on invalid block must reutn nil")
 	}
 }
 
@@ -521,21 +543,45 @@ func TestBlockV4V6(t *testing.T) {
 	}
 }
 
-func TestFindDiffNil(t *testing.T) {
+func TestFindDiffCornerCases(t *testing.T) {
+	// nil
 	r := mustBlock("::/0")
 	rs := r.Diff(nil)
 
 	if rs[0] != r {
-		t.Errorf("Remove(nil), got %v, want %v", rs, []Block{r})
+		t.Errorf("Diff(nil), got %v, want %v", rs, []Block{r})
 	}
-}
 
-func TestFindDiffSelf(t *testing.T) {
-	r := mustBlock("::/0")
-	rs := r.Diff([]Block{r})
+	// self
+	r = mustBlock("::/0")
+	rs = r.Diff([]Block{r})
 	if rs != nil {
-		t.Errorf("Remove(self), got %#v, want nil", rs)
+		t.Errorf("Diff(self), got %v, want nil", rs)
 	}
+
+	// covers
+	r = mustBlock("10.0.0.0/16")
+	rs = r.Diff([]Block{mustBlock("10.0.0.0/8")})
+	if rs != nil {
+		t.Errorf("Diff(coverage), got %v, want nil", rs)
+	}
+
+	// overflow
+	r = mustBlock("0.0.0.0/0")
+	rs = r.Diff([]Block{mustBlock("255.255.255.255")})
+	want := mustBlock("0.0.0.0-255.255.255.254")
+	if rs[0] != want {
+		t.Errorf("Diff(overflow), got %v, want %v", rs, want)
+	}
+
+	// base > last
+	r = mustBlock("10.0.0.0/8")
+	rs = r.Diff([]Block{mustBlock("10.128.0.0/9")})
+	want = mustBlock("10.0.0.0/9")
+	if rs[0] != want {
+		t.Errorf("Diff(base>last), got %v, want %v", rs, want)
+	}
+
 }
 
 func TestFindDiffIANAv6(t *testing.T) {

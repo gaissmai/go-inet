@@ -179,6 +179,9 @@ func (b Block) Is6() bool {
 
 // IsCIDR returns true if the block has a common prefix netmask.
 func (b Block) IsCIDR() bool {
+	if !b.IsValid() {
+		return false
+	}
 	return b.base.isCIDR(b.last)
 }
 

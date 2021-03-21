@@ -17,16 +17,19 @@ func mustParseBlock(s string) inet.Block {
 
 func ExampleParseBlock() {
 	for _, s := range []string{
-		"fe80::1-fe80::2",         // block from string
-		"10.0.0.0-11.255.255.255", // block from string, as range but true CIDR, see output
+		"fe80::1-fe80::2",         // as range
+		"10.0.0.0-11.255.255.255", // as range but true CIDR, see output
+		"",                        // invalid
 	} {
 		a, _ := inet.ParseBlock(s)
-		fmt.Printf("block: %v\n", a)
+		fmt.Printf("block: %-20s IsValid: %5v, IsCIDR: %5v, Is4: %5v, Is6: %5v\n", a, a.IsValid(), a.IsCIDR(), a.Is4(), a.Is6())
 	}
 
 	// Output:
-	// block: fe80::1-fe80::2
-	// block: 10.0.0.0/7
+	// block: fe80::1-fe80::2      IsValid:  true, IsCIDR: false, Is4: false, Is6:  true
+	// block: 10.0.0.0/7           IsValid:  true, IsCIDR:  true, Is4:  true, Is6: false
+	// block: invalid Block        IsValid: false, IsCIDR: false, Is4: false, Is6: false
+
 }
 
 func ExampleBlock_Less() {
