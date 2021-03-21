@@ -51,10 +51,10 @@ func FromStdIP(std net.IP) (IP, error) {
 	return ipZero, errInvalidIP
 }
 
-// ToStdIP converts to net.IP. Panics on invalid input.
-func (ip IP) ToStdIP() net.IP {
+// toStdIP converts to net.IP. Panics on invalid input.
+func (ip IP) toStdIP() net.IP {
 	if ip == ipZero {
-		panic("ToStdIP() called on zero value")
+		panic("toStdIP() called on zero value")
 	}
 	return net.IP(ip.toBytes())
 }
@@ -91,7 +91,7 @@ func (ip IP) String() string {
 	if ip == ipZero {
 		return errInvalidIP.Error()
 	}
-	return ip.ToStdIP().String()
+	return ip.toStdIP().String()
 }
 
 // Less reports whether the ip should sort before ip2.

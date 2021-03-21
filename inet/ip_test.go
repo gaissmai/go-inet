@@ -64,18 +64,6 @@ func TestPanic_1(t *testing.T) {
 	mustIP(1)
 }
 
-func TestPanic_2(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-
-	// should panic
-	var ip IP
-	_ = ip.ToStdIP()
-}
-
 func TestLess(t *testing.T) {
 	ip1 := mustIP("127.0.0.1")
 	if ip1.Less(ip1) {

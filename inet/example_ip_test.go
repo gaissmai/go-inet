@@ -48,17 +48,6 @@ func ExampleIP_Reverse() {
 	// "0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.e.f.f.f"
 }
 
-func ExampleIP_ToStdIP() {
-	ip1, _ := inet.ParseIP("192.168.2.1")
-	ip2, _ := inet.ParseIP("fffe:db8::")
-	fmt.Printf("%#v\n", ip1.ToStdIP())
-	fmt.Printf("%#v\n", ip2.ToStdIP())
-
-	// Output:
-	// net.IP{0xc0, 0xa8, 0x2, 0x1}
-	// net.IP{0xff, 0xfe, 0xd, 0xb8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
-}
-
 func ExampleIP_Less() {
 	s := []string{
 		"0.0.0.1",
