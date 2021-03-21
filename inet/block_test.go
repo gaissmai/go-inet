@@ -10,11 +10,20 @@ import (
 )
 
 func mustBlock(i interface{}) Block {
-	b, err := ParseBlock(i)
-	if err != nil {
-		panic(err)
+	switch v := i.(type) {
+	case string:
+		if b, err := ParseBlock(v); err == nil {
+			return b
+		}
+		panic(errInvalidBlock)
+	case net.IPNet:
+		if b, err := FromStdIPNet(v); err == nil {
+			return b
+		}
+		panic(errInvalidBlock)
+	default:
+		panic(errInvalidBlock)
 	}
-	return b
 }
 
 func TestString(t *testing.T) {
@@ -49,14 +58,10 @@ func TestParseFault(t *testing.T) {
 	if err == nil {
 		t.Errorf("ParseBlock(\"\"), expected error: %v", errInvalidBlock)
 	}
-	_, err = ParseBlock(5)
-	if err == nil {
-		t.Errorf("ParseBlock(int), expected error: %v", errInvalidBlock)
-	}
 }
 
 func TestBaseLast(t *testing.T) {
-	b, err := ParseBlock(mustIP("1.2.3.4"))
+	b, err := ParseBlock("1.2.3.4")
 	if err != nil {
 		t.Errorf("ParseBlock(IP) returns error: %v", err)
 	}
@@ -66,21 +71,20 @@ func TestBaseLast(t *testing.T) {
 }
 
 func TestFromStdlib(t *testing.T) {
-	tests := []interface{}{
-		net.IP([]byte{10, 0, 0, 1}),
-		net.IP([]byte{0x20, 0x01, 0x0d, 0xdb}),
-		net.IPNet{
-			IP:   net.IP([]byte{0: 0x20, 1: 0x01, 2: 0x0d, 3: 0xdb, 15: 0}),
-			Mask: net.IPMask([]byte{0: 0xff, 1: 0xfe, 15: 0}),
-		},
-	}
-
-	for _, ip := range tests {
-		_, err := ParseBlock(ip)
-		if err != nil {
-			t.Errorf("Block from net.IP, got error %s", err)
+	for _, tt := range []struct {
+		in  net.IPNet
+		err error
+	}{
+		{net.IPNet{net.ParseIP("2001:db8::"), net.IPMask(net.ParseIP("fffe::"))}, nil},
+		{net.IPNet{net.ParseIP("1.2.3.400.500"), net.IPMask(net.ParseIP("255.0.0.0"))}, errInvalidBlock},
+		{net.IPNet{net.ParseIP("2001:db8::"), net.IPMask(net.ParseIP("Giraffe::"))}, errInvalidBlock},
+	} {
+		_, err := FromStdIPNet(tt.in)
+		if err != tt.err {
+			t.Errorf("Block from net.IPNet, got %v, want %v", err, tt.err)
 		}
 	}
+
 }
 
 func TestParseBlockFail(t *testing.T) {

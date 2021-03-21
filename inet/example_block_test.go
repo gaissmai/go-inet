@@ -2,7 +2,6 @@ package inet_test
 
 import (
 	"fmt"
-	"net"
 	"sort"
 
 	"github.com/gaissmai/go-inet/v2/inet"
@@ -17,20 +16,17 @@ func mustParseBlock(s string) inet.Block {
 }
 
 func ExampleParseBlock() {
-	for _, anyOf := range []interface{}{
+	for _, s := range []string{
 		"fe80::1-fe80::2",         // block from string
 		"10.0.0.0-11.255.255.255", // block from string, as range but true CIDR, see output
-		net.IP{192, 168, 0, 0},    // IP from net.IP
 	} {
-		a, _ := inet.ParseBlock(anyOf)
+		a, _ := inet.ParseBlock(s)
 		fmt.Printf("block: %v\n", a)
 	}
 
 	// Output:
 	// block: fe80::1-fe80::2
 	// block: 10.0.0.0/7
-	// block: 192.168.0.0/32
-
 }
 
 func ExampleBlock_Less() {

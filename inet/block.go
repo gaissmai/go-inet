@@ -39,44 +39,24 @@ func (b Block) Base() IP { return b.base }
 // Last returns the last IP address of the block.
 func (b Block) Last() IP { return b.last }
 
-// ParseBlock parses and returns the input as type Block.
-// The input type may be:
+// ParseBlock parses and returns the input string as type Block.
 //
-//   string
-//   net.IPNet
-//   net.IP
-//   IP
+// Valid strings are of the form:
 //
-// Example for valid input strings:
+//  192.168.2.3-192.168.7.255
+//  2001:db8::1-2001:db8::ff00:35
 //
-//  "192.168.2.3-192.168.7.255"
-//  "2001:db8::1-2001:db8::ff00:35"
+//  2001:db8:dead::/38
+//  10.0.0.0/8
 //
-//  "2001:db8:dead::/38"
-//  "10.0.0.0/8"
-//  "4.4.4.4"
+//  4.4.4.4
+//  ::0
 //
 // IP addresses as input are converted to /32 or /128 blocks.
 // Returns error and Block{} on invalid input.
 //
 // The hard part is done by net.ParseIP() and net.ParseCIDR().
-func ParseBlock(i interface{}) (Block, error) {
-	switch v := i.(type) {
-	case string:
-		return blockFromString(v)
-	case IP:
-		return blockFromIP(v)
-	case net.IP:
-		return blockFromNetIP(v)
-	case net.IPNet:
-		return blockFromNetIPNet(v)
-	default:
-		return blockZero, errInvalidBlock
-	}
-}
-
-// blockFromString parses s in network CIDR or in begin-end IP address-range notation.
-func blockFromString(s string) (Block, error) {
+func ParseBlock(s string) (Block, error) {
 	if s == "" {
 		return blockZero, errInvalidBlock
 	}
@@ -100,32 +80,18 @@ func blockFromString(s string) (Block, error) {
 	return blockZero, errInvalidBlock
 }
 
-// blockFromIP converts inet.IP to inet.Block with ip as base and last.
-func blockFromIP(ip IP) (Block, error) {
-	b := Block{base: ip, last: ip}
-	return b, nil
-}
-
-// blockFromNetIP converts net.IP to inet.Block with /32 or /128 CIDR mask
-func blockFromNetIP(stdIP net.IP) (Block, error) {
-	ip, err := fromStdIP(stdIP)
-	if err != nil {
-		return blockZero, err
-	}
-	return blockFromIP(ip)
-}
-
-// blockFromNetIPNet converts from stdlib net.IPNet to ip.Block representation.
-func blockFromNetIPNet(stdNet net.IPNet) (Block, error) {
+// FromStdIPNet returns an Block from the standard library's IPNet type. If std is invalid, ok is false.
+// If std is invalid, returns Block{} and error.
+func FromStdIPNet(stdNet net.IPNet) (Block, error) {
 	var err error
 	a := blockZero
 
-	a.base, err = fromStdIP(stdNet.IP)
+	a.base, err = FromStdIP(stdNet.IP)
 	if err != nil {
 		return blockZero, errInvalidBlock
 	}
 
-	mask, err := fromStdIP(net.IP(stdNet.Mask)) // cast needed
+	mask, err := FromStdIP(net.IP(stdNet.Mask)) // cast needed
 	if err != nil {
 		return blockZero, errInvalidBlock
 	}
@@ -133,6 +99,12 @@ func blockFromNetIPNet(stdNet net.IPNet) (Block, error) {
 	a.last = a.base.mkLastIP(mask.uint128)
 
 	return a, nil
+}
+
+// blockFromIP converts inet.IP to inet.Block with ip as base and last.
+func blockFromIP(ip IP) (Block, error) {
+	b := Block{base: ip, last: ip}
+	return b, nil
 }
 
 // parse IP CIDR
@@ -146,7 +118,7 @@ func blockFromCIDR(s string) (Block, error) {
 		return blockZero, err
 	}
 
-	return blockFromNetIPNet(*netIPNet)
+	return FromStdIPNet(*netIPNet)
 }
 
 // parse IP address-range

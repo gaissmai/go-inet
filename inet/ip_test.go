@@ -6,11 +6,20 @@ import (
 )
 
 func mustIP(i interface{}) IP {
-	ip, err := ParseIP(i)
-	if err != nil {
-		panic(err)
+	switch v := i.(type) {
+	case string:
+		if ip, err := ParseIP(v); err == nil {
+			return ip
+		}
+		panic(errInvalidIP)
+	case net.IP:
+		if ip, err := FromStdIP(v); err == nil {
+			return ip
+		}
+		panic(errInvalidIP)
+	default:
+		panic(errInvalidIP)
 	}
-	return ip
 }
 
 func TestIPZero(t *testing.T) {
@@ -39,7 +48,7 @@ func TestParseIP(t *testing.T) {
 	if ip := mustIP(net.IP([]byte{1, 2, 3, 4})); !ip.Is4() {
 		t.Error("1.2.3.4 should be v4")
 	}
-	if ip, _ := ParseIP(net.IP([]byte{1, 2, 3, 4, 5})); ip.IsValid() {
+	if ip, _ := FromStdIP(net.IP([]byte{1, 2, 3, 4, 5})); ip.IsValid() {
 		t.Error("1.2.3.4.5 should be invalid")
 	}
 }

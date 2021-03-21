@@ -26,29 +26,18 @@ var errInvalidIP = errors.New("invalid IP")
 // ParseIP parses and returns the input as type IP.
 // Returns the zero value for IP and error on invalid input.
 //
-// The input type may be:
-//   string
-//   net.IP
-//
 // The string form can be in IPv4 dotted decimal ("192.168.2.1"), IPv6
 // ("2001:db8::affe"), or IPv4-mapped IPv6 ("::ffff:172.16.0.1").
 //
 // The hard part is done by net.ParseIP().
-func ParseIP(i interface{}) (IP, error) {
-	switch v := i.(type) {
-	case net.IP:
-		return fromStdIP(v)
-	case string:
-		return fromStdIP(net.ParseIP(v))
-	default:
-		return ipZero, errInvalidIP
-	}
+func ParseIP(s string) (IP, error) {
+	return FromStdIP(net.ParseIP(s))
 }
 
-// fromStdIP returns an IP from the standard library's IP type.
+// FromStdIP returns an IP from the standard library's IP type.
 //
 // If std is <nil>, returns the zero value and error.
-func fromStdIP(std net.IP) (IP, error) {
+func FromStdIP(std net.IP) (IP, error) {
 	if std == nil {
 		return ipZero, errInvalidIP
 	}
