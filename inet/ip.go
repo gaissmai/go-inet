@@ -18,10 +18,9 @@ type IP struct {
 	uint128 // hi, lo uint64
 }
 
-// the zero-value of type IP
-var ipZero IP
+const invalidIP = "invalid IP"
 
-var errInvalidIP = errors.New("invalid IP")
+var errInvalidIP = errors.New(invalidIP)
 
 // ParseIP parses and returns the input as type IP.
 // Returns the zero value for IP and error on invalid input.
@@ -30,16 +29,17 @@ var errInvalidIP = errors.New("invalid IP")
 // ("2001:db8::affe"), or IPv4-mapped IPv6 ("::ffff:172.16.0.1").
 //
 // The hard part is done by net.ParseIP().
-func ParseIP(s string) (IP, error) {
+func ParseIP(s string) (ip IP, err error) {
 	return FromStdIP(net.ParseIP(s))
 }
 
 // FromStdIP returns an IP from the standard library's IP type.
 //
 // If std is <nil>, returns the zero value and error.
-func FromStdIP(std net.IP) (IP, error) {
+func FromStdIP(std net.IP) (ip IP, err error) {
 	if std == nil {
-		return ipZero, errInvalidIP
+		err = errInvalidIP
+		return
 	}
 
 	if bs := std.To4(); bs != nil {
@@ -48,12 +48,13 @@ func FromStdIP(std net.IP) (IP, error) {
 	if bs := std.To16(); bs != nil {
 		return fromBytes(bs)
 	}
-	return ipZero, errInvalidIP
+	err = errInvalidIP
+	return
 }
 
 // toStdIP converts to net.IP. Panics on invalid input.
 func (ip IP) toStdIP() net.IP {
-	if ip == ipZero {
+	if !ip.IsValid() {
 		panic("toStdIP() called on zero value")
 	}
 	return net.IP(ip.toBytes())
@@ -64,7 +65,7 @@ func (ip IP) toStdIP() net.IP {
 //
 // Note that "0.0.0.0" and "::" are not the zero value.
 func (ip IP) IsValid() bool {
-	return ip != ipZero
+	return ip != IP{}
 }
 
 // Is4 reports whether ip is an IPv4 address.
@@ -88,8 +89,8 @@ func (ip IP) Is6() bool {
 //   "127.0.0.1"
 //   "2001:db8::1"
 func (ip IP) String() string {
-	if ip == ipZero {
-		return errInvalidIP.Error()
+	if !ip.IsValid() {
+		return invalidIP
 	}
 	return ip.toStdIP().String()
 }

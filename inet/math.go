@@ -76,7 +76,7 @@ func fromBytes(bs []byte) (IP, error) {
 		return ip, nil
 	}
 
-	return ipZero, errInvalidIP
+	return IP{}, errInvalidIP
 }
 
 // toBytes returns the ip address in network ordered byte representation.
@@ -186,7 +186,7 @@ func subOne128(u uint128) (m uint128, ok bool) {
 // addOne increments the IP by one, returns IPZero on overflow.
 func (ip IP) addOne() IP {
 	if !ip.IsValid() {
-		return ipZero
+		return IP{}
 	}
 
 	var ok bool
@@ -196,7 +196,7 @@ func (ip IP) addOne() IP {
 		ip.uint128, ok = addOne128(ip.uint128)
 	}
 	if !ok {
-		return ipZero
+		return IP{}
 	}
 	return ip
 }
@@ -204,7 +204,7 @@ func (ip IP) addOne() IP {
 // subOne decrements the IP by one, returns IPZero on underflow.
 func (ip IP) subOne() IP {
 	if !ip.IsValid() {
-		return ipZero
+		return IP{}
 	}
 
 	var ok bool
@@ -214,7 +214,7 @@ func (ip IP) subOne() IP {
 		ip.uint128, ok = subOne128(ip.uint128)
 	}
 	if !ok {
-		return ipZero
+		return IP{}
 	}
 	return ip
 }

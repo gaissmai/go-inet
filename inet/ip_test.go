@@ -84,15 +84,15 @@ func TestIP_addOne(t *testing.T) {
 		want IP
 		ok   bool
 	}{
-		{ipZero, ipZero, false},
+		{IP{}, IP{}, false},
 		{mustIP("0.0.0.0"), mustIP("0.0.0.1"), true},
 		{mustIP("127.0.0.1"), mustIP("127.0.0.2"), true},
-		{mustIP("255.255.255.255"), ipZero, false},
+		{mustIP("255.255.255.255"), IP{}, false},
 		//
 		{mustIP("::"), mustIP("::1"), true},
 		{mustIP("::1"), mustIP("::2"), true},
 		{mustIP("::ffff:ffff:ffff:ffff"), mustIP("0:0:0:1::"), true},
-		{mustIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), ipZero, false},
+		{mustIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), IP{}, false},
 	}
 
 	for _, tt := range ips {
@@ -109,12 +109,12 @@ func TestIP_subOne(t *testing.T) {
 		want IP
 		ok   bool
 	}{
-		{ipZero, ipZero, false},
-		{mustIP("0.0.0.0"), ipZero, false},
+		{IP{}, IP{}, false},
+		{mustIP("0.0.0.0"), IP{}, false},
 		{mustIP("0.0.0.1"), mustIP("0.0.0.0"), true},
 		{mustIP("127.0.0.1"), mustIP("127.0.0.0"), true},
 		//
-		{mustIP("::"), ipZero, false},
+		{mustIP("::"), IP{}, false},
 		{mustIP("::1"), mustIP("::"), true},
 		{mustIP("0:0:0:1::"), mustIP("::ffff:ffff:ffff:ffff"), true},
 	}
@@ -133,7 +133,7 @@ func TestIP_fromBytes(t *testing.T) {
 	}{
 		{[]byte{0, 0, 0, 0}, mustIP("0.0.0.0")},
 		{[]byte{15: 0}, mustIP("::0")},
-		{[]byte{7: 0}, ipZero},
+		{[]byte{7: 0}, IP{}},
 	}
 
 	for _, tt := range tests {

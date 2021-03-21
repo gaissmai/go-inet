@@ -24,14 +24,17 @@ type Block struct {
 	last IP
 }
 
-var (
-	errInvalidBlock = errors.New("invalid Block")
-	errOverflow     = errors.New("overflow")
-	errUnderflow    = errors.New("underflow")
+const (
+	invalidBlock = "invalid Block"
+	overflow     = "overflow"
+	underflow    = "underflow"
 )
 
-// the zero-value of type Block
-var blockZero Block
+var (
+	errInvalidBlock = errors.New(invalidBlock)
+	errOverflow     = errors.New(overflow)
+	errUnderflow    = errors.New(underflow)
+)
 
 // Base returns the base IP address of the block.
 func (b Block) Base() IP { return b.base }
@@ -56,9 +59,10 @@ func (b Block) Last() IP { return b.last }
 // Returns error and Block{} on invalid input.
 //
 // The hard part is done by net.ParseIP() and net.ParseCIDR().
-func ParseBlock(s string) (Block, error) {
+func ParseBlock(s string) (b Block, err error) {
 	if s == "" {
-		return blockZero, errInvalidBlock
+		err = errInvalidBlock
+		return
 	}
 
 	i := strings.IndexByte(s, '/')
@@ -77,23 +81,25 @@ func ParseBlock(s string) (Block, error) {
 		return blockFromIP(ip)
 	}
 
-	return blockZero, errInvalidBlock
+	err = errInvalidBlock
+	return
 }
 
 // FromStdIPNet returns an Block from the standard library's IPNet type. If std is invalid, ok is false.
 // If std is invalid, returns Block{} and error.
-func FromStdIPNet(stdNet net.IPNet) (Block, error) {
-	var err error
-	a := blockZero
+func FromStdIPNet(stdNet net.IPNet) (b Block, err error) {
+	a := Block{}
 
 	a.base, err = FromStdIP(stdNet.IP)
 	if err != nil {
-		return blockZero, errInvalidBlock
+		err = errInvalidBlock
+		return
 	}
 
 	mask, err := FromStdIP(net.IP(stdNet.Mask)) // cast needed
 	if err != nil {
-		return blockZero, errInvalidBlock
+		err = errInvalidBlock
+		return
 	}
 
 	a.last = a.base.mkLastIP(mask.uint128)
@@ -109,13 +115,14 @@ func blockFromIP(ip IP) (Block, error) {
 
 // parse IP CIDR
 // e.g.: 127.0.0.0/8 or 2001:db8::/32
-func blockFromCIDR(s string) (Block, error) {
+func blockFromCIDR(s string) (b Block, err error) {
 	if strings.HasPrefix(s, "::ffff:") && strings.IndexByte(s, '.') > 6 {
 		s = s[7:]
 	}
 	_, netIPNet, err := net.ParseCIDR(s)
 	if err != nil {
-		return blockZero, err
+		err = errInvalidBlock
+		return
 	}
 
 	return FromStdIPNet(*netIPNet)
@@ -123,28 +130,32 @@ func blockFromCIDR(s string) (Block, error) {
 
 // parse IP address-range
 // e.g.: 127.0.0.0-127.0..0.17 or 2001:db8::1-2001:dbb::ffff
-func blockFromRange(s string, i int) (Block, error) {
+func blockFromRange(s string, i int) (b Block, err error) {
 	// split string
 	base, last := s[:i], s[i+1:]
 
 	baseIP, err := ParseIP(base)
 	if err != nil {
-		return blockZero, errInvalidBlock
+		err = errInvalidBlock
+		return
 	}
 
 	lastIP, err := ParseIP(last)
 	if err != nil {
-		return blockZero, errInvalidBlock
+		err = errInvalidBlock
+		return
 	}
 
 	// begin-end have version mismatch
 	if baseIP.version != lastIP.version {
-		return blockZero, errInvalidBlock
+		err = errInvalidBlock
+		return
 	}
 
 	// begin > end
 	if !baseIP.Less(lastIP) {
-		return blockZero, errInvalidBlock
+		err = errInvalidBlock
+		return
 	}
 
 	return Block{base: baseIP, last: lastIP}, nil
@@ -153,7 +164,7 @@ func blockFromRange(s string, i int) (Block, error) {
 // IsValid reports whether block is valid and not the zero value of the Block type.
 // The zero value is not a valid Block of any type.
 func (b Block) IsValid() bool {
-	return b.base.IsValid() && b.last.IsValid()
+	return b != Block{}
 }
 
 // Is4 reports whether block is IPv4.
@@ -178,8 +189,8 @@ func (b Block) IsCIDR() bool {
 //   "127.0.0.1-127.0.0.19"  if b.IsCIDR is false
 //   "2001:db8::/32"         if b.IsCIDR is true
 func (b Block) String() string {
-	if b == blockZero {
-		return errInvalidBlock.Error()
+	if !b.IsValid() {
+		return invalidBlock
 	}
 	if !b.IsCIDR() {
 		return fmt.Sprintf("%s-%s", b.base, b.last)
@@ -256,7 +267,7 @@ func Merge(bs []Block) []Block {
 	for _, b := range bs[1:] {
 		prev := &out[len(out)-1]
 		switch {
-		case b == blockZero:
+		case !b.IsValid():
 			// no-op
 		case prev.overlaps(b):
 			prev.last = b.last
@@ -273,7 +284,7 @@ func Merge(bs []Block) []Block {
 
 // CIDRs returns a list of CIDRs that span b.
 func (b Block) CIDRs() []Block {
-	if b == blockZero {
+	if !b.IsValid() {
 		return nil
 	}
 	return b.base.toCIDRsRec(nil, b.last)
@@ -317,7 +328,7 @@ func (b Block) Diff(bs []Block) []Block {
 	var out []Block
 	for _, d := range bs {
 		switch {
-		case d == blockZero:
+		case !d.IsValid():
 			// no-op
 		case d.isDisjunct(b):
 			// no-op
@@ -339,7 +350,7 @@ func (b Block) Diff(bs []Block) []Block {
 			panic("logic error")
 		}
 		// overflow from last addOne()
-		if b.base == ipZero {
+		if !b.base.IsValid() {
 			return out
 		}
 		// cursor moved behind b.last
