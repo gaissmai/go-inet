@@ -44,6 +44,27 @@ func TestString(t *testing.T) {
 	}
 }
 
+func TestParseFault(t *testing.T) {
+	_, err := ParseBlock("")
+	if err == nil {
+		t.Errorf("ParseBlock(\"\"), expected error: %v", errInvalidBlock)
+	}
+	_, err = ParseBlock(5)
+	if err == nil {
+		t.Errorf("ParseBlock(int), expected error: %v", errInvalidBlock)
+	}
+}
+
+func TestBaseLast(t *testing.T) {
+	b, err := ParseBlock(mustIP("1.2.3.4"))
+	if err != nil {
+		t.Errorf("ParseBlock(IP) returns error: %v", err)
+	}
+	if b.Base() != b.Last() {
+		t.Errorf("ParseBlock(IP), expected b.Base() == b.Last(), got (%v, %v)", b.Base(), b.Last())
+	}
+}
+
 func TestFromStdlib(t *testing.T) {
 	tests := []interface{}{
 		net.IP([]byte{10, 0, 0, 1}),
@@ -496,7 +517,7 @@ func TestBlockV4V6(t *testing.T) {
 	}
 }
 
-func TestFindRemoveNil(t *testing.T) {
+func TestFindDiffNil(t *testing.T) {
 	r := mustBlock("::/0")
 	rs := r.Diff(nil)
 
@@ -505,7 +526,7 @@ func TestFindRemoveNil(t *testing.T) {
 	}
 }
 
-func TestFindRemoveSelf(t *testing.T) {
+func TestFindDiffSelf(t *testing.T) {
 	r := mustBlock("::/0")
 	rs := r.Diff([]Block{r})
 	if rs != nil {
@@ -513,7 +534,7 @@ func TestFindRemoveSelf(t *testing.T) {
 	}
 }
 
-func TestFindRemoveIANAv6(t *testing.T) {
+func TestFindDiffIANAv6(t *testing.T) {
 	b, _ := ParseBlock("::/0")
 
 	var inner []Block
@@ -553,6 +574,6 @@ func TestFindRemoveIANAv6(t *testing.T) {
 	rs := b.Diff(inner)
 
 	if !reflect.DeepEqual(rs, want) {
-		t.Errorf("Remove for IANAv6 blocks, got %v, want %v", rs, want)
+		t.Errorf("Diff for IANAv6 blocks, got %v, want %v", rs, want)
 	}
 }

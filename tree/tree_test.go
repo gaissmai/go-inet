@@ -120,7 +120,12 @@ func TestTreeLookup(t *testing.T) {
 		t.Error(err)
 	}
 
-	item := ival{47, 62}
+	item := ival{0, 6}
+	if got := tree.Lookup(item); got != nil {
+		t.Errorf("Lookup(%v) = %v, want %v", item, got, nil)
+	}
+
+	item = ival{47, 62}
 	if got := tree.Lookup(item); !got.Equal(ival{1, 100}) {
 		t.Errorf("Lookup(%v) = %v, want %v", item, got, ival{1, 100})
 	}
