@@ -48,8 +48,23 @@ func TestParseIP(t *testing.T) {
 	if ip := mustIP(net.IP([]byte{1, 2, 3, 4})); !ip.Is4() {
 		t.Error("1.2.3.4 should be v4")
 	}
-	if ip, _ := FromStdIP(net.IP([]byte{1, 2, 3, 4, 5})); ip.IsValid() {
+}
+
+func TestParseIPFail(t *testing.T) {
+	if _, err := ParseIP(""); err == nil {
+		t.Error("\"\" should be invalid")
+	}
+
+	if _, err := ParseIP("1.2.344.5"); err == nil {
+		t.Error("1.2.344.5 should be invalid")
+	}
+
+	if _, err := ParseIP("1.2.3.4.5"); err == nil {
 		t.Error("1.2.3.4.5 should be invalid")
+	}
+
+	if _, err := FromStdIP(net.IP([]byte{1, 2, 3, 4, 5})); err == nil {
+		t.Error("net.IP{1,2,3,4,5} should be invalid")
 	}
 }
 

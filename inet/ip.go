@@ -3,6 +3,7 @@ package inet
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net"
 	"strconv"
 )
@@ -30,7 +31,12 @@ var errInvalidIP = errors.New(invalidIP)
 //
 // The hard part is done by net.ParseIP().
 func ParseIP(s string) (ip IP, err error) {
-	return FromStdIP(net.ParseIP(s))
+	std := net.ParseIP(s)
+	if std == nil {
+		err = fmt.Errorf("%v: %v", invalidIP, s)
+		return
+	}
+	return FromStdIP(std)
 }
 
 // FromStdIP returns an IP from the standard library's IP type.
@@ -48,7 +54,7 @@ func FromStdIP(std net.IP) (ip IP, err error) {
 	if bs := std.To16(); bs != nil {
 		return fromBytes(bs)
 	}
-	err = errInvalidIP
+	err = fmt.Errorf("%v: %v", errInvalidIP, std)
 	return
 }
 
@@ -115,7 +121,7 @@ func (ip IP) Expand() string {
 	if ip.version == v6 {
 		return expandIPv6(ip.toBytes())
 	}
-	return errInvalidIP.Error()
+	return invalidIP
 }
 
 //  127.0.0.1 -> 127.000.000.001
@@ -166,7 +172,7 @@ func (ip IP) Reverse() string {
 	if ip.version == v6 {
 		return reverseIPv6(ip.toBytes())
 	}
-	return errInvalidIP.Error()
+	return invalidIP
 }
 
 // []byte{127,0,0,1}} -> "1.0.0.127"

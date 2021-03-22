@@ -61,7 +61,7 @@ func (b Block) Last() IP { return b.last }
 // The hard part is done by net.ParseIP() and net.ParseCIDR().
 func ParseBlock(s string) (b Block, err error) {
 	if s == "" {
-		err = errInvalidBlock
+		err = fmt.Errorf("%v: %v", invalidBlock, s)
 		return
 	}
 
@@ -81,7 +81,6 @@ func ParseBlock(s string) (b Block, err error) {
 		return blockFromIP(ip)
 	}
 
-	err = errInvalidBlock
 	return
 }
 
@@ -92,13 +91,13 @@ func FromStdIPNet(stdNet net.IPNet) (b Block, err error) {
 
 	a.base, err = FromStdIP(stdNet.IP)
 	if err != nil {
-		err = errInvalidBlock
+		err = fmt.Errorf("%v: %v", invalidBlock, err)
 		return
 	}
 
 	mask, err := FromStdIP(net.IP(stdNet.Mask)) // cast needed
 	if err != nil {
-		err = errInvalidBlock
+		err = fmt.Errorf("%v: %v", invalidBlock, err)
 		return
 	}
 
@@ -121,7 +120,7 @@ func blockFromCIDR(s string) (b Block, err error) {
 	}
 	_, netIPNet, err := net.ParseCIDR(s)
 	if err != nil {
-		err = errInvalidBlock
+		err = fmt.Errorf("%v: %v", invalidBlock, s)
 		return
 	}
 
@@ -136,25 +135,23 @@ func blockFromRange(s string, i int) (b Block, err error) {
 
 	baseIP, err := ParseIP(base)
 	if err != nil {
-		err = errInvalidBlock
 		return
 	}
 
 	lastIP, err := ParseIP(last)
 	if err != nil {
-		err = errInvalidBlock
 		return
 	}
 
 	// begin-end have version mismatch
 	if baseIP.version != lastIP.version {
-		err = errInvalidBlock
+		err = fmt.Errorf("%v: version mismatch, %v", invalidBlock, s)
 		return
 	}
 
 	// begin > end
 	if !baseIP.Less(lastIP) {
-		err = errInvalidBlock
+		err = fmt.Errorf("%v: base > last, %v", invalidBlock, s)
 		return
 	}
 

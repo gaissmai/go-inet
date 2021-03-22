@@ -3,6 +3,7 @@ package inettree_test
 import (
 	"fmt"
 
+	"github.com/gaissmai/go-inet/v2/inet"
 	"github.com/gaissmai/go-inet/v2/inettree"
 	"github.com/gaissmai/go-inet/v2/tree"
 )
@@ -15,7 +16,7 @@ var iana = map[string]string{
 	"800::/5":  "Reserved by IETF     [RFC3513][RFC4291]",
 	"1000::/4": "Reserved by IETF     [RFC3513][RFC4291]",
 	"2000::/3": "Global Unicast       [RFC3513][RFC4291]",
-	"2000::/4": "Test",
+	"2000::/4": "",
 	"3000::/4": "FREE",
 	"4000::/3": "Reserved by IETF     [RFC3513][RFC4291]",
 	"6000::/3": "Reserved by IETF     [RFC3513][RFC4291]",
@@ -24,12 +25,15 @@ var iana = map[string]string{
 func Example_usage() {
 	bs := make([]tree.Interface, 0, len(iana))
 
-	for k, v := range iana {
-		item, err := inettree.NewItem(k, k+" ... "+v)
+	for k, text := range iana {
+		block, err := inet.ParseBlock(k)
 		if err != nil {
 			panic(err)
 		}
-		bs = append(bs, item)
+		if text != "" {
+			text = block.String() + " ... " + text
+		}
+		bs = append(bs, inettree.Item{block, text})
 	}
 
 	t, err := tree.NewTree(bs)
@@ -48,7 +52,7 @@ func Example_usage() {
 	// ├─ 800::/5 ... Reserved by IETF     [RFC3513][RFC4291]
 	// ├─ 1000::/4 ... Reserved by IETF     [RFC3513][RFC4291]
 	// ├─ 2000::/3 ... Global Unicast       [RFC3513][RFC4291]
-	// │  ├─ 2000::/4 ... Test
+	// │  ├─ 2000::/4
 	// │  └─ 3000::/4 ... FREE
 	// ├─ 4000::/3 ... Reserved by IETF     [RFC3513][RFC4291]
 	// └─ 6000::/3 ... Reserved by IETF     [RFC3513][RFC4291]

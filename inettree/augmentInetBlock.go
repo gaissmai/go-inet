@@ -2,9 +2,6 @@
 package inettree
 
 import (
-	"fmt"
-	"net"
-
 	"github.com/gaissmai/go-inet/v2/inet"
 	"github.com/gaissmai/go-inet/v2/tree"
 )
@@ -16,20 +13,6 @@ type Item struct {
 
 	// augment Block with additional text, see example
 	Text string
-}
-
-// NewItem augments inet.ParseBlock or inet.FromStdIPNet
-func NewItem(i interface{}, str string) (Item, error) {
-	switch v := i.(type) {
-	case string:
-		bb, err := inet.ParseBlock(v)
-		return Item{bb, str}, err
-	case net.IPNet:
-		bb, err := inet.FromStdIPNet(v)
-		return Item{bb, str}, err
-	default:
-		return Item{}, fmt.Errorf("invalid type: %T", i)
-	}
 }
 
 // Less implements the tree.Interface for Item

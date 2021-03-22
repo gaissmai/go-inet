@@ -72,19 +72,18 @@ func TestBaseLast(t *testing.T) {
 
 func TestFromStdlib(t *testing.T) {
 	for _, tt := range []struct {
-		in  net.IPNet
-		err error
+		in net.IPNet
+		ok bool
 	}{
-		{in: net.IPNet{IP: net.ParseIP("2001:db8::"), Mask: net.IPMask(net.ParseIP("fffe::"))}, err: nil},
-		{in: net.IPNet{IP: net.ParseIP("1.2.3.400.500"), Mask: net.IPMask(net.ParseIP("255.0.0.0"))}, err: errInvalidBlock},
-		{in: net.IPNet{IP: net.ParseIP("2001:db8::"), Mask: net.IPMask(net.ParseIP("Giraffe::"))}, err: errInvalidBlock},
+		{in: net.IPNet{IP: net.ParseIP("2001:db8::"), Mask: net.IPMask(net.ParseIP("fffe::"))}, ok: true},
+		{in: net.IPNet{IP: net.ParseIP("1.2.3.400.500"), Mask: net.IPMask(net.ParseIP("255.0.0.0"))}, ok: false},
+		{in: net.IPNet{IP: net.ParseIP("2001:db8::"), Mask: net.IPMask(net.ParseIP("Giraffe::"))}, ok: false},
 	} {
 		_, err := FromStdIPNet(tt.in)
-		if err != tt.err {
-			t.Errorf("Block from net.IPNet, got %v, want %v", err, tt.err)
+		if tt.ok && err != nil {
+			t.Errorf("Block from net.IPNet, got error %v", err)
 		}
 	}
-
 }
 
 func TestParseBlockFail(t *testing.T) {
