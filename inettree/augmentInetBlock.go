@@ -1,0 +1,61 @@
+// Package inettree implements the tree.Interface for inet.Block
+package inettree
+
+import (
+	"fmt"
+	"net"
+
+	"github.com/gaissmai/go-inet/v2/inet"
+	"github.com/gaissmai/go-inet/v2/tree"
+)
+
+// Item augments inet.Block, implementing the tree.Interface
+type Item struct {
+	// the augmented Block
+	inet.Block
+
+	// augment Block with additional text, see example
+	Text string
+}
+
+// NewItem augments inet.ParseBlock or inet.FromStdIPNet
+func NewItem(i interface{}, str string) (Item, error) {
+	switch v := i.(type) {
+	case string:
+		bb, err := inet.ParseBlock(v)
+		return Item{bb, str}, err
+	case net.IPNet:
+		bb, err := inet.FromStdIPNet(v)
+		return Item{bb, str}, err
+	default:
+		return Item{}, fmt.Errorf("invalid type: %T", i)
+	}
+}
+
+// Less implements the tree.Interface for Item
+func (a Item) Less(i tree.Interface) bool {
+	b := i.(Item)
+	return a.Block.Less(b.Block)
+}
+
+// Equal implements the tree.Interface for Item
+func (a Item) Equal(i tree.Interface) bool {
+	b := i.(Item)
+	return a.Block == b.Block
+}
+
+// Covers implements the tree.Interface for Item
+func (a Item) Covers(i tree.Interface) bool {
+	b := i.(Item)
+	return a.Block.Covers(b.Block)
+}
+
+// String implements the tree.Interface for Item
+func (a Item) String() string {
+	if a.Text == "" {
+		// print just the Block as string
+		return a.Block.String()
+	}
+	// augment the Block with additonal text
+	return a.Text
+}
