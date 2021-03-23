@@ -5,9 +5,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/go-inet)](https://goreportcard.com/report/github.com/gaissmai/go-inet/v2)
 [![Coverage Status](https://coveralls.io/repos/github/gaissmai/go-inet/badge.svg)](https://coveralls.io/github/gaissmai/go-inet/)
 
-## ATTENTION: v2 is coming ...
 
 A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks.
+
+## ATTENTION: v2 with new API
 
 Version v2 uses the math based on `type uint128 struct {hi uint64, lo uint64}`, no longer bytes fiddling in network byte order.
 The API is reduced to the bare minimum, the tree representation is abstracted with an Interface.
@@ -60,27 +61,7 @@ The tree can be visualized as:
 
 ## go-inet/inettree
 
-Package inettree implements the tree.Interface for inet.Block
-
-## Documentation
-
-
-Full `go doc` style documentation for the project can be viewed online without
-installing this package by using the excellent [Pkg.go.dev site](https://pkg.go.dev/github.com/gaissmai/go-inet/v2)
-
-## Installation
-
-```bash
-$ go get -u github.com/gaissmai/go-inet/v2/...
-```
-You can also view the documentation locally once the package is installed with
-the `godoc` tool by running
-
-```bash
-$ godoc -http=:6060
-```
-and pointing your browser to
-http://localhost:6060/pkg/github.com/gaissmai/go-inet/v2
+Package inettree implements the tree.Interface for inet.Block.
 
 ## License
 
