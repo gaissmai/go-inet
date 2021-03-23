@@ -58,6 +58,10 @@ The tree can be visualized as:
  │  │  ├─ 2001:db8:900::/52
 ```
 
+## go-inet/inettree
+
+Package inettree implements the tree.Interface for inet.Block
+
 ## Documentation
 
 
