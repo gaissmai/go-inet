@@ -13,7 +13,7 @@ A Go library for reading, formatting, sorting and converting IP-addresses and IP
 Version v2 uses the math based on `type uint128 struct {hi uint64, lo uint64}`, no longer bytes fiddling in network byte order.
 The API is reduced to the bare minimum, the tree representation is abstracted with an Interface.
 
-## go-inet/inet
+## github.com/gaissmai/go-inet/v2/inet
 
 Package inet represents IP-addresses and IP-Blocks as comparable types.
 
@@ -34,7 +34,7 @@ Blocks are IP-networks or arbitrary IP-ranges, e.g.
     10.0.0.3-10.0.17.134        // IP range, no CIDR
     2001:db8::1-2001:db8::f6    // IP range, no CIDR
 
-## go-inet/tree
+## github.com/gaissmai/go-inet/v2/tree
 
 Package tree is a minimal interval tree implementation.
 
@@ -59,9 +59,14 @@ The tree can be visualized as:
  │  │  ├─ 2001:db8:900::/52
 ```
 
-## go-inet/inettree
+## github.com/gaissmai/go-inet/v2/inettree
 
 Package inettree implements the tree.Interface for inet.Block.
+
+## Documentation
+
+Please study the applications in the [examples directory](https://github.com/gaissmai/go-inet/tree/master/examples)
+to get familiar with the API.
 
 ## License
 
