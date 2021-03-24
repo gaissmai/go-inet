@@ -63,10 +63,10 @@ func main() {
 	for b, t := range input {
 
 		// augment the block string with text from stdin:
-		// ::0, home sweet home
+		// ::1, home sweet home
 		//
 		// Output:
-		// └─ ::/128 ........................ home sweet home
+		// └─ ::1/128 ....................... home sweet home
 
 		if t != "" {
 			s := b.String()
