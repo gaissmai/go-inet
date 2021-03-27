@@ -14,7 +14,7 @@ type ival struct {
 // implementing tree.Interface
 
 // Equal
-func (a ival) Equal(i Interface) bool {
+func (a ival) Equals(i Interface) bool {
 	b := i.(ival)
 	return a == b
 }
@@ -126,7 +126,7 @@ func TestTreeLookup(t *testing.T) {
 	}
 
 	item = ival{47, 62}
-	if got := tree.Lookup(item); !got.Equal(ival{1, 100}) {
+	if got := tree.Lookup(item); !got.Equals(ival{1, 100}) {
 		t.Errorf("Lookup(%v) = %v, want %v", item, got, ival{1, 100})
 	}
 }

@@ -20,8 +20,8 @@ type Interface interface {
 	// HINT: All supersets must be ordered to the left of their subsets!
 	Less(Interface) bool
 
-	// Equal reports whether receiver and item are equal.
-	Equal(Interface) bool
+	// Equals reports whether receiver and item are equal.
+	Equals(Interface) bool
 
 	// string representation of the item
 	fmt.Stringer
@@ -58,7 +58,7 @@ func NewTree(items []Interface) (Tree, error) {
 
 	// items are sorted, build the index tree, O(n), bail out on duplicates
 	for i := range t.items {
-		if i > 0 && t.items[i-1].Equal(t.items[i]) {
+		if i > 0 && t.items[i-1].Equals(t.items[i]) {
 			return Tree{}, fmt.Errorf("duplicate item: %v", t.items[i])
 		}
 		t.buildIndexTree(root, i)
@@ -115,7 +115,7 @@ func (t Tree) lookup(p int, item Interface) Interface {
 	// child before idx may be equal or covers item
 	if i > 0 {
 		i--
-		if t.items[cs[i]].Equal(item) {
+		if t.items[cs[i]].Equals(item) {
 			return t.items[cs[i]]
 		}
 		if t.items[cs[i]].Covers(item) {
@@ -141,7 +141,7 @@ func (t Tree) Superset(item Interface) Interface {
 
 	// find first item with O(n) in root level
 	for _, v := range t.tree[root] {
-		if t.items[v].Equal(item) || t.items[v].Covers(item) {
+		if t.items[v].Equals(item) || t.items[v].Covers(item) {
 			return t.items[v]
 		}
 	}

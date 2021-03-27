@@ -30,7 +30,7 @@ func (a item) Less(i tree.Interface) bool {
 	return a.Block.Less(b.Block)
 }
 
-func (a item) Equal(i tree.Interface) bool {
+func (a item) Equals(i tree.Interface) bool {
 	b := i.(item)
 	return a.Block == b.Block
 }
