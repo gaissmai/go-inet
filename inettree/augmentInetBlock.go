@@ -6,6 +6,9 @@ import (
 	"github.com/gaissmai/go-inet/v2/tree"
 )
 
+// compiler check, Item implements tree.Interface
+var _ tree.Interface = Item{}
+
 // Item augments inet.Block, implementing the tree.Interface
 type Item struct {
 	// the augmented Block

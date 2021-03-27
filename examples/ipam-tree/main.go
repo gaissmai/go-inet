@@ -73,7 +73,7 @@ func main() {
 			t = s + " " + strings.Repeat(".", 30-len(s)) + " " + t
 		}
 
-		bs = append(bs, inettree.Item{b, t})
+		bs = append(bs, inettree.Item{Block: b, Text: t})
 	}
 
 	// build tree
