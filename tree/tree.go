@@ -91,7 +91,6 @@ func (t *Tree) buildIndexTree(p, c int) {
 
 	// not covered by any child, just append at this level the child index
 	t.tree[p] = append(t.tree[p], c)
-	return
 }
 
 // Lookup returns the item itself or the *smallest* superset (bottom-up).

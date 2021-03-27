@@ -24,17 +24,9 @@ type Block struct {
 	last IP
 }
 
-const (
-	invalidBlock = "invalid Block"
-	overflow     = "overflow"
-	underflow    = "underflow"
-)
+const invalidBlock = "invalid Block"
 
-var (
-	errInvalidBlock = errors.New(invalidBlock)
-	errOverflow     = errors.New(overflow)
-	errUnderflow    = errors.New(underflow)
-)
+var errInvalidBlock = errors.New(invalidBlock)
 
 // Base returns the base IP address of the block.
 func (b Block) Base() IP { return b.base }
@@ -287,14 +279,14 @@ func (b Block) CIDRs() []Block {
 	if !b.IsValid() {
 		return nil
 	}
-	return b.base.toCIDRsRec(nil, b.last)
+	return b.base.toCIDRsRec(b.last, nil)
 }
 
 // recursion ahead
 // end condition: isCIDR
 // split the range in the middle
 // call both halves recursively
-func (a IP) toCIDRsRec(buf []Block, b IP) []Block {
+func (a IP) toCIDRsRec(b IP, buf []Block) []Block {
 	if a.isCIDR(b) {
 		buf = append(buf, Block{a, b})
 		return buf
@@ -309,8 +301,8 @@ func (a IP) toCIDRsRec(buf []Block, b IP) []Block {
 	v := b.mkBaseIP(m)
 
 	// rec call for both halves, {a, u} and {v, b}
-	buf = a.toCIDRsRec(buf, u)
-	buf = v.toCIDRsRec(buf, b)
+	buf = a.toCIDRsRec(u, buf)
+	buf = v.toCIDRsRec(b, buf)
 
 	return buf
 }

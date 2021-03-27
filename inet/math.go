@@ -11,9 +11,6 @@ type uint128 struct {
 	lo uint64
 }
 
-var maxV4 = uint128{uint64(0), uint64(^uint32(0))} //  32x1 :0x00_00..00_ff_ff_ff_ff
-var maxV6 = uint128{^uint64(0), ^uint64(0)}        // 128x1 :0xff_ff..ff_ff_ff_ff_ff
-
 // bitwise NOT: ^u
 func not(u uint128) uint128 {
 	return uint128{^u.hi, ^u.lo}

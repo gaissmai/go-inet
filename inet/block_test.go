@@ -266,7 +266,7 @@ func TestBlockMerge(t *testing.T) {
 
 	// corner cases
 	bs = []Block{} // nil slice
-	if got := Merge(bs); got != nil {
+	if got = Merge(bs); got != nil {
 		t.Errorf("Merge() nil slice should return nil, got %v\n", got)
 	}
 
@@ -300,13 +300,7 @@ func TestBlockToCIDRs(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("%v.ToCIDRs(), got %v, want %v", b, got, want)
-	}
-
-	// corner case
-	b = Block{}
-	if b.CIDRs() != nil {
-		t.Error("ToCIDRs on invalid block must reutn nil")
+		t.Errorf("%v.CIDRs(), got %v, want %v", b, got, want)
 	}
 }
 
@@ -338,24 +332,34 @@ func TestBlockToCIDRsV6(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("%v.ToCIDRs(), got %v, want %v", b, got, want)
+		t.Errorf("%v.CIDRs(), got %v, want %v", b, got, want)
 	}
 }
 
-func TestBlockToCIDRsV4(t *testing.T) {
-	b, _ := ParseBlock("255.255.255.253-255.255.255.255")
+func TestBlockToCIDRsV4CornerCase(t *testing.T) {
+	b := mustBlock("255.255.255.253-255.255.255.254")
 	got := b.CIDRs()
 
 	var want []Block
 	for _, s := range []string{
 		"255.255.255.253/32",
-		"255.255.255.254/31",
+		"255.255.255.254/32",
 	} {
 		want = append(want, mustBlock(s))
 	}
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("%v.ToCIDRs(), got %v, want %v", b, got, want)
+		t.Errorf("%v.CIDRs(), got %v, want %v", b, got, want)
+	}
+
+	b = Block{}
+	if b.CIDRs() != nil {
+		t.Error("CIDRs on invalid block must return nil")
+	}
+
+	b = mustBlock("127.0.0.1")
+	if len(b.CIDRs()) != 1 || b.CIDRs()[0] != b {
+		t.Error("CIDRs on CIDR block must return CIDR")
 	}
 }
 
@@ -372,7 +376,7 @@ func TestBlockToCIDRsV6cornerCase(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("%v.AsCIDRs(), got %v, want %v", b, got, want)
+		t.Errorf("%v.CIDRs(), got %v, want %v", b, got, want)
 	}
 }
 
