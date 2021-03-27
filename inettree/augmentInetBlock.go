@@ -22,7 +22,7 @@ func (a Item) Less(i tree.Interface) bool {
 }
 
 // Equal implements the tree.Interface for Item
-func (a Item) Equal(i tree.Interface) bool {
+func (a Item) Equals(i tree.Interface) bool {
 	b := i.(Item)
 	return a.Block == b.Block
 }
