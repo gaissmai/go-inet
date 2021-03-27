@@ -1,7 +1,7 @@
 package tree
 
 import (
-	"fmt"
+	"errors"
 	"sort"
 	"strings"
 )
@@ -23,8 +23,8 @@ type Interface interface {
 	// Equals reports whether receiver and item are equal.
 	Equals(Interface) bool
 
-	// string representation of the item
-	fmt.Stringer
+	// Stringer interface
+	String() string
 }
 
 // Tree partially implements an interval tree.
@@ -59,7 +59,8 @@ func NewTree(items []Interface) (Tree, error) {
 	// items are sorted, build the index tree, O(n), bail out on duplicates
 	for i := range t.items {
 		if i > 0 && t.items[i-1].Equals(t.items[i]) {
-			return Tree{}, fmt.Errorf("duplicate item: %v", t.items[i])
+			//return Tree{}, fmt.Errorf("duplicate item: %v", t.items[i])
+			return Tree{}, errors.New("duplicate item: " + t.items[i].String())
 		}
 		t.buildIndexTree(root, i)
 	}
