@@ -215,8 +215,10 @@ func (t *Tree) walkAndStringify(p int, buf *strings.Builder, pad string) *string
 // If the function returns a non-nil error, Walk stops and returns that error.
 type WalkFunc func(depth int, item, parent Interface, childs []Interface) error
 
-// String returns the ordered tree as a directory graph.
-// The items are stringified using their fmt.Stringer interface.
+// Walk walks the tree, calling fn for each item in the tree.
+//
+// The items are walked in natural pre-order, as presented by String().
+// Every error returned by fn stops the walk and is returned to the caller.
 func (t *Tree) Walk(fn WalkFunc) error {
 	if t == nil {
 		return nil
@@ -241,8 +243,8 @@ func (t *Tree) walk(fn WalkFunc, d, idx, p int) error {
 		parent = t.items[p]
 	}
 
-	c_idxs := t.tree[idx]
-	for _, c := range c_idxs {
+	cs := t.tree[idx]
+	for _, c := range cs {
 		childs = append(childs, t.items[c])
 	}
 
@@ -252,7 +254,7 @@ func (t *Tree) walk(fn WalkFunc, d, idx, p int) error {
 	}
 
 	// rec-descent
-	for _, c := range c_idxs {
+	for _, c := range cs {
 		if err := t.walk(fn, d+1, c, idx); err != nil {
 			return err
 		}

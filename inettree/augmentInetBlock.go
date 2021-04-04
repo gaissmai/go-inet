@@ -24,7 +24,7 @@ func (a Item) Less(i tree.Interface) bool {
 	return a.Block.Less(b.Block)
 }
 
-// Equal implements the tree.Interface for Item
+// Equals implements the tree.Interface for Item
 func (a Item) Equals(i tree.Interface) bool {
 	b := i.(Item)
 	return a.Block == b.Block
