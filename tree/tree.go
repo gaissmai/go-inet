@@ -202,7 +202,7 @@ func (t *Tree) walkAndStringify(p int, buf *strings.Builder, pad string) *string
 	return t.walkAndStringify(idx, buf, pad+"   ")
 }
 
-// WalkTreeFunc is the type of the function called by WalkTree to visit each item.
+// WalkFunc is the type of the function called by Walk to visit each item.
 //
 // depth is 0 for root items.
 //
@@ -213,11 +213,11 @@ func (t *Tree) walkAndStringify(p int, buf *strings.Builder, pad string) *string
 // childs is the slice of direct descendants, childs is nil for leaf items.
 //
 // If the function returns a non-nil error, Walk stops and returns that error.
-type WalkTreeFunc func(depth int, item, parent Interface, childs []Interface) error
+type WalkFunc func(depth int, item, parent Interface, childs []Interface) error
 
 // String returns the ordered tree as a directory graph.
 // The items are stringified using their fmt.Stringer interface.
-func (t *Tree) Walk(fn WalkTreeFunc) error {
+func (t *Tree) Walk(fn WalkFunc) error {
 	if t == nil {
 		return nil
 	}
@@ -231,7 +231,7 @@ func (t *Tree) Walk(fn WalkTreeFunc) error {
 	return nil
 }
 
-func (t *Tree) walk(fn WalkTreeFunc, d, idx, p int) error {
+func (t *Tree) walk(fn WalkFunc, d, idx, p int) error {
 	var item, parent Interface
 	var childs []Interface
 
