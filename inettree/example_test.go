@@ -20,6 +20,9 @@ var iana = map[string]string{
 	"3000::/4": "FREE",
 	"4000::/3": "Reserved by IETF     [RFC3513][RFC4291]",
 	"6000::/3": "Reserved by IETF     [RFC3513][RFC4291]",
+
+	// force duplicate error
+	"2000::0000/3": "Global Unicast       [RFC3513][RFC4291]",
 }
 
 func Example_usage() {
@@ -36,14 +39,18 @@ func Example_usage() {
 		bs = append(bs, inettree.Item{block, text})
 	}
 
-	t, err := tree.NewTree(bs)
+	t, err := tree.New(bs)
 	if err != nil {
-		panic(err)
+		fmt.Println("ERROR:", err)
+		fmt.Printf("dups: %v\n\n", t.Duplicates())
 	}
 
 	fmt.Println(t)
 
 	// Output:
+	// ERROR: some items are duplicate
+	// dups: [2000::/3 ... Global Unicast       [RFC3513][RFC4291]]
+	//
 	// ▼
 	// ├─ ::/8 ... Reserved by IETF     [RFC3513][RFC4291]
 	// ├─ 100::/8 ... Reserved by IETF     [RFC3513][RFC4291]

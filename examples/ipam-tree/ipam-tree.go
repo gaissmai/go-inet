@@ -22,7 +22,7 @@ var startBlock inet.Block
 var description = `
 Read records with blocks and text (separated by comma) from STDIN and prints the tree representation.
 If a startBlock is defined as argument, the tree is restricted to blocks covered by startBlock.
-With the flag -f, free blocks direct under the startBlock are marked as FREE and also printed.
+With the flag -f, free blocks are marked as FREE and also printed.
 
 Input:
 10.0.0.0/8, RFC-1918
@@ -49,35 +49,21 @@ func main() {
 	input := make(map[inet.Block]string)
 	readData(input)
 
-	// filter and find free
-	if (startBlock != inet.Block{}) {
-		if *flagFree {
-			input = free(input, startBlock)
-		} else {
-			input = filter(input, startBlock)
-		}
-	}
-
-	// augment blocks with text
 	bs := make([]tree.Interface, 0)
 	for b, t := range input {
+		bs = append(bs, marshalItem(b, t))
+	}
 
-		// augment the block string with text from stdin:
-		// ::1, home sweet home
-		//
-		// Output:
-		// └─ ::1/128 ....................... home sweet home
-
-		if t != "" {
-			s := b.String()
-			t = s + " " + strings.Repeat(".", 30-len(s)) + " " + t
-		}
-
-		bs = append(bs, inettree.Item{Block: b, Text: t})
+	// filter and find free
+	if (startBlock != inet.Block{}) {
+		bs = filter(bs, startBlock)
+	}
+	if *flagFree {
+		bs = free(bs)
 	}
 
 	// build tree
-	t, err := tree.NewTree(bs)
+	t, err := tree.New(bs)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -126,39 +112,73 @@ func readData(m map[inet.Block]string) {
 	}
 }
 
+// marshal the text field
+func marshalItem(b inet.Block, t string) inettree.Item {
+	bs := b.String()
+	if t != "" {
+		t = bs + " " + strings.Repeat(".", 50-len(bs)) + " " + t
+	}
+	return inettree.Item{Block: b, Text: t}
+}
+
 // filters input blocks by startBlock
-func filter(input map[inet.Block]string, outer inet.Block) map[inet.Block]string {
-	result := make(map[inet.Block]string, len(input))
-	for block, text := range input {
-		if outer.Covers(block) || outer == block {
-			result[block] = text
+func filter(bs []tree.Interface, outer inet.Block) []tree.Interface {
+	result := make([]tree.Interface, 0, len(bs))
+
+	for _, item := range bs {
+		if outer.Covers(item.(inettree.Item).Block) || outer == item.(inettree.Item).Block {
+			result = append(result, item)
 		}
 	}
 	return result
 }
 
-// filters input blocks by startBlock and calc free blocks, return both
-func free(input map[inet.Block]string, outer inet.Block) map[inet.Block]string {
+func assertBlock(is []tree.Interface) (bs []inet.Block) {
+	for _, v := range is {
+		bs = append(bs, v.(inettree.Item).Block)
+	}
+	return
+}
 
-	result := make(map[inet.Block]string, len(input))
-	result[outer] = input[outer]
+// find free
+func free(is []tree.Interface) []tree.Interface {
 
-	// filter and copy to result
-	inner := make([]inet.Block, 0, len(input))
-	for block, text := range input {
-		if outer.Covers(block) {
-			inner = append(inner, block)
-			result[block] = text
-		}
+	// make tree with input
+	t, err := tree.New(is)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		log.Fatalf("duplicate blocks: %v", t.Duplicates())
 	}
 
-	// calc free blocks, copy to result
-	for _, freeBlock := range outer.Diff(inner) {
-		for _, cidr := range freeBlock.CIDRs() {
-			result[cidr] = "FREE"
+	// find free blocks
+	var free []inet.Block
+	fn := func(_ int, item, _ tree.Interface, childs []tree.Interface) error {
+		if childs == nil {
+			return nil
 		}
+
+		{
+			// type assertions from tree.Interface to inet.Block
+			item := item.(inettree.Item).Block
+			childs := assertBlock(childs)
+
+			// calc free blocks for every item
+			for _, diff := range item.Diff(childs) {
+				free = append(free, diff.CIDRs()...)
+			}
+		}
+		return nil
 	}
-	return result
+
+	if err := t.Walk(fn); err != nil {
+		log.Fatalf("ERROR, in WalkTreeFn: %v", err)
+	}
+
+	for _, b := range free {
+		is = append(is, marshalItem(b, "FREE"))
+	}
+
+	return is
 }
 
 // check flags and arguments
@@ -166,11 +186,6 @@ func checkCmdline() {
 	flag.Usage = usage
 	flag.Parse()
 	w := flag.CommandLine.Output()
-
-	if *flagFree && len(flag.Args()) == 0 {
-		fmt.Fprintf(w, "ERROR: missing start block\n\n")
-		usage()
-	}
 
 	if len(flag.Args()) > 0 {
 		block, err := inet.ParseBlock(flag.Arg(0))

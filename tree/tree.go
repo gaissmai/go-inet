@@ -34,17 +34,25 @@ type Tree struct {
 
 	// top-down parentIdx -> []childIdx tree
 	tree map[int][]int
+
+	// the duplicate items
+	dups []Interface
+}
+
+// Duplicates returns the conflicting items. Returns nil if there was no error during New().
+func (t *Tree) Duplicates() []Interface {
+	return t.dups
 }
 
 // Len returns the number of items in tree.
-func (t Tree) Len() int {
+func (t *Tree) Len() int {
 	return len(t.items)
 }
 
-// NewTree builds and returns an immutable tree.
-// Bails out and returns an error on duplicate items.
-func NewTree(items []Interface) (Tree, error) {
-	t := Tree{}
+// New builds and returns an immutable tree.
+// Returns an error != nil on duplicate items.
+func New(items []Interface) (*Tree, error) {
+	t := &Tree{}
 	if items == nil {
 		return t, nil
 	}
@@ -58,12 +66,19 @@ func NewTree(items []Interface) (Tree, error) {
 
 	// items are sorted, build the index tree, O(n), bail out on duplicates
 	for i := range t.items {
+
+		// collect the dups
 		if i > 0 && t.items[i-1].Equals(t.items[i]) {
-			//return Tree{}, fmt.Errorf("duplicate item: %v", t.items[i])
-			return Tree{}, errors.New("duplicate item: " + t.items[i].String())
+			t.dups = append(t.dups, t.items[i])
+			continue
 		}
 		t.buildIndexTree(root, i)
 	}
+
+	if t.dups != nil {
+		return t, errors.New("some items are duplicate")
+	}
+
 	return t, nil
 }
 
@@ -98,7 +113,7 @@ func (t *Tree) buildIndexTree(p, c int) {
 // If item is not covered at all by tree, then the returned item is nil.
 //
 // Example: Can be used in IP-ranges or IP-CIDRs to find the so called longest-prefix-match.
-func (t Tree) Lookup(item Interface) Interface {
+func (t *Tree) Lookup(item Interface) Interface {
 	if t.items == nil || item == nil {
 		return nil
 	}
@@ -106,7 +121,7 @@ func (t Tree) Lookup(item Interface) Interface {
 	return t.lookup(root, item)
 }
 
-func (t Tree) lookup(p int, item Interface) Interface {
+func (t *Tree) lookup(p int, item Interface) Interface {
 	// dereference
 	cs := t.tree[p]
 
@@ -135,7 +150,7 @@ func (t Tree) lookup(p int, item Interface) Interface {
 // Find first interval covering item in root level.
 // If item is not contained at all in tree, then the returned item is nil.
 // Extremely degraded trees with heavy overlaps result in O(n).
-func (t Tree) Superset(item Interface) Interface {
+func (t *Tree) Superset(item Interface) Interface {
 	if item == nil {
 		return nil
 	}
@@ -152,7 +167,7 @@ func (t Tree) Superset(item Interface) Interface {
 
 // String returns the ordered tree as a directory graph.
 // The items are stringified using their fmt.Stringer interface.
-func (t Tree) String() string {
+func (t *Tree) String() string {
 	str := t.walkAndStringify(root, new(strings.Builder), "").String()
 
 	if str == "" {
@@ -162,7 +177,7 @@ func (t Tree) String() string {
 }
 
 // walkAndStringify rec-descent, top-down
-func (t Tree) walkAndStringify(p int, buf *strings.Builder, pad string) *strings.Builder {
+func (t *Tree) walkAndStringify(p int, buf *strings.Builder, pad string) *strings.Builder {
 	cs := t.tree[p]
 	l := len(cs)
 
@@ -185,4 +200,63 @@ func (t Tree) walkAndStringify(p int, buf *strings.Builder, pad string) *strings
 
 	buf.WriteString(pad + "└─ " + t.items[idx].String() + "\n")
 	return t.walkAndStringify(idx, buf, pad+"   ")
+}
+
+// WalkTreeFunc is the type of the function called by WalkTree to visit each item.
+//
+// depth is 0 for root items.
+//
+// item is the visited item.
+//
+// parent is nil for root items.
+//
+// childs is the slice of direct descendants, childs is nil for leaf items.
+//
+// If the function returns a non-nil error, Walk stops and returns that error.
+type WalkTreeFunc func(depth int, item, parent Interface, childs []Interface) error
+
+// String returns the ordered tree as a directory graph.
+// The items are stringified using their fmt.Stringer interface.
+func (t *Tree) Walk(fn WalkTreeFunc) error {
+	if t == nil {
+		return nil
+	}
+
+	// for all child_idxs of the root item...
+	for _, idx := range t.tree[root] {
+		if err := t.walk(fn, 0, idx, root); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *Tree) walk(fn WalkTreeFunc, d, idx, p int) error {
+	var item, parent Interface
+	var childs []Interface
+
+	item = t.items[idx]
+
+	if p != root {
+		parent = t.items[p]
+	}
+
+	c_idxs := t.tree[idx]
+	for _, c := range c_idxs {
+		childs = append(childs, t.items[c])
+	}
+
+	// visitor callback
+	if err := fn(d, item, parent, childs); err != nil {
+		return err
+	}
+
+	// rec-descent
+	for _, c := range c_idxs {
+		if err := t.walk(fn, d+1, c, idx); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

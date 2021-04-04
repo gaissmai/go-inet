@@ -1,6 +1,7 @@
 package tree
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -65,7 +66,7 @@ func generateIvals(n int) []Interface {
 }
 
 func TestTreeNil(t *testing.T) {
-	tree, _ := NewTree(nil)
+	tree, _ := New(nil)
 
 	if s := tree.String(); s != "" {
 		t.Errorf("tree.String() = %v, want \"\"", s)
@@ -98,14 +99,25 @@ func TestTreeNil(t *testing.T) {
 		}
 	}
 
+	if i := tree.Walk(nil); i != nil {
+		t.Errorf("tree.Walk(nil) = %v, want nil", i)
+	}
+
 }
 
-func TestTreeInsertDup(t *testing.T) {
+func TestTreeNewWithDups(t *testing.T) {
 
-	_, err := NewTree([]Interface{ival{42, 4242}, ival{42, 4242}})
+	tree, err := New([]Interface{ival{0, 0}, ival{6, 10}, ival{42, 4242}, ival{42, 4242}})
 	if err == nil {
-		t.Errorf("expected error, got nil")
+		t.Errorf("expected error, got: %v", err)
 	}
+	if d := tree.Duplicates(); d == nil {
+		t.Errorf("expected dups, got: %v", d)
+	}
+	if d := tree.Duplicates()[0]; !d.Equals(Interface(ival{42, 4242})) {
+		t.Errorf("expected: %v, got: %v", ival{42, 4242}, d)
+	}
+
 }
 
 func TestTreeLookup(t *testing.T) {
@@ -115,7 +127,7 @@ func TestTreeLookup(t *testing.T) {
 		ival{45, 60},
 	}
 
-	tree, err := NewTree(is)
+	tree, err := New(is)
 	if err != nil {
 		t.Error(err)
 	}
@@ -131,9 +143,69 @@ func TestTreeLookup(t *testing.T) {
 	}
 }
 
+func TestTreeWalk(t *testing.T) {
+	var tree *Tree
+	if i := tree.Walk(nil); i != nil {
+		t.Errorf("tree.Walk(nil) = %v, want nil", i)
+	}
+
+	is := generateIvals(21)
+	tree, _ = New(is)
+
+	var count int
+	var maxDepth int
+	var maxChilds int
+	var itemWithMaxChilds Interface
+
+	// as closure
+	walkFn := func(d int, item, parent Interface, childs []Interface) error {
+		count++
+		if d > maxDepth {
+			maxDepth = d
+		}
+		if len(childs) > maxChilds {
+			maxChilds = len(childs)
+			itemWithMaxChilds = item
+		}
+		return nil
+	}
+	if err := tree.Walk(walkFn); err != nil {
+		t.Errorf("Walk returns error: %v", err)
+	}
+
+	if count != 21 {
+		t.Errorf("Walk, count items, expected 21, got: %v", count)
+	}
+
+	if maxDepth != 6 {
+		t.Errorf("Walk, maxDepth, expected 6, got: %v", maxDepth)
+	}
+
+	if maxChilds != 3 {
+		t.Errorf("Walk, maxChilds, expected 3, got: %v", maxChilds)
+	}
+
+	exp := ival{0, 20}
+	if !exp.Equals(itemWithMaxChilds) {
+		t.Errorf("Walk, itemWithMaxChilds, expected 0...20, got: %v", itemWithMaxChilds)
+	}
+
+	// now with error
+	walkFn2 := func(d int, item, parent Interface, childs []Interface) error {
+		if d > 4 {
+			return errors.New("to deep")
+		}
+		return nil
+	}
+
+	if err := tree.Walk(walkFn2); err == nil {
+		t.Errorf("Walk, expected error, got: %v", err)
+	}
+}
+
 func TestTreeRandom(t *testing.T) {
 	is := generateIvals(10_000)
-	tree, _ := NewTree(is)
+	tree, _ := New(is)
 
 	if len(is) != tree.Len() {
 		t.Errorf("Len(), got %v, expected %v", tree.Len(), len(is))
@@ -150,20 +222,3 @@ func TestTreeRandom(t *testing.T) {
 		}
 	}
 }
-
-// ▼
-// ├─ 0...15
-// │  └─ 0...6
-// ├─ 1...245
-// │  ├─ 1...87
-// │  │  └─ 1...18
-// │  ├─ 2...89
-// │  └─ 4...211
-// │     └─ 5...140
-// │        └─ 5...66
-// └─ 7...247
-//    └─ 7...206
-//       └─ 7...88
-//          ├─ 7...59
-//          └─ 8...74
-//             └─ 8...58

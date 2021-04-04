@@ -66,7 +66,7 @@ var is = []tree.Interface{
 
 func Example_interface() {
 
-	t, err := tree.NewTree(is)
+	t, err := tree.New(is)
 	if err != nil {
 		log.Fatal(err)
 	}
