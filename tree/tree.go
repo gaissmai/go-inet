@@ -189,17 +189,17 @@ func (t *Tree) walkAndStringify(p int, buf *strings.Builder, pad string) *string
 	// !!! stop before last child (<= l-2)
 	i := 0
 	for ; i <= l-2; i++ {
-		idx := cs[i] // dereference
+		v := cs[i] // dereference
 
-		buf.WriteString(pad + "├─ " + t.items[idx].String() + "\n")
-		buf = t.walkAndStringify(idx, buf, pad+"│  ")
+		buf.WriteString(pad + "├─ " + t.items[v].String() + "\n")
+		buf = t.walkAndStringify(v, buf, pad+"│  ")
 	}
 
 	// treat last child special
-	idx := cs[i] // dereference
+	v := cs[i] // dereference
 
-	buf.WriteString(pad + "└─ " + t.items[idx].String() + "\n")
-	return t.walkAndStringify(idx, buf, pad+"   ")
+	buf.WriteString(pad + "└─ " + t.items[v].String() + "\n")
+	return t.walkAndStringify(v, buf, pad+"   ")
 }
 
 // WalkFunc is the type of the function called by Walk to visit each item.
@@ -224,28 +224,28 @@ func (t *Tree) Walk(fn WalkFunc) error {
 		return nil
 	}
 
-	// for all child_idxs of the root item...
-	for _, idx := range t.tree[root] {
-		if err := t.walk(fn, 0, idx, root); err != nil {
+	// for all child indexes of the root item...
+	for _, v := range t.tree[root] {
+		if err := t.walk(fn, 0, v, root); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (t *Tree) walk(fn WalkFunc, d, idx, p int) error {
+func (t *Tree) walk(fn WalkFunc, d, i, p int) error {
 	var item, parent Interface
 	var childs []Interface
 
-	item = t.items[idx]
+	item = t.items[i]
 
 	if p != root {
 		parent = t.items[p]
 	}
 
-	cs := t.tree[idx]
-	for _, c := range cs {
-		childs = append(childs, t.items[c])
+	cs := t.tree[i]
+	for _, v := range cs {
+		childs = append(childs, t.items[v])
 	}
 
 	// visitor callback
@@ -254,8 +254,8 @@ func (t *Tree) walk(fn WalkFunc, d, idx, p int) error {
 	}
 
 	// rec-descent
-	for _, c := range cs {
-		if err := t.walk(fn, d+1, c, idx); err != nil {
+	for _, v := range cs {
+		if err := t.walk(fn, d+1, v, i); err != nil {
 			return err
 		}
 	}
