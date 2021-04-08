@@ -585,6 +585,38 @@ func TestFindDiffCornerCases(t *testing.T) {
 		t.Errorf("Diff(base>last), got %v, want %v", rs, want)
 	}
 
+	// left overlap v4
+	r = mustBlock("10.0.0.5-10.0.0.15")
+	rs = r.Diff([]Block{mustBlock("10.0.0.3-10.0.0.10")})
+	want = mustBlock("10.0.0.11-10.0.0.15")
+	if rs[0] != want {
+		t.Errorf("Diff(leftOverlapV4), got %v, want %v", rs, want)
+	}
+
+	// right overlap v4
+	r = mustBlock("10.0.0.4-10.0.0.15")
+	rs = r.Diff([]Block{mustBlock("10.0.0.6-10.0.0.19")})
+	want = mustBlock("10.0.0.4-10.0.0.5")
+	if rs[0] != want {
+		t.Errorf("Diff(leftOverlapV4), got %v, want %v", rs, want)
+	}
+
+	// left overlap v6
+	r = mustBlock("2001:db8::17-2001:db8::177")
+	rs = r.Diff([]Block{mustBlock("2001:db8::14-2001:db8::137")})
+	want = mustBlock("2001:db8::138-2001:db8::177")
+	if rs[0] != want {
+		t.Errorf("Diff(leftOverlapV4), got %v, want %v", rs, want)
+	}
+
+	// right overlap v6
+	r = mustBlock("2001:db8::17-2001:db8::177")
+	rs = r.Diff([]Block{mustBlock("2001:db8::3f-2001:db8::fff")})
+	want = mustBlock("2001:db8::17-2001:db8::3e")
+	if rs[0] != want {
+		t.Errorf("Diff(leftOverlapV4), got %v, want %v", rs, want)
+	}
+
 }
 
 func TestFindDiffIANAv6(t *testing.T) {

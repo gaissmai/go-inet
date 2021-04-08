@@ -330,7 +330,7 @@ func (b Block) Diff(bs []Block) []Block {
 		case d.Covers(b):
 			// masks rest
 			return out
-		case d.base == b.base:
+		case d.base.Less(b.base), d.base == b.base:
 			// move forward
 			b.base = d.last.addOne()
 		case b.base.Less(d.base):
