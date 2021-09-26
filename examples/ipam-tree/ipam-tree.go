@@ -19,6 +19,11 @@ var flagFree = flag.Bool("f", false, "show also free blocks under startBlock")
 
 var startBlock inet.Block
 
+type record struct {
+	b inet.Block
+	t string
+}
+
 var description = `
 Read records with blocks and text (separated by comma) from STDIN and prints the tree representation.
 If a startBlock is defined as argument, the tree is restricted to blocks covered by startBlock.
@@ -46,26 +51,30 @@ func main() {
 	checkCmdline()
 
 	// input records
-	input := make(map[inet.Block]string)
-	readData(input)
+	records := readData(os.Stdin)
 
-	bs := make([]tree.Interface, 0)
-	for b, t := range input {
-		bs = append(bs, marshalItem(b, t))
-	}
-
-	// filter and find free
+	// filter by startBlock
 	if (startBlock != inet.Block{}) {
-		bs = filter(bs, startBlock)
+		records = filter(records, startBlock)
 	}
+
+	// mangle text and convert record to inettree.Item
+	// implements tree.Interface
+	items := make([]tree.Interface, 0)
+	for _, r := range records {
+		items = append(items, convertRec(r.b, r.t))
+	}
+
+	// find free blocks
 	if *flagFree {
-		bs = free(bs)
+		items = free(items)
 	}
 
 	// build tree
-	t, err := tree.New(bs)
+	t, err := tree.New(items)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("ERROR:", err)
+		log.Fatalf("duplicate blocks: %v", t.Duplicates())
 	}
 
 	// print tree
@@ -74,14 +83,16 @@ func main() {
 
 // input records as CSV data:
 // block, text...
-func readData(m map[inet.Block]string) {
+func readData(in io.Reader) []record {
+	out := make([]record, 0)
+
 	r := csv.NewReader(os.Stdin)
 	r.FieldsPerRecord = -1
 
 	for {
 		fields, err := r.Read()
 		if err == io.EOF {
-			return
+			return out
 		}
 
 		if err != nil {
@@ -96,10 +107,6 @@ func readData(m map[inet.Block]string) {
 			log.Printf("skip record: %v (%v)", err, f0)
 			continue
 		}
-		if _, ok := m[block]; ok {
-			log.Printf("duplicate block: %v", block)
-			continue
-		}
 
 		var text string
 		if len(fields) > 1 {
@@ -108,29 +115,30 @@ func readData(m map[inet.Block]string) {
 		}
 
 		// save record
-		m[block] = text
+		out = append(out, record{b: block, t: text})
 	}
+	return out
 }
 
-// marshal the text field
-func marshalItem(b inet.Block, t string) inettree.Item {
-	bs := b.String()
+// marshal the text field, Item implements tree.Interface
+func convertRec(b inet.Block, t string) inettree.Item {
+	asStr := b.String()
 	if t != "" {
-		t = bs + " " + strings.Repeat(".", 50-len(bs)) + " " + t
+		t = asStr + " " + strings.Repeat(".", 50-len(asStr)) + " " + t
 	}
 	return inettree.Item{Block: b, Text: t}
 }
 
 // filters input blocks by startBlock
-func filter(bs []tree.Interface, outer inet.Block) []tree.Interface {
-	result := make([]tree.Interface, 0, len(bs))
+func filter(in []record, outer inet.Block) []record {
+	out := make([]record, 0, len(in))
 
-	for _, item := range bs {
-		if outer.Covers(item.(inettree.Item).Block) || outer == item.(inettree.Item).Block {
-			result = append(result, item)
+	for _, r := range in {
+		if outer.Covers(r.b) || outer == r.b {
+			out = append(out, r)
 		}
 	}
-	return result
+	return out
 }
 
 func assertBlock(is []tree.Interface) (bs []inet.Block) {
@@ -152,7 +160,7 @@ func free(is []tree.Interface) []tree.Interface {
 
 	// find free blocks
 	var free []inet.Block
-	fn := func(_ int, item, _ tree.Interface, childs []tree.Interface) error {
+	walkFn := func(_ int, item, _ tree.Interface, childs []tree.Interface) error {
 		if childs == nil {
 			return nil
 		}
@@ -170,12 +178,12 @@ func free(is []tree.Interface) []tree.Interface {
 		return nil
 	}
 
-	if err := t.Walk(fn); err != nil {
+	if err := t.Walk(walkFn); err != nil {
 		log.Fatalf("ERROR, in WalkTreeFn: %v", err)
 	}
 
 	for _, b := range free {
-		is = append(is, marshalItem(b, "FREE"))
+		is = append(is, convertRec(b, "FREE"))
 	}
 
 	return is
