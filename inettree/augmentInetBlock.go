@@ -42,6 +42,6 @@ func (a Item) String() string {
 		// print just the Block as string
 		return a.Block.String()
 	}
-	// augment the Block with additonal text
+	// augment the Block with additional text
 	return a.Text
 }
