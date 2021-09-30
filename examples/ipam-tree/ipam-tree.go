@@ -58,11 +58,10 @@ func main() {
 		records = filter(records, startBlock)
 	}
 
-	// mangle text and convert record to inettree.Item
-	// implements tree.Interface
+	// box block and text to inettree.Item, implements tree.Interface
 	items := make([]tree.Interface, 0)
 	for _, r := range records {
-		items = append(items, convertRec(r.b, r.t))
+		items = append(items, boxing(r.b, r.t))
 	}
 
 	// find free blocks
@@ -120,10 +119,11 @@ func readData(in io.Reader) []record {
 	return out
 }
 
-// marshal the text field, Item implements tree.Interface
-func convertRec(b inet.Block, t string) inettree.Item {
+// box the inet.Block and text to inettree.Item, implements tree.Interface
+func boxing(b inet.Block, t string) inettree.Item {
 	asStr := b.String()
 	if t != "" {
+		// 10.0.0.0/8 ........................................ RFC-1981
 		t = asStr + " " + strings.Repeat(".", 50-len(asStr)) + " " + t
 	}
 	return inettree.Item{Block: b, Text: t}
@@ -183,7 +183,7 @@ func free(is []tree.Interface) []tree.Interface {
 	}
 
 	for _, b := range free {
-		is = append(is, convertRec(b, "FREE"))
+		is = append(is, boxing(b, "FREE"))
 	}
 
 	return is
