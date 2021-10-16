@@ -1,3 +1,4 @@
+[![CI](https://github.com/gaissmai/go-inet/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/gaissmai/go-inet/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gaissmai/go-inet.svg)](https://pkg.go.dev/github.com/gaissmai/go-inet/v2)
 [![GitHub](https://img.shields.io/github/license/gaissmai/go-inet)](https://github.com/gaissmai/go-inet/blob/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gaissmai/go-inet)](https://goreportcard.com/report/github.com/gaissmai/go-inet/v2)
