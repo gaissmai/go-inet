@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   coverage:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
