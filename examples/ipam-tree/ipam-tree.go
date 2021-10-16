@@ -91,7 +91,7 @@ func readData(in io.Reader) []record {
 	for {
 		fields, err := r.Read()
 		if err == io.EOF {
-			return out
+			break
 		}
 
 		if err != nil {
@@ -210,6 +210,6 @@ func usage() {
 	w := flag.CommandLine.Output()
 	fmt.Fprintf(w, "Usage: %s [-f] [startBlock]\n\n", os.Args[0])
 	flag.PrintDefaults()
-	fmt.Fprintf(w, description)
+	fmt.Fprintln(w, description)
 	os.Exit(1)
 }
