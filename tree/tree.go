@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// parent of all childs
+// parent index of all childs
 const root = -1
 
 // An Interface for various methods on intervals.
@@ -64,7 +64,7 @@ func New(items []Interface) (*Tree, error) {
 	copy(t.items, items)
 	sort.Slice(t.items, func(i, j int) bool { return t.items[i].Less(t.items[j]) })
 
-	// items are sorted, build the index tree, O(n), bail out on duplicates
+	// items are sorted, build the index tree, O(n), collect but skip duplicates
 	for i := range t.items {
 
 		// collect the dups
@@ -85,7 +85,6 @@ func New(items []Interface) (*Tree, error) {
 // buildIndexTree, parent->child map, rec-descent algo.
 // Just building the tree with the slice indices, the items itself are not moved.
 func (t *Tree) buildIndexTree(p, c int) {
-
 	// if child index slice is empty, just append the childs index
 	if t.tree[p] == nil {
 		t.tree[p] = append(t.tree[p], c)
@@ -149,7 +148,7 @@ func (t *Tree) lookup(p int, item Interface) Interface {
 // Superset returns the *biggest* superset (top-down) or the item itself.
 // Find first interval covering item in root level.
 // If item is not contained at all in tree, then the returned item is nil.
-// Extremely degraded trees with heavy overlaps result in O(n).
+// Extremely degraded trees with heavy interval overlaps result in O(n).
 func (t *Tree) Superset(item Interface) Interface {
 	if item == nil {
 		return nil

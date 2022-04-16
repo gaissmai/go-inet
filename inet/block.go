@@ -195,11 +195,11 @@ func (b Block) String() string {
 	return fmt.Sprintf("%s/%d", b.base, n)
 }
 
-// Covers reports whether Block a contains Block b. a and b may NOT coincide.
-// a.Covers(b) returns true when a is a *true* cover of b, a == b must then be false.
+// Covers reports whether Block b contains Block c. b and c may NOT coincide.
+// b.Covers(c) returns true when b is a *true* cover of c, b == c must then be false.
 //
-//  a |-----------------| |-----------------| |-----------------|
-//  b   |------------|    |------------|           |------------|
+//  b |-----------------| |-----------------| |-----------------|
+//  c   |------------|    |------------|           |------------|
 func (b Block) Covers(c Block) bool {
 	if b.base.version != c.base.version {
 		return false
@@ -213,8 +213,8 @@ func (b Block) Covers(c Block) bool {
 	return false
 }
 
-// Less reports whether the block a should be sorted before b.
-// REMEMBER: sort supersets always to the left of their subsets!
+// Less reports whether the block b should be sorted before c.
+// REMEMBER: sort the supersets always to the left of their subsets!
 // If b.Covers(c) is true then b.Less(c) must also be true.
 //
 //  b |---|
@@ -363,7 +363,6 @@ func (b Block) Diff(bs []Block) []Block {
 //  b |------|
 //  c          |---|
 func (b Block) isDisjunct(c Block) bool {
-
 	//  a       |----------|
 	//  b |---|
 	if c.last.Less(b.base) {
