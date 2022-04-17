@@ -125,16 +125,16 @@ func (t *Tree) lookup(p int, item Interface) Interface {
 	cs := t.tree[p]
 
 	// find pos in slice on this level
-	i := sort.Search(len(cs), func(i int) bool { return item.Less(t.items[cs[i]]) })
+	idx := sort.Search(len(cs), func(i int) bool { return item.Less(t.items[cs[i]]) })
 
 	// child before idx may be equal or covers item
-	if i > 0 {
-		i--
-		if t.items[cs[i]].Equals(item) {
-			return t.items[cs[i]]
+	if idx > 0 {
+		idx--
+		if t.items[cs[idx]].Equals(item) {
+			return item
 		}
-		if t.items[cs[i]].Covers(item) {
-			return t.lookup(cs[i], item)
+		if t.items[cs[idx]].Covers(item) {
+			return t.lookup(cs[idx], item)
 		}
 	}
 
@@ -146,22 +146,51 @@ func (t *Tree) lookup(p int, item Interface) Interface {
 }
 
 // Superset returns the *biggest* superset (top-down) or the item itself.
-// Find first interval covering item in root level.
+// Find first interval in sort order covering item in root level.
 // If item is not contained at all in tree, then the returned item is nil.
-// Extremely degraded trees with heavy interval overlaps result in O(n).
+// Extremely degraded trees with heavy interval overlaps may result in O(n).
 func (t *Tree) Superset(item Interface) Interface {
 	if item == nil {
 		return nil
 	}
 
-	// find first item with O(n) in root level
-	for _, v := range t.tree[root] {
-		if t.items[v].Equals(item) || t.items[v].Covers(item) {
-			return t.items[v]
-		}
+	// dereference root level slice
+	rs := t.tree[root]
+
+	// find pos in slice on root level
+	idx := sort.Search(len(rs), func(i int) bool { return item.Less(t.items[rs[i]]) })
+
+	if idx == 0 {
+		return nil
 	}
 
-	return nil
+	// item before idx found by Less() may be equal
+	if t.items[rs[idx-1]].Equals(item) {
+		// the items on root level are disjunct, maybe overlapping, BUT NOT covering each other
+		// therefore we can return here, no element before can overlap this item
+		return item
+	}
+
+	// item isn't equal to any root level interval, find and return leftmost superset
+
+	// remember match
+	match := Interface(nil)
+
+	// some items before idx may cover item, find the leftmost
+	for j := idx - 1; j >= 0; j-- {
+
+		// save match, but continue to find leftmost superset
+		if t.items[rs[j]].Covers(item) {
+			match = t.items[rs[j]]
+			continue
+		}
+
+		// remember: the items on root level are disjunct, maybe overlapping, BUT NOT covering each other
+		// premature stop condition without item coverage, last match was superset
+		break
+	}
+
+	return match
 }
 
 // String returns the ordered tree as a directory graph.

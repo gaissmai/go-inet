@@ -102,11 +102,9 @@ func TestTreeNil(t *testing.T) {
 	if i := tree.Walk(nil); i != nil {
 		t.Errorf("tree.Walk(nil) = %v, want nil", i)
 	}
-
 }
 
 func TestTreeNewWithDups(t *testing.T) {
-
 	tree, err := New([]Interface{ival{0, 0}, ival{6, 10}, ival{42, 4242}, ival{42, 4242}})
 	if err == nil {
 		t.Errorf("expected error, got: %v", err)
@@ -117,11 +115,9 @@ func TestTreeNewWithDups(t *testing.T) {
 	if d := tree.Duplicates()[0]; !d.Equals(Interface(ival{42, 4242})) {
 		t.Errorf("expected: %v, got: %v", ival{42, 4242}, d)
 	}
-
 }
 
 func TestTreeLookup(t *testing.T) {
-
 	is := []Interface{
 		ival{1, 100},
 		ival{45, 60},
@@ -140,6 +136,44 @@ func TestTreeLookup(t *testing.T) {
 	item = ival{47, 62}
 	if got := tree.Lookup(item); !got.Equals(ival{1, 100}) {
 		t.Errorf("Lookup(%v) = %v, want %v", item, got, ival{1, 100})
+	}
+}
+
+func TestTreeSuperset(t *testing.T) {
+	is := []Interface{
+		ival{1, 100},
+		ival{45, 120},
+		ival{46, 80},
+	}
+
+	tree, err := New(is)
+	if err != nil {
+		t.Error(err)
+	}
+
+	item := ival{0, 6}
+	if got := tree.Superset(item); got != nil {
+		t.Errorf("Superset(%v) = %v, want %v", item, got, nil)
+	}
+
+	item = ival{99, 200}
+	if got := tree.Superset(item); got != nil {
+		t.Errorf("Superset(%v) = %v, want %v", item, got, nil)
+	}
+
+	item = ival{1, 100}
+	if got := tree.Superset(item); !got.Equals(ival{1, 100}) {
+		t.Errorf("Superset(%v) = %v, want %v", item, got, ival{1, 100})
+	}
+
+	item = ival{46, 80}
+	if got := tree.Superset(item); !got.Equals(ival{1, 100}) {
+		t.Errorf("Superset(%v) = %v, want %v", item, got, ival{1, 100})
+	}
+
+	item = ival{47, 62}
+	if got := tree.Superset(item); !got.Equals(ival{1, 100}) {
+		t.Errorf("Superset(%v) = %v, want %v", item, got, ival{1, 100})
 	}
 }
 
