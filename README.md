@@ -8,7 +8,11 @@
 
 A Go library for reading, formatting, sorting and converting IP-addresses and IP-blocks.
 
-## ATTENTION: v2 with new API
+## ATTENTION: DEVELOPMENT STOPPED
+
+Go has since v1.18 a usable stdlib for IP addresses and prefixes, net/netip, so the package go-inet/inet will be rebuilt on top of the new stdlib and released either as v3 or possibly under a completely new package name.
+
+## v2 with new API
 
 Version v2 uses the math based on `type uint128 struct {hi uint64, lo uint64}`, no longer bytes fiddling in network byte order.
 The API is reduced to the bare minimum, the tree representation is abstracted with an Interface.
