@@ -9,5 +9,5 @@ Go has since v1.18 a usable stdlib `net/netip` for IP addresses and prefixes and
 ## NEW:
 
 * https://github.com/gaissmai/iprange
-* https://gibthub.com/gaissmai/interval
+* https://github.com/gaissmai/interval
 
